@@ -7,7 +7,7 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 ## Current Status
 
 **Phase:** Implementation (Phase 4)
-**Current Story:** 1.1 - Ollama Integration & Model Setup ✅ IMPLEMENTED
+**Current Story:** 1.2 - Email Preprocessing Pipeline ✅ IMPLEMENTED
 
 ## Features (Current)
 
@@ -19,6 +19,18 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 - Configuration management via YAML
 - Comprehensive error handling
 - Full unit test coverage
+
+### ✅ Story 1.2: Email Preprocessing Pipeline (COMPLETE)
+
+- Email metadata extraction (sender, subject, date, threading)
+- HTML to plain text conversion with structure preserved
+- Intelligent signature and quote stripping
+- Attachment metadata handling
+- Smart content truncation for long emails (>10k chars)
+- Structured JSON output for LLM consumption
+- Thread context preservation
+- Input sanitization to prevent prompt injection
+- Performance: <200ms preprocessing target
 
 ## Prerequisites
 
@@ -94,6 +106,46 @@ Expected output:
 ✓ Story 1.1 (Ollama Integration) complete!
 ```
 
+### Email Preprocessing Demo
+
+```bash
+python examples/email_preprocessing_demo.py
+```
+
+This demonstrates:
+- Simple plain text email preprocessing
+- HTML email parsing
+- Signature stripping
+- Thread context extraction
+- Attachment handling
+- Long email truncation
+- Suspicious content detection
+- Complete structured JSON output
+
+### Using the EmailPreprocessor
+
+```python
+from src.mailmind.core.email_preprocessor import EmailPreprocessor
+
+# Create preprocessor instance
+preprocessor = EmailPreprocessor()
+
+# Preprocess an email
+email = {
+    'from': 'alice@example.com',
+    'subject': 'Test Email',
+    'body': 'Email content here...',
+    'date': '2025-10-13T14:30:00Z'
+}
+
+result = preprocessor.preprocess_email(email)
+
+# Access structured output
+print(f"From: {result['metadata']['from']}")
+print(f"Body: {result['content']['body']}")
+print(f"Processing time: {result['preprocessing_metadata']['processing_time_ms']}ms")
+```
+
 ## Development
 
 ### Project Structure
@@ -103,19 +155,25 @@ mail-mind/
 ├── src/
 │   └── mailmind/
 │       ├── core/              # Core business logic
-│       │   └── ollama_manager.py
+│       │   ├── ollama_manager.py      # Story 1.1
+│       │   └── email_preprocessor.py  # Story 1.2
 │       ├── ui/                # User interface (coming in Story 2.3)
 │       ├── utils/             # Utilities
 │       │   └── config.py
 │       └── models/            # Data models
 ├── tests/
 │   ├── unit/                  # Unit tests
-│   │   └── test_ollama_manager.py
+│   │   ├── test_ollama_manager.py        # Story 1.1 tests
+│   │   └── test_email_preprocessor.py    # Story 1.2 tests
 │   └── integration/           # Integration tests
+├── examples/
+│   └── email_preprocessing_demo.py       # Story 1.2 demo
 ├── config/
 │   └── default.yaml           # Default configuration
 ├── docs/
 │   ├── stories/               # Story files
+│   │   ├── story-1.1.md       # Ollama Integration
+│   │   └── story-1.2.md       # Email Preprocessing
 │   ├── epic-stories.md        # Epic breakdown
 │   └── project-workflow-status-2025-10-13.md
 ├── main.py                    # Application entry point
@@ -155,13 +213,13 @@ ollama:
 
 ## Roadmap
 
-### ✅ Completed
+### ✅ Completed (2/12 stories - 14% progress)
 
-- **Story 1.1:** Ollama Integration & Model Setup
+- **Story 1.1:** Ollama Integration & Model Setup (5 points)
+- **Story 1.2:** Email Preprocessing Pipeline (5 points)
 
 ### 🔄 Next Up
 
-- **Story 1.2:** Email Preprocessing Pipeline
 - **Story 1.3:** Real-Time Analysis Engine (<2s)
 - **Story 1.4:** Priority Classification System
 - **Story 1.5:** Response Generation Assistant
@@ -221,6 +279,7 @@ For issues and questions:
 
 ---
 
-**Project Status:** 32% Complete (Phase 4 - Implementation)
-**Current Story:** 1.1 ✅ COMPLETE
-**Next Story:** 1.2 - Email Preprocessing Pipeline
+**Project Status:** 14% Complete (Phase 4 - Implementation)
+**Stories Completed:** 2/12 (10 story points)
+**Current Story:** 1.2 ✅ COMPLETE
+**Next Story:** 1.3 - Real-Time Analysis Engine

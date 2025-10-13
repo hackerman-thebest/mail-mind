@@ -6,6 +6,8 @@ ollama>=0.1.6
 
 # Email Integration
 pywin32>=306  # Windows Outlook COM automation
+beautifulsoup4>=4.12.0  # HTML email parsing
+lxml>=4.9.0  # Fast HTML parser backend for BeautifulSoup
 
 # Database
 pysqlite3>=0.5.0  # SQLite with encryption support
