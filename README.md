@@ -7,7 +7,7 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 ## Current Status
 
 **Phase:** Implementation (Phase 4)
-**Current Story:** 1.2 - Email Preprocessing Pipeline ✅ IMPLEMENTED
+**Current Story:** 1.3 - Real-Time Email Analysis Engine ✅ IMPLEMENTED
 
 ## Features (Current)
 
@@ -31,6 +31,36 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 - Thread context preservation
 - Input sanitization to prevent prompt injection
 - Performance: <200ms preprocessing target
+
+### ✅ Story 1.3: Real-Time Email Analysis Engine (COMPLETE)
+
+- **AI-Powered Analysis:** Priority classification, summarization, tags, sentiment, action items
+- **Progressive Disclosure:** Quick priority in <500ms, full analysis in <2s
+- **SQLite Caching:** Sub-100ms cache retrieval for analyzed emails
+- **Batch Processing:** Analyze multiple emails with progress tracking
+- **Performance Monitoring:** Tokens/second, processing time metrics
+- **Complete Pipeline:** Preprocessing → LLM → Parsing → Caching
+- **Robust Parsing:** JSON response parsing with fallback heuristics
+- **Model Version Tracking:** Automatic cache invalidation on model changes
+
+**Output Format:**
+```json
+{
+  "priority": "High",
+  "confidence": 0.92,
+  "summary": "CFO reports Q4 budget overrun requiring immediate action",
+  "tags": ["budget", "urgent", "financial", "deadline"],
+  "sentiment": "urgent",
+  "action_items": [
+    "Review all pending expenses immediately",
+    "Submit spending analysis by Friday COB"
+  ],
+  "processing_time_ms": 1847,
+  "tokens_per_second": 52.3,
+  "model_version": "llama3.1:8b-instruct-q4_K_M",
+  "cache_hit": false
+}
+```
 
 ## Prerequisites
 
@@ -122,6 +152,110 @@ This demonstrates:
 - Suspicious content detection
 - Complete structured JSON output
 
+### Email Analysis Demo
+
+```bash
+python examples/email_analysis_demo.py
+```
+
+This comprehensive demo showcases:
+1. **Single Email Analysis** - End-to-end pipeline with urgent budget email
+2. **Cache Performance** - Demonstrates cache hit speedup (10-50x faster)
+3. **Batch Processing** - Process multiple emails with progress tracking
+4. **Progressive Disclosure** - Shows quick priority (<500ms) then full analysis
+5. **Analysis Statistics** - Database stats and metrics visualization
+6. **Complete Pipeline** - Visualizes all pipeline steps
+
+Expected output:
+```
+======================================================================
+DEMO 1: Single Email Analysis
+======================================================================
+
+1. Initializing Ollama...
+✓ Ollama ready: llama3.1:8b-instruct-q4_K_M
+
+2. Creating Email Analysis Engine...
+✓ Engine ready
+
+3. Analyzing email...
+   From: alice@company.com (Alice Smith - CFO)
+   Subject: URGENT: Q4 Budget Overrun - Action Required
+
+✓ Analysis complete in 1.85s
+
+======================================================================
+ANALYSIS RESULTS
+======================================================================
+
+🔴 Priority: High (confidence: 0.92)
+
+📊 Sentiment: urgent
+
+📝 Summary:
+   CFO reports Q4 budget overrun requiring immediate action
+
+🏷️  Tags: budget, urgent, financial, deadline, action-required
+
+✅ Action Items:
+   1. Review all pending expenses immediately
+   2. Identify cost reduction opportunities
+   3. Schedule emergency budget meeting this week
+
+⚡ Performance:
+   Processing time: 1847ms
+   Tokens/second: 52.3
+   Model: llama3.1:8b-instruct-q4_K_M
+   Cache hit: False
+```
+
+### Using the EmailAnalysisEngine
+
+```python
+from src.mailmind.core.ollama_manager import OllamaManager
+from src.mailmind.core.email_analysis_engine import EmailAnalysisEngine
+from src.mailmind.utils.config import load_config, get_ollama_config
+
+# Initialize Ollama
+config = load_config()
+ollama_config = get_ollama_config(config)
+ollama = OllamaManager(ollama_config)
+ollama.initialize()
+
+# Create analysis engine
+engine = EmailAnalysisEngine(ollama, db_path='data/mailmind.db')
+
+# Analyze a single email
+email = {
+    'from': 'alice@example.com',
+    'subject': 'URGENT: Need your review',
+    'body': 'Please review the attached document ASAP.',
+    'date': '2025-10-13T14:30:00Z',
+    'message_id': 'msg_001'
+}
+
+analysis = engine.analyze_email(email)
+
+print(f"Priority: {analysis['priority']}")
+print(f"Summary: {analysis['summary']}")
+print(f"Tags: {', '.join(analysis['tags'])}")
+print(f"Action Items: {analysis['action_items']}")
+
+# Analyze multiple emails in batch
+emails = [email1, email2, email3]
+
+def progress(current, total, result):
+    print(f"[{current}/{total}] Analyzed: {result['priority']}")
+
+results = engine.analyze_batch(emails, callback=progress)
+
+# Get analysis statistics
+stats = engine.get_analysis_stats()
+print(f"Total analyses: {stats['total_analyses']}")
+print(f"Cache hit rate: {stats['cache_hit_rate_percent']:.1f}%")
+print(f"Avg processing time: {stats['avg_processing_time_ms']}ms")
+```
+
 ### Using the EmailPreprocessor
 
 ```python
@@ -155,25 +289,32 @@ mail-mind/
 ├── src/
 │   └── mailmind/
 │       ├── core/              # Core business logic
-│       │   ├── ollama_manager.py      # Story 1.1
-│       │   └── email_preprocessor.py  # Story 1.2
+│       │   ├── ollama_manager.py         # Story 1.1: LLM integration
+│       │   ├── email_preprocessor.py     # Story 1.2: Email preprocessing
+│       │   └── email_analysis_engine.py  # Story 1.3: AI analysis
 │       ├── ui/                # User interface (coming in Story 2.3)
 │       ├── utils/             # Utilities
 │       │   └── config.py
 │       └── models/            # Data models
 ├── tests/
-│   ├── unit/                  # Unit tests
-│   │   ├── test_ollama_manager.py        # Story 1.1 tests
-│   │   └── test_email_preprocessor.py    # Story 1.2 tests
+│   ├── unit/                  # Unit tests (50+ tests)
+│   │   ├── test_ollama_manager.py            # Story 1.1 tests
+│   │   ├── test_email_preprocessor.py        # Story 1.2 tests
+│   │   └── test_email_analysis_engine.py     # Story 1.3 tests
 │   └── integration/           # Integration tests
+│       └── test_email_analysis_integration.py # Real Ollama tests
 ├── examples/
-│   └── email_preprocessing_demo.py       # Story 1.2 demo
+│   ├── email_preprocessing_demo.py           # Story 1.2 demo
+│   └── email_analysis_demo.py                # Story 1.3 demo (6 scenarios)
 ├── config/
 │   └── default.yaml           # Default configuration
+├── data/
+│   └── mailmind.db            # SQLite database (created at runtime)
 ├── docs/
 │   ├── stories/               # Story files
 │   │   ├── story-1.1.md       # Ollama Integration
-│   │   └── story-1.2.md       # Email Preprocessing
+│   │   ├── story-1.2.md       # Email Preprocessing
+│   │   └── story-1.3.md       # Email Analysis Engine
 │   ├── epic-stories.md        # Epic breakdown
 │   └── project-workflow-status-2025-10-13.md
 ├── main.py                    # Application entry point
@@ -184,17 +325,25 @@ mail-mind/
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
+# Run all unit tests
+pytest tests/unit/
 
 # Run with coverage
 pytest --cov=src/mailmind --cov-report=html
 
-# Run specific test file
-pytest tests/unit/test_ollama_manager.py
+# Run specific story tests
+pytest tests/unit/test_ollama_manager.py           # Story 1.1 tests
+pytest tests/unit/test_email_preprocessor.py       # Story 1.2 tests
+pytest tests/unit/test_email_analysis_engine.py    # Story 1.3 tests
+
+# Run integration tests (requires Ollama running)
+pytest tests/integration/test_email_analysis_integration.py -v
 
 # Run specific test class
-pytest tests/unit/test_ollama_manager.py::TestOllamaConnection
+pytest tests/unit/test_email_analysis_engine.py::TestQuickPriorityHeuristic
+
+# Run performance benchmarks
+pytest tests/integration/test_email_analysis_integration.py::TestPerformanceBenchmark -v -s
 ```
 
 ### Configuration
@@ -213,14 +362,14 @@ ollama:
 
 ## Roadmap
 
-### ✅ Completed (2/12 stories - 14% progress)
+### ✅ Completed (3/12 stories - 25% progress)
 
 - **Story 1.1:** Ollama Integration & Model Setup (5 points)
 - **Story 1.2:** Email Preprocessing Pipeline (5 points)
+- **Story 1.3:** Real-Time Email Analysis Engine (8 points)
 
 ### 🔄 Next Up
 
-- **Story 1.3:** Real-Time Analysis Engine (<2s)
 - **Story 1.4:** Priority Classification System
 - **Story 1.5:** Response Generation Assistant
 - **Story 1.6:** Performance Optimization & Caching
@@ -279,7 +428,7 @@ For issues and questions:
 
 ---
 
-**Project Status:** 14% Complete (Phase 4 - Implementation)
-**Stories Completed:** 2/12 (10 story points)
-**Current Story:** 1.2 ✅ COMPLETE
-**Next Story:** 1.3 - Real-Time Analysis Engine
+**Project Status:** 25% Complete (Phase 4 - Implementation)
+**Stories Completed:** 3/12 (18 story points)
+**Current Story:** 1.3 ✅ COMPLETE
+**Next Story:** 1.4 - Priority Classification System
