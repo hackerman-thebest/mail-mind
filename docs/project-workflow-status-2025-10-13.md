@@ -54,7 +54,6 @@
 
 | Epic | Story | ID  | Title | File |
 | ---- | ----- | --- | ----- | ---- |
-| 1 | 3 | 1.3 | Real-Time Analysis Engine (<2s) | docs/stories/story-1.3.md |
 | 1 | 4 | 1.4 | Priority Classification System | docs/stories/story-1.4.md |
 | 1 | 5 | 1.5 | Response Generation Assistant | docs/stories/story-1.5.md |
 | 1 | 6 | 1.6 | Performance Optimization & Caching | docs/stories/story-1.6.md |
@@ -65,29 +64,31 @@
 | 2 | 5 | 2.5 | Hardware Profiling & Onboarding Wizard | docs/stories/story-2.5.md |
 | 2 | 6 | 2.6 | Error Handling, Logging & Installer | docs/stories/story-2.6.md |
 
-**Total in backlog:** 10 stories (62 story points)
+**Total in backlog:** 9 stories (54 story points)
 
 **Instructions:**
 - Stories move from BACKLOG → TODO when Phase 4 begins
 - SM agent uses story information from this table to draft new stories
 - Story order follows recommended implementation sequence from epic-stories.md
 
-#### TODO (Drafted - Awaiting Approval)
+#### TODO (Needs Drafting)
+
+- **Story ID:** 1.3
+- **Story Title:** Real-Time Analysis Engine (<2s)
+- **Story File:** `docs/stories/story-1.3.md`
+- **Story Points:** 8
+- **Status:** Awaiting Story 1.2 completion
+- **Action:** Will be drafted after Story 1.2 is complete
+
+#### IN PROGRESS (Approved for Development)
 
 - **Story ID:** 1.2
 - **Story Title:** Email Preprocessing Pipeline
 - **Story File:** `docs/stories/story-1.2.md`
 - **Story Points:** 5
-- **Status:** Drafted (awaiting user review and approval)
-- **Action:** User should review story and run `story-ready` to approve, or request revisions
-
-#### IN PROGRESS (Approved for Development)
-
-- **Story ID:** (None - Story 1.1 complete, waiting for Story 1.2)
-- **Story Title:** N/A
-- **Story File:** N/A
-- **Story Status:** N/A
-- **Action:** Story 1.2 needs to be drafted and approved before development starts
+- **Status:** IN PROGRESS (Approved 2025-10-13)
+- **Started:** 2025-10-13
+- **Action:** DEV agent implementing acceptance criteria AC1-AC8
 
 #### DONE (Completed Stories)
 
@@ -103,13 +104,13 @@
 **Total Epics:** 2
 **Total Stories:** 12
 **Total Story Points:** 72
-**Stories in Backlog:** 10
-**Stories in TODO:** 1 (Story 1.2 - 5 points)
-**Stories in IN PROGRESS:** 0
+**Stories in Backlog:** 9 (54 points)
+**Stories in TODO:** 1 (Story 1.3 - 8 points)
+**Stories in IN PROGRESS:** 1 (Story 1.2 - 5 points)
 **Stories DONE:** 1 (Story 1.1 - 5 points)
 
 **Epic Breakdown:**
-- Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 1/6 complete (14% done, 1 in TODO)
+- Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 1/6 complete (14% done, 1 in progress, 1 in TODO)
 - Epic 2: Desktop Application & User Experience (6 stories, 36 points) - 0/6 complete
 
 ### Artifacts Generated
@@ -126,16 +127,18 @@
 
 ### Next Action Required
 
-**What to do next:** Review Story 1.2 (Email Preprocessing Pipeline) and approve it for development
+**What to do next:** Implement Story 1.2 (Email Preprocessing Pipeline)
 
-**Command to run:** story-ready (to approve Story 1.2 for development)
+**Current Status:** Story 1.2 approved and moved to IN PROGRESS
 
-**Agent to load:** SM (Scrum Master) or DEV (Developer)
+**Command to run:** dev-story (to implement Story 1.2)
+
+**Agent to load:** DEV (Developer)
 
 **Alternative Actions:**
-- Request story revisions if acceptance criteria need changes
-- Start implementing Story 1.2 directly if ready to code
-- Push completed work to GitHub if not yet pushed
+- Continue implementing Story 1.2 directly (all ACs defined)
+- Review acceptance criteria if clarification needed
+- Push work-in-progress commits to GitHub for backup
 
 ---
 
@@ -325,7 +328,22 @@ This will:
   - Added output format examples (JSON structure)
   - Story moved to TODO with "Drafted" status (awaiting user review)
   - Updated artifacts list to include Story 1.2
-  - Set next action: story-ready (user review and approval)
+  - Committed and pushed Story 1.2 draft to GitHub
+
+### 2025-10-13 - SM Agent (story-ready workflow - Story 1.2)
+
+- Phase: 4-Implementation (story approval)
+- Changes:
+  - User approved Story 1.2 for development
+  - Story 1.2 moved from TODO to IN PROGRESS
+  - Updated story status: TODO → IN PROGRESS
+  - Added approval date and start date to story file
+  - Moved Story 1.3 from BACKLOG to TODO (next in queue)
+  - Updated backlog count: 10 → 9 stories (62 → 54 points)
+  - Updated workflow status counts:
+    - IN PROGRESS: 0 → 1 (Story 1.2)
+    - TODO: 1 → 1 (Story 1.3 replaces Story 1.2)
+  - Set next action: dev-story (implement Story 1.2)
 
 ---
 
