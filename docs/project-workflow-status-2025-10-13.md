@@ -72,14 +72,14 @@
 - SM agent uses story information from this table to draft new stories
 - Story order follows recommended implementation sequence from epic-stories.md
 
-#### TODO (Needs Drafting)
+#### TODO (Drafted - Awaiting Approval)
 
 - **Story ID:** 1.2
 - **Story Title:** Email Preprocessing Pipeline
 - **Story File:** `docs/stories/story-1.2.md`
 - **Story Points:** 5
-- **Status:** Ready to draft (Story 1.1 complete)
-- **Action:** SM should run `create-story` workflow to draft this story
+- **Status:** Drafted (awaiting user review and approval)
+- **Action:** User should review story and run `story-ready` to approve, or request revisions
 
 #### IN PROGRESS (Approved for Development)
 
@@ -120,18 +120,22 @@
 | Product Requirements Document | Existing | Product Requirements Document (PRD) - MailMind.md | 2024-10 |
 | Epic & Story Breakdown | Complete | docs/epic-stories.md | 2025-10-13 |
 | Story 1.1 File | Complete ✅ | docs/stories/story-1.1.md | 2025-10-13 |
+| Story 1.2 File | Drafted 📝 | docs/stories/story-1.2.md | 2025-10-13 |
 | CHANGELOG | Complete | docs/CHANGELOG.md | 2025-10-13 |
 | Verification Report | Complete | docs/VERIFICATION-REPORT.md | 2025-10-13 |
 
 ### Next Action Required
 
-**What to do next:** Review Story 1.1 and approve it for development (this moves it from TODO → IN PROGRESS and advances next story from BACKLOG → TODO)
+**What to do next:** Review Story 1.2 (Email Preprocessing Pipeline) and approve it for development
 
-**Command to run:** story-ready (to approve Story 1.1)
+**Command to run:** story-ready (to approve Story 1.2 for development)
 
-**Agent to load:** SM (Scrum Master)
+**Agent to load:** SM (Scrum Master) or DEV (Developer)
 
-**Alternative:** Start implementing Story 1.1 directly if you're ready to code
+**Alternative Actions:**
+- Request story revisions if acceptance criteria need changes
+- Start implementing Story 1.2 directly if ready to code
+- Push completed work to GitHub if not yet pushed
 
 ---
 
@@ -297,7 +301,31 @@ This will:
   - Committed to git with comprehensive commit message
   - Story 1.1 moved to DONE (5 points completed)
   - Updated progress to 38%
+  - Pushed Story 1.1 commits to GitHub
   - Set next action: Draft Story 1.2
+
+### 2025-10-13 - SM Agent (Second Session)
+
+- Phase: 4-Implementation (create-story workflow - Story 1.2)
+- Changes:
+  - Drafted story-1.2.md (Email Preprocessing Pipeline)
+  - Story includes comprehensive acceptance criteria (AC1-AC8):
+    - Email metadata extraction
+    - HTML to plain text conversion
+    - Attachment handling
+    - Signature and quote stripping
+    - Smart content truncation
+    - Structured prompt format for LLM
+    - Thread context preservation
+    - Input sanitization for security
+  - Added detailed implementation approach with code examples
+  - Included performance targets (<200ms preprocessing)
+  - Created testing checklist (unit, integration, edge cases)
+  - Documented dependencies (BeautifulSoup4, lxml, dateutil)
+  - Added output format examples (JSON structure)
+  - Story moved to TODO with "Drafted" status (awaiting user review)
+  - Updated artifacts list to include Story 1.2
+  - Set next action: story-ready (user review and approval)
 
 ---
 
