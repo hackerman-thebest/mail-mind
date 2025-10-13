@@ -10,8 +10,8 @@
 ## Workflow Status Tracker
 
 **Current Phase:** 4-Implementation
-**Current Workflow:** Ready for Story 1.4
-**Current Agent:** SM (for next story draft)
+**Current Workflow:** Story 1.4 Drafted - Ready for Review
+**Current Agent:** SM (for story approval via story-ready)
 **Overall Progress:** 25% (18/72 story points)
 
 ### Phase Completion Status
@@ -54,7 +54,6 @@
 
 | Epic | Story | ID  | Title | File |
 | ---- | ----- | --- | ----- | ---- |
-| 1 | 4 | 1.4 | Priority Classification System | docs/stories/story-1.4.md |
 | 1 | 5 | 1.5 | Response Generation Assistant | docs/stories/story-1.5.md |
 | 1 | 6 | 1.6 | Performance Optimization & Caching | docs/stories/story-1.6.md |
 | 2 | 1 | 2.1 | Outlook Integration (pywin32) | docs/stories/story-2.1.md |
@@ -64,7 +63,7 @@
 | 2 | 5 | 2.5 | Hardware Profiling & Onboarding Wizard | docs/stories/story-2.5.md |
 | 2 | 6 | 2.6 | Error Handling, Logging & Installer | docs/stories/story-2.6.md |
 
-**Total in backlog:** 9 stories (54 story points)
+**Total in backlog:** 8 stories (49 story points)
 
 **Instructions:**
 - Stories move from BACKLOG → TODO when Phase 4 begins
@@ -73,12 +72,12 @@
 
 #### TODO (Drafted - Awaiting Approval)
 
-- **Story ID:** (None - Story 1.4 ready to be drafted)
+- **Story ID:** 1.4
 - **Story Title:** Priority Classification System
-- **Story File:** `docs/stories/story-1.4.md` (not yet created)
-- **Story Points:** TBD
-- **Status:** Ready to be drafted by SM agent
-- **Action:** Run create-story workflow for Story 1.4
+- **Story File:** `docs/stories/story-1.4.md` ✅
+- **Story Points:** 5
+- **Status:** Draft (awaiting user review)
+- **Action:** Review story and run story-ready workflow to approve for development
 
 #### IN PROGRESS (Approved for Development)
 
@@ -105,13 +104,13 @@
 **Total Epics:** 2
 **Total Stories:** 12
 **Total Story Points:** 72
-**Stories in Backlog:** 9 (54 points)
-**Stories in TODO:** 0 (Story 1.4 ready to be drafted)
+**Stories in Backlog:** 8 (49 points)
+**Stories in TODO:** 1 (Story 1.4 - 5 points)
 **Stories in IN PROGRESS:** 0
 **Stories DONE:** 3 (Stories 1.1, 1.2, 1.3 - 18 points total)
 
 **Epic Breakdown:**
-- Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 3/6 complete (50% done, 0 in progress, 0 in TODO)
+- Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 3/6 complete (50% done, 0 in progress, 1 in TODO)
 - Epic 2: Desktop Application & User Experience (6 stories, 36 points) - 0/6 complete
 
 ### Artifacts Generated
@@ -124,23 +123,24 @@
 | Story 1.1 File | Complete ✅ | docs/stories/story-1.1.md | 2025-10-13 |
 | Story 1.2 File | Complete ✅ | docs/stories/story-1.2.md | 2025-10-13 |
 | Story 1.3 File | Complete ✅ | docs/stories/story-1.3.md | 2025-10-13 |
+| Story 1.4 File | Draft 📝 | docs/stories/story-1.4.md | 2025-10-13 |
 | CHANGELOG | Complete | CHANGELOG.md | 2025-10-13 |
 | Verification Report | Complete | docs/VERIFICATION-REPORT.md | 2025-10-13 |
 
 ### Next Action Required
 
-**What to do next:** Draft Story 1.4 (Priority Classification System)
+**What to do next:** Review and Approve Story 1.4 (Priority Classification System)
 
-**Current Status:** Story 1.3 completed. Ready to draft Story 1.4
+**Current Status:** Story 1.4 drafted and ready for user review
 
-**Command to run:** create-story (to draft Story 1.4)
+**Command to run:** story-ready (to approve Story 1.4 for development)
 
-**Agent to load:** SM (Scrum Master) to draft next story
+**Agent to load:** SM (Scrum Master) to approve story
 
 **Alternative Actions:**
-- Review Story 1.3 implementation and results
-- Begin planning for remaining Epic 1 stories
-- Continue with next story in sequence
+- Review Story 1.4 draft in docs/stories/story-1.4.md
+- Edit story if changes needed, then re-run workflow-status
+- Skip to next story (Story 1.5) if desired
 
 ---
 
@@ -462,6 +462,62 @@ This will:
   - Updated progress to 25% (18/72 story points)
   - Epic 1 progress: 3/6 stories complete (50% done)
   - Set next action: Draft Story 1.4 (Priority Classification System)
+
+### 2025-10-13 - SM Agent (Fourth Session - create-story workflow - Story 1.4)
+
+- Phase: 4-Implementation (story drafting)
+- Changes:
+  - Drafted story-1.4.md (Priority Classification System)
+  - Story builds on Story 1.3's basic priority classification
+  - Story includes comprehensive acceptance criteria (AC1-AC9):
+    - AC1: Priority classification with confidence score
+    - AC2: High priority detection logic (urgency, deadlines, VIP senders)
+    - AC3: Medium priority detection logic (project updates, team comms)
+    - AC4: Low priority detection logic (newsletters, notifications)
+    - AC5: User correction & learning system
+    - AC6: Sender importance tracking (0.0-1.0 scale)
+    - AC7: Visual priority indicators (🔴🟡🔵)
+    - AC8: Manual priority override with feedback loop
+    - AC9: Accuracy tracking & improvement (target: >85% after 30 days)
+  - Database schema extensions:
+    - user_corrections table for storing feedback
+    - sender_importance table for learning sender patterns
+    - Enhanced email_analysis table with override fields
+  - Enhanced priority classification algorithm:
+    - Builds on Story 1.3 base classification
+    - Applies sender importance adjustments
+    - Learns from user correction patterns
+    - Calculates confidence based on historical data
+  - Learning system implementation:
+    - Records all user priority overrides
+    - Updates sender importance scores incrementally
+    - Weights recent corrections more heavily (30-day window)
+    - Provides accuracy metrics and reporting
+  - Integration with Story 1.3:
+    - PriorityClassifier enhances EmailAnalysisEngine
+    - Seamless pipeline: base priority → enhanced priority
+    - Backward compatible with existing analysis
+  - Performance targets:
+    - Enhanced classification: <50ms overhead
+    - Sender lookup: <10ms
+    - Correction recording: <20ms
+    - Accuracy calculation: <100ms for 30 days
+  - Testing strategy:
+    - Unit tests for core classification logic
+    - Integration tests with learning scenarios
+    - Accuracy tracking over simulated time periods
+    - UI/UX tests for visual indicators and overrides
+  - Implementation plan: 4 phases over 4 days
+    1. Database schema & core logic
+    2. User correction system
+    3. Integration & accuracy tracking
+    4. Testing & documentation
+  - Story points: 5 (P0 - Critical Path)
+  - Story moved to TODO with "Draft" status (awaiting user review)
+  - Moved Story 1.4 from BACKLOG to TODO
+  - Updated backlog count: 9 → 8 stories (54 → 49 points)
+  - Updated artifacts list to include Story 1.4
+  - Set next action: story-ready (user review and approval)
 
 ---
 
