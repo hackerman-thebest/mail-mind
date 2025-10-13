@@ -1,0 +1,30 @@
+# MailMind - Sovereign AI Email Assistant
+# Python Dependencies
+
+# AI/LLM Integration
+ollama>=0.1.6
+
+# Email Integration
+pywin32>=306  # Windows Outlook COM automation
+
+# Database
+pysqlite3>=0.5.0  # SQLite with encryption support
+
+# UI Framework
+customtkinter>=5.2.0
+
+# Configuration
+pyyaml>=6.0
+
+# Utilities
+python-dateutil>=2.8.2
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+
+# Development
+black>=23.7.0
+flake8>=6.1.0
+mypy>=1.5.0

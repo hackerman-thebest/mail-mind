@@ -1,0 +1,37 @@
+# MailMind Default Configuration
+# This file contains default settings for the application
+
+app:
+  name: "MailMind"
+  version: "0.1.0"
+  log_level: "INFO"
+
+ollama:
+  primary_model: "llama3.1:8b-instruct-q4_K_M"
+  fallback_model: "mistral:7b-instruct-q4_K_M"
+  temperature: 0.3
+  context_window: 8192
+  auto_download: false  # Prompt user before downloading model
+  gpu_acceleration: true  # Auto-detect and use GPU if available
+
+database:
+  path: "data/mailmind.db"
+  encrypt: false  # Optional encryption
+  backup_enabled: true
+  max_size_mb: 1024
+
+performance:
+  cache_enabled: true
+  cache_size_mb: 500
+  batch_size: 10
+  max_concurrent_analyses: 3
+
+ui:
+  theme: "dark"
+  startup_behavior: "normal"  # normal, minimized, or tray
+  show_notifications: true
+
+privacy:
+  telemetry_enabled: false
+  crash_reports_enabled: false
+  local_logging_enabled: true
