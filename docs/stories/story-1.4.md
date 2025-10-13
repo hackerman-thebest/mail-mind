@@ -4,8 +4,9 @@
 **Story ID:** 1.4
 **Story Points:** 5
 **Priority:** P0 (Critical Path)
-**Status:** Draft
+**Status:** Ready
 **Created:** 2025-10-13
+**Approved:** 2025-10-13
 
 ---
 
