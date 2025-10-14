@@ -551,13 +551,13 @@ Return ONLY the JSON object, no additional text:"""
             batch_size: Number of emails processed (for batch operations)
         """
         try:
-            self.db.insert_performance_metric(
-                operation=operation,
-                processing_time_ms=analysis.get('processing_time_ms', 0),
-                tokens_per_second=analysis.get('tokens_per_second', 0.0),
-                model_version=analysis.get('model_version', 'unknown'),
-                batch_size=batch_size
-            )
+            metrics = {
+                'processing_time_ms': analysis.get('processing_time_ms', 0),
+                'tokens_per_second': analysis.get('tokens_per_second', 0.0),
+                'model_version': analysis.get('model_version', 'unknown'),
+                'batch_size': batch_size
+            }
+            self.db.insert_performance_metric(operation=operation, metrics=metrics)
 
             logger.debug(f"Performance logged: {operation}, {analysis.get('processing_time_ms', 0)}ms")
 

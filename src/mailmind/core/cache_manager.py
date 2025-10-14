@@ -65,6 +65,8 @@ class CacheManager:
         """
         # Use DatabaseManager for all database operations
         self.db = DatabaseManager(db_path=db_path)
+        # Keep db_path for backward compatibility with tests
+        self.db_path = db_path
 
         logger.info(f"CacheManager initialized with DatabaseManager: {db_path}")
 
@@ -174,7 +176,7 @@ class CacheManager:
         try:
             # Get all emails and delete those matching the model version
             deleted_count = 0
-            all_emails = self.db.query_emails(filters={}, limit=10000)  # Get up to 10k emails
+            all_emails = self.db.query_email_analyses(filters={}, limit=10000)  # Get up to 10k emails
 
             for email in all_emails:
                 if email.get('model_version') == old_model_version:
@@ -198,7 +200,7 @@ class CacheManager:
         """
         try:
             # Get count before deletion
-            all_emails = self.db.query_emails(filters={}, limit=100000)
+            all_emails = self.db.query_email_analyses(filters={}, limit=100000)
             count_before = len(all_emails)
 
             # Delete all email analyses
@@ -226,7 +228,7 @@ class CacheManager:
         """
         try:
             # Get all emails to calculate stats
-            all_emails = self.db.query_emails(filters={}, limit=100000)
+            all_emails = self.db.query_email_analyses(filters={}, limit=100000)
             total_entries = len(all_emails)
 
             # Get database size
@@ -248,9 +250,9 @@ class CacheManager:
                 # Update oldest/newest
                 processed_date = email.get('processed_date')
                 if processed_date:
-                    if processed_date < model_stats[model_version]['oldest_entry']:
+                    if model_stats[model_version]['oldest_entry'] and processed_date < model_stats[model_version]['oldest_entry']:
                         model_stats[model_version]['oldest_entry'] = processed_date
-                    if processed_date > model_stats[model_version]['newest_entry']:
+                    if model_stats[model_version]['newest_entry'] and processed_date > model_stats[model_version]['newest_entry']:
                         model_stats[model_version]['newest_entry'] = processed_date
 
             by_model = list(model_stats.values())
@@ -285,7 +287,7 @@ class CacheManager:
         """
         try:
             # Get all emails sorted by processed date (oldest first)
-            all_emails = self.db.query_emails(filters={}, limit=100000)
+            all_emails = self.db.query_email_analyses(filters={}, limit=100000)
             current_count = len(all_emails)
 
             if current_count <= max_entries:

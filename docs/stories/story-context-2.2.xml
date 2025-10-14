@@ -1,0 +1,593 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>SQLite Database & Caching Layer</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-2.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>a robust local SQLite database to persist email analysis, user preferences, and performance metrics</iWant>
+    <soThat>the application maintains state across restarts, delivers fast queries, and preserves user data securely</soThat>
+    <tasks>
+### Task 1: Complete Database Schema Implementation (AC1)
+- Create `src/mailmind/database/schema.py` with complete SQL schema definitions
+- Define `email_analysis` table with all fields from epic-stories.md
+- Define `performance_metrics` table for hardware/model tracking
+- Define `user_preferences` table for settings persistence
+- Define `user_corrections` table for user feedback
+- Add `schema_version` table for migration tracking
+- Create indexes for common queries (message_id, received_date, priority)
+- Add CHECK constraints for enum fields (priority, sentiment)
+- Write unit tests for schema creation
+
+### Task 2: DatabaseManager Core Implementation (AC3, AC4, AC9)
+- Create `src/mailmind/database/database_manager.py`
+- Implement `DatabaseManager` class with connection management
+- Implement automatic database creation on first run
+- Add connection pooling for concurrent access
+- Implement CRUD methods for `email_analysis` table
+- Implement CRUD methods for `performance_metrics` table
+- Implement CRUD methods for `user_preferences` table
+- Implement CRUD methods for `user_corrections` table
+- Add context manager support (`with DatabaseManager() as db:`)
+- Add thread-safety via connection per thread or pooling
+- Implement query performance logging (debug mode)
+- Write unit tests for DatabaseManager operations
+
+### Task 3: Optional Database Encryption (AC2)
+- Add optional SQLCipher dependency (pysqlcipher3)
+- Implement encryption toggle in first-run setup
+- Store encryption key using Windows DPAPI (cryptography library)
+- Detect encryption status on database open
+- Handle encrypted database connections
+- Add encryption status to Settings UI
+- Measure and log encryption performance impact
+- Write unit tests for encrypted database operations
+- Document encryption setup in README
+
+### Task 4: Database Migration System (AC5)
+- Create `src/mailmind/database/migrations/` folder
+- Implement migration framework (`Migration` base class)
+- Create initial migration (v1 → v2) as example
+- Detect schema version mismatch on startup
+- Apply migrations sequentially with logging
+- Backup database before migration
+- Rollback on migration failure
+- Update schema_version after successful migration
+- Write unit tests for migration application
+- Document migration creation process
+
+### Task 5: Backup and Restore (AC6)
+- Implement manual backup: `db.backup(backup_path)`
+- Implement automatic daily backups (background task)
+- Store backups in `{project-root}/backups/` folder
+- Add timestamp to backup filenames: `mailmind-db-2025-10-14.bak`
+- Keep last 7 daily backups, delete older
+- Implement restore: `db.restore(backup_path)`
+- Add checksum validation for backup integrity
+- Display backup status in Settings UI
+- Write unit tests for backup/restore operations
+- Handle backup failures gracefully (disk full, permissions)
+
+### Task 6: Data Deletion and Privacy (AC7)
+- Add "Delete All Data" option in Settings → Privacy
+- Implement confirmation dialog with explicit warning
+- Delete database file completely
+- Delete all backup files in backups/ folder
+- Delete encryption key from Windows DPAPI
+- Log data deletion event before deletion
+- Clear application state after deletion
+- Write unit tests for data deletion
+- Document data deletion in Privacy Policy
+
+### Task 7: Database Size Monitoring (AC8)
+- Implement `db.get_size_mb()` method
+- Display size in Settings UI: "Database: 245 MB / 1 GB"
+- Check size on startup and periodically (every 10 minutes)
+- Show orange warning if size > 1 GB
+- Implement "Optimize Database" button (VACUUM)
+- Show space saved after optimization
+- Log size metrics to performance_metrics table
+- Write unit tests for size monitoring
+
+### Task 8: Integration with Existing Stories (AC9)
+- Refactor Story 1.3 (EmailAnalysisEngine) to use DatabaseManager
+- Refactor Story 1.6 (CacheManager) to use DatabaseManager
+- Update Story 2.1 (OutlookConnector) integration for email metadata storage
+- Create integration examples in `examples/database_integration_demo.py`
+- Write integration tests with EmailAnalysisEngine
+- Write integration tests with CacheManager
+- Verify backward compatibility with existing data
+
+### Task 9: Testing and Documentation
+- Write comprehensive unit tests (target: >85% coverage)
+- Write integration tests with concurrent access
+- Write performance tests (query benchmarks)
+- Create demo script: `examples/database_demo.py`
+- Write database administration guide in docs/
+- Document backup/restore procedures
+- Document migration creation process
+- Update README with database setup instructions
+- Update CHANGELOG with Story 2.2 completion
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC1: Complete Database Schema Definition
+- Define production-ready schema for 5 core tables: `email_analysis`, `performance_metrics`, `user_preferences`, `user_corrections`, `schema_version`
+- Add proper indexes for common query patterns (message_id, received_date, priority)
+- Add foreign key constraints where appropriate
+- Include schema version tracking for migrations
+- Add CHECK constraints for data validation
+
+### AC2: Optional Database Encryption
+- Support optional SQLite database encryption using SQLCipher
+- Prompt user during first-run to enable/disable encryption
+- Store encryption key securely (Windows DPAPI)
+- Display encryption status in Settings UI
+- Performance impact: <5% overhead for encrypted database operations
+- Clear warning if encryption cannot be enabled (missing dependencies)
+
+### AC3: Fast Query Performance
+- All database operations complete in <100ms (target: <50ms for common queries)
+- Implement connection pooling for concurrent access
+- Add query logging for performance monitoring (debug mode)
+- Use prepared statements to prevent SQL injection
+- Optimize indexes based on query patterns (EXPLAIN QUERY PLAN)
+
+### AC4: Automatic Database Creation & Initialization
+- Detect if database exists on startup
+- Create database with complete schema if not found
+- Initialize with default user preferences
+- Log database creation with timestamp
+- Handle concurrent initialization gracefully (file locking)
+
+### AC5: Database Migration Support
+- Track current schema version in `schema_version` table
+- Detect schema version mismatch on startup
+- Apply migrations sequentially (version N → N+1 → N+2)
+- Rollback migrations on failure with error logging
+- Backup database before applying migrations
+- Support forward-only migrations (no downgrades in MVP)
+
+### AC6: Backup and Restore Functionality
+- Manual backup: Export database to timestamped file
+- Automatic backups: Daily backup to `backups/` folder (keep last 7 days)
+- Restore from backup: Select and restore from backup file
+- Verify backup integrity before restore (checksum validation)
+- Backup includes schema version for compatibility check
+- Display backup status: last backup date, backup size
+
+### AC7: Complete Data Deletion on Uninstall
+- Provide "Delete All Data" option in Settings
+- Confirmation dialog with explicit warning
+- Delete database file completely (not just clear tables)
+- Delete all backup files
+- Delete encryption key from secure storage
+- Log data deletion event (before deletion, for troubleshooting)
+
+### AC8: Database Size Monitoring
+- Track database file size in real-time
+- Display size in Settings: "Database: 245 MB / 1 GB"
+- Alert user if database exceeds 1 GB (orange warning)
+- Provide "Optimize Database" button (VACUUM command)
+- Show space saved after optimization
+- Log size metrics to performance_metrics table
+
+### AC9: Centralized Database Manager Class
+- Create `DatabaseManager` class as single entry point for all DB operations
+- Provide CRUD methods for each table (create, read, update, delete)
+- Handle connection lifecycle (open, close, context manager)
+- Thread-safe operations (connection per thread or pooling)
+- Comprehensive error handling with specific exceptions
+- Integration interface for CacheManager, EmailAnalysisEngine, OutlookConnector
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Primary Specification -->
+      <artifact path="docs/epic-stories.md" title="Story 2.2 Specification">
+        <section>Story 2.2: SQLite Database &amp; Caching Layer (lines 285-349)</section>
+        <snippet>
+Complete story specification with:
+- Database schema for 5 tables: email_analysis, performance_metrics, user_preferences, user_corrections, schema_version
+- Optional database encryption for sensitive analysis data
+- Fast queries: &lt;100ms for all operations (target: &lt;50ms)
+- Automatic database creation on first run with indexes
+- Backup and restore functionality with integrity checking
+- Database migration support for future versions
+- Complete data deletion on uninstall with confirmation
+- Database size monitoring with 1GB warning threshold
+- Story points: 5, Priority: P0 (Critical Path)
+        </snippet>
+      </artifact>
+
+      <!-- Integration Context from Epic 1 -->
+      <artifact path="README.md" title="Project Status and Integration Patterns">
+        <section>Current Implementation Status (lines 1-745)</section>
+        <snippet>
+**Epic 1 Complete (6/6 stories):**
+- Story 1.1: Ollama Integration (OllamaManager) ✅
+- Story 1.2: Email Preprocessing (EmailPreprocessor) ✅
+- Story 1.3: Real-Time Analysis Engine (EmailAnalysisEngine with SQLite caching) ✅
+- Story 1.4: Priority Classification (PriorityClassifier with user_corrections table) ✅
+- Story 1.5: Response Generation (ResponseGenerator with writing_style_profiles) ✅
+- Story 1.6: Performance Optimization (CacheManager, HardwareProfiler, PerformanceTracker) ✅
+
+**Epic 2 In Progress (1/6 complete):**
+- Story 2.1: Outlook Integration (OutlookConnector) ✅ COMPLETE
+- Story 2.2: SQLite Database &amp; Caching Layer ← **CURRENT STORY**
+
+**Key Integration Patterns:**
+- All Stories 1.3, 1.6 use inline SQLite code (to be consolidated)
+- Repository Pattern recommended for database abstraction
+- Connection pooling pattern: one connection per thread
+- Context manager pattern: `with DatabaseManager() as db:`
+- Test coverage: 140+ tests across Epic 1, >85% coverage target
+        </snippet>
+      </artifact>
+
+      <!-- Story 1.3 Database Schema -->
+      <artifact path="docs/stories/story-1.3.md" title="EmailAnalysisEngine Database Schema">
+        <section>Database Schema (lines 223-265)</section>
+        <snippet>
+**email_analysis table** (initial implementation in Story 1.3):
+- Primary key: id (autoincrement)
+- Unique key: message_id (for cache lookups)
+- Fields: subject, sender, received_date, analysis_json, priority, sentiment, confidence_score
+- Performance tracking: processing_time_ms, tokens_per_second, model_version, hardware_profile
+- Indexes: idx_message_id, idx_priority, idx_processed_date
+
+**performance_metrics table** (initial implementation):
+- Fields: operation, hardware_config, model_version, tokens_per_second, memory_usage_mb, processing_time_ms
+- Used by EmailAnalysisEngine for performance logging
+
+**Story 2.2 extends these schemas** with:
+- Additional fields in email_analysis (suggested_folder, user_feedback)
+- user_preferences table for settings persistence
+- user_corrections table for learning system (Story 1.4 integration)
+- schema_version table for migration tracking
+        </snippet>
+      </artifact>
+
+      <!-- Story 1.6 Cache Manager Pattern -->
+      <artifact path="docs/stories/story-1.6.md" title="CacheManager Implementation Pattern">
+        <section>Cache Manager Implementation (lines 192-319)</section>
+        <snippet>
+**CacheManager class** (Story 1.6 implementation):
+- Database connection management with context managers
+- Cache operations: get_cached_analysis(), cache_analysis(), invalidate_entry()
+- Cache invalidation by model version: invalidate_by_model_version()
+- Cache statistics: get_cache_stats() with total entries, size, hit rate
+- Performance: <100ms cache retrieval (achieved ~10-50ms average)
+
+**Database patterns used:**
+- Parameterized queries for SQL injection prevention
+- CREATE INDEX for fast lookups (<10ms)
+- UPDATE last_accessed on cache hits for LRU tracking
+- JSON serialization for analysis_json field
+- Model version tracking for cache invalidation
+
+**Story 2.2 consolidates CacheManager** into DatabaseManager:
+- Repository Pattern for unified database access
+- All Stories 1.3, 1.6, 2.1 will use DatabaseManager instead of inline SQLite
+- Backward compatibility with existing data required
+        </snippet>
+      </artifact>
+    </docs>
+    <code>
+      <!-- CacheManager Pattern (Story 1.6) -->
+      <artifact path="src/mailmind/core/cache_manager.py" kind="class" symbol="CacheManager">
+        <lines>37-110</lines>
+        <reason>Example of SQLite connection management with init_database pattern - DatabaseManager should follow similar structure</reason>
+        <snippet>
+Database initialization pattern:
+- _init_database() creates tables with CREATE TABLE IF NOT EXISTS
+- Separate CREATE INDEX statements for fast lookups
+- Connection opened/closed per operation (no connection pooling yet)
+- Uses Path().mkdir() for directory creation
+        </snippet>
+      </artifact>
+
+      <!-- EmailAnalysisEngine Inline SQLite (Story 1.3) -->
+      <artifact path="src/mailmind/core/email_analysis_engine.py" kind="class" symbol="EmailAnalysisEngine">
+        <lines>98-158</lines>
+        <reason>Inline SQLite code that DatabaseManager should consolidate - shows email_analysis and performance_metrics table creation</reason>
+        <snippet>
+Current inline database operations:
+- Creates email_analysis table with UNIQUE(message_id) constraint
+- Creates performance_metrics table for performance logging
+- Uses separate sqlite3.connect() for each operation (inefficient)
+- No connection pooling or reuse
+**DatabaseManager should refactor these to centralized methods**
+        </snippet>
+      </artifact>
+
+      <!-- PriorityClassifier Tables (Story 1.4) -->
+      <artifact path="src/mailmind/core/priority_classifier.py" kind="class" symbol="PriorityClassifier">
+        <lines>82-205</lines>
+        <reason>Creates user_corrections and sender_importance tables with ALTER TABLE for email_analysis extensions</reason>
+        <snippet>
+User learning tables:
+- user_corrections: Records manual priority overrides for learning
+- sender_importance: Tracks sender importance scores (VIP, importance_score)
+- ALTER TABLE pattern for extending email_analysis (user_override, override_reason, original_priority columns)
+**DatabaseManager must support these tables and provide CRUD methods**
+        </snippet>
+      </artifact>
+
+      <!-- OutlookConnector Integration Point (Story 2.1) -->
+      <artifact path="src/mailmind/integrations/outlook_connector.py" kind="class" symbol="OutlookConnector">
+        <lines>524-668</lines>
+        <reason>Shows how Outlook emails will be stored in database - OutlookEmail.to_dict() provides database-compatible format</reason>
+        <snippet>
+Integration with DatabaseManager:
+- OutlookEmail dataclass has to_dict() method for database storage
+- Properties: entry_id (message_id), subject, sender_email, sender_name, received_time, body, conversation_id
+- DatabaseManager needs method: insert_email_metadata() to store Outlook email properties
+**Story 2.2 enables caching of Outlook email metadata for performance**
+        </snippet>
+      </artifact>
+
+      <!-- Repository Pattern Example -->
+      <artifact path="README.md" kind="doc" symbol="Integration Patterns">
+        <lines>579-630</lines>
+        <reason>Shows recommended patterns for using EmailAnalysisEngine and CacheManager - DatabaseManager should provide similar unified API</reason>
+        <snippet>
+**Current Integration Pattern (before Story 2.2):**
+- EmailAnalysisEngine uses inline SQLite for email_analysis table
+- CacheManager uses separate SQLite connection for analysis_cache table
+- No unified database access layer
+
+**Target Pattern (after Story 2.2):**
+- DatabaseManager provides unified Repository Pattern API
+- All Stories 1.3, 1.6, 2.1 use DatabaseManager instead of inline SQLite
+- Context manager: `with DatabaseManager() as db:`
+- Connection pooling: one connection per thread
+        </snippet>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="python">
+        <package name="pysqlite3" version=">=0.5.0" reason="SQLite database with optional encryption support (SQLCipher compatibility)"/>
+        <package name="cryptography" version=">=41.0.0" reason="Windows DPAPI for encryption key storage (AC2)"/>
+        <package name="pytest" version=">=7.4.0" reason="Testing framework (existing in project)" required="dev"/>
+        <package name="pytest-mock" version=">=3.11.1" reason="Mocking for database tests" required="dev"/>
+      </ecosystem>
+      <ecosystem name="system">
+        <package name="SQLite3" version=">=3.35.0" reason="Built into Python standard library - used for all database operations"/>
+        <package name="Windows DPAPI" version="N/A" reason="Windows-only encryption key storage (optional feature for AC2)"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+**Architecture Patterns:**
+- **Repository Pattern**: DatabaseManager acts as single access point for all database operations
+- **Connection Management**: One connection per thread (threading.local()) for thread-safety
+- **Context Manager Support**: `with DatabaseManager() as db:` for automatic cleanup
+- **Backward Compatibility**: Must support existing data from Stories 1.3, 1.6 (no data loss on upgrade)
+
+**SQLite Limitations:**
+- Single-writer limitation: Use WAL (Write-Ahead Logging) mode for better concurrency
+- Performance degrades >1GB: Implement size monitoring and VACUUM optimization
+- No built-in encryption: SQLCipher is optional dependency (fail gracefully if missing)
+- Limited ALTER TABLE: Cannot modify columns easily - use migrations for schema changes
+
+**Database Schema Consolidation:**
+- **email_analysis table** (Stories 1.3, 1.4): Extend existing schema, don't recreate
+- **performance_metrics table** (Stories 1.3, 1.6): Add database_size_mb field
+- **analysis_cache table** (Story 1.6): Deprecated - merge into email_analysis or keep separate based on use case
+- **user_corrections table** (Story 1.4): Already created, DatabaseManager provides access
+- **sender_importance table** (Story 1.4): Already created, DatabaseManager provides access
+- **user_preferences table** (NEW): For settings persistence
+- **schema_version table** (NEW): For migration tracking
+
+**Integration Constraints:**
+- Story 1.3 refactoring: Replace inline SQLite with `db.insert_email_analysis()`
+- Story 1.6 refactoring: CacheManager delegates to DatabaseManager
+- Story 2.1 integration: `db.insert_email_metadata()` for Outlook emails
+- Story 2.4 dependency: user_preferences table for Settings System
+
+**Performance Requirements:**
+- All operations <100ms (target: <50ms for common queries)
+- Prepared statements for SQL injection prevention
+- Indexes on message_id, priority, received_date, timestamp
+- Connection pooling to avoid repeated open/close overhead
+  </constraints>
+
+  <interfaces>
+**DatabaseManager Core API:**
+```python
+class DatabaseManager:
+    def __init__(self, db_path: str, encryption_key: Optional[str] = None)
+
+    # Connection Management
+    def connect() -> bool
+    def disconnect()
+    def is_connected() -> bool
+
+    # Email Analysis CRUD (Story 1.3 integration)
+    def insert_email_analysis(message_id: str, analysis: Dict, metadata: Dict) -> int
+    def get_email_analysis(message_id: str) -> Optional[Dict]
+    def update_email_analysis(message_id: str, analysis: Dict) -> bool
+    def delete_email_analysis(message_id: str) -> bool
+
+    # Performance Metrics (Story 1.6 integration)
+    def insert_performance_metric(operation: str, metrics: Dict) -> int
+    def get_performance_metrics(days: int = 7) -> List[Dict]
+
+    # User Preferences (Story 2.4 integration)
+    def get_preference(key: str, default: Any = None) -> Any
+    def set_preference(key: str, value: Any) -> bool
+    def get_all_preferences(category: Optional[str] = None) -> Dict
+
+    # User Corrections (Story 1.4 integration)
+    def insert_user_correction(correction: Dict) -> int
+    def get_user_corrections(sender: str, days: int = 30) -> List[Dict]
+
+    # Sender Importance (Story 1.4 integration)
+    def get_sender_importance(sender: str) -> Optional[Dict]
+    def update_sender_importance(sender: str, importance_data: Dict) -> bool
+
+    # Backup & Restore (AC6)
+    def backup(backup_path: str) -> bool
+    def restore(backup_path: str) -> bool
+    def verify_backup_integrity(backup_path: str) -> bool
+
+    # Database Maintenance (AC8)
+    def get_database_size_mb() -> float
+    def optimize_database() -> Tuple[bool, float]  # Returns (success, space_saved_mb)
+
+    # Migration Support (AC5)
+    def get_schema_version() -> int
+    def apply_migrations() -> bool
+
+    # Data Deletion (AC7)
+    def delete_all_data() -> bool
+```
+
+**EmailPreprocessor → DatabaseManager:**
+- EmailPreprocessor outputs dict format
+- DatabaseManager.insert_email_analysis() accepts email metadata dict
+
+**OutlookConnector → DatabaseManager:**
+- OutlookEmail.to_dict() provides database-compatible format
+- DatabaseManager.insert_email_metadata() stores Outlook email data
+
+**CacheManager → DatabaseManager:**
+- CacheManager becomes thin wrapper around DatabaseManager
+- Delegates cache operations: get_cached_analysis(), cache_analysis()
+
+**PriorityClassifier → DatabaseManager:**
+- Uses DatabaseManager for user_corrections and sender_importance queries
+- Methods: record_user_override(), get_sender_importance()
+  </interfaces>
+
+  <tests>
+    <standards>
+**Testing Framework:**
+- pytest for unit and integration tests
+- pytest-mock for mocking database connections
+- Temporary SQLite databases (:memory: or temp files) for test isolation
+- Test coverage target: >85% for DatabaseManager class
+
+**Test Organization:**
+- tests/unit/test_database_manager.py - Core CRUD operations
+- tests/unit/test_schema.py - Schema creation and validation
+- tests/unit/test_migrations.py - Migration application and rollback
+- tests/unit/test_backup_manager.py - Backup/restore functionality
+- tests/integration/test_database_integration.py - Integration with Stories 1.3, 1.6, 2.1
+
+**Testing Patterns from Epic 1:**
+- Fixtures for test data setup
+- Parameterized tests for multiple scenarios
+- Performance assertions (<100ms query time)
+- Error handling tests (database corruption, permission denied, disk full)
+- Concurrent access tests (thread-safety validation)
+    </standards>
+    <locations>
+- tests/unit/test_database_manager.py
+- tests/unit/test_schema.py
+- tests/unit/test_migrations.py
+- tests/unit/test_backup_manager.py
+- tests/integration/test_database_integration.py
+- examples/database_demo.py
+    </locations>
+    <ideas>
+**AC1 (Database Schema) - 8 tests:**
+1. Test schema creation with all 5 tables (email_analysis, performance_metrics, user_preferences, user_corrections, schema_version)
+2. Test indexes created correctly (message_id, priority, received_date, etc.)
+3. Test foreign key constraints enforced
+4. Test CHECK constraints validate data (priority IN ('High', 'Medium', 'Low'))
+5. Test schema_version table tracks version number
+6. Test backward compatibility with existing Story 1.3/1.6 data
+7. Test WAL mode enabled on database initialization
+8. Test table creation is idempotent (CREATE TABLE IF NOT EXISTS)
+
+**AC2 (Optional Encryption) - 6 tests:**
+1. Test encryption toggle during initialization
+2. Test SQLCipher database creation with encryption key
+3. Test Windows DPAPI key storage and retrieval
+4. Test encrypted database connection success
+5. Test fallback to unencrypted if SQLCipher unavailable
+6. Test encryption status display in metadata
+
+**AC3 (Fast Query Performance) - 8 tests:**
+1. Test SELECT query <50ms for indexed columns (message_id lookup)
+2. Test INSERT query <50ms for email_analysis table
+3. Test UPDATE query <50ms for user_preferences
+4. Test connection pooling reduces overhead (benchmark connection reuse)
+5. Test prepared statements prevent SQL injection (parameterized queries)
+6. Test EXPLAIN QUERY PLAN shows index usage
+7. Test concurrent queries from multiple threads
+8. Test query logging in debug mode
+
+**AC4 (Automatic Database Creation) - 5 tests:**
+1. Test database file created on first run if not exists
+2. Test schema initialized with all tables on creation
+3. Test default user preferences inserted on initialization
+4. Test database creation logged with timestamp
+5. Test concurrent initialization handled gracefully (file locking)
+
+**AC5 (Database Migration) - 9 tests:**
+1. Test schema_version table tracks current version
+2. Test migration detection on version mismatch
+3. Test migrations applied sequentially (v1 → v2 → v3)
+4. Test migration rollback on failure with error logging
+5. Test database backup created before migration
+6. Test forward-only migrations enforced (no downgrades)
+7. Test migration framework supports Python migration classes
+8. Test schema_version updated after successful migration
+9. Test migration history logged in schema_version table
+
+**AC6 (Backup and Restore) - 10 tests:**
+1. Test manual backup creates timestamped file
+2. Test automatic daily backup runs in background
+3. Test last 7 backups kept, older deleted
+4. Test restore from backup file succeeds
+5. Test backup integrity checksum validation
+6. Test backup includes schema_version for compatibility check
+7. Test backup status display (last backup date, size)
+8. Test backup failure handling (disk full, permission denied)
+9. Test restore overwrites current database correctly
+10. Test backup compression for large databases (optional)
+
+**AC7 (Complete Data Deletion) - 8 tests:**
+1. Test "Delete All Data" option deletes database file
+2. Test confirmation dialog required before deletion
+3. Test all backup files deleted from backups/ folder
+4. Test encryption key deleted from Windows DPAPI
+5. Test data deletion logged before deletion (for troubleshooting)
+6. Test application state cleared after deletion
+7. Test deletion cannot be undone (permanent)
+8. Test user preferences reset to defaults after deletion
+
+**AC8 (Database Size Monitoring) - 7 tests:**
+1. Test get_size_mb() returns accurate file size
+2. Test size displayed in Settings UI format
+3. Test orange warning triggered at >1GB threshold
+4. Test VACUUM optimization reduces database size
+5. Test space saved calculation after VACUUM
+6. Test size metrics logged to performance_metrics table
+7. Test size check runs on startup and periodically
+
+**AC9 (Centralized DatabaseManager) - 9 tests:**
+1. Test DatabaseManager singleton pattern (get_instance())
+2. Test CRUD methods for email_analysis table
+3. Test CRUD methods for performance_metrics table
+4. Test CRUD methods for user_preferences table
+5. Test CRUD methods for user_corrections table
+6. Test context manager support (with DatabaseManager() as db)
+7. Test thread-safe operations (connection per thread)
+8. Test comprehensive error handling with specific exceptions
+9. Test integration with CacheManager, EmailAnalysisEngine, OutlookConnector
+    </ideas>
+  </tests>
+</story-context>

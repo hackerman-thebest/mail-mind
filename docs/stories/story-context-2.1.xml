@@ -1,0 +1,500 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.1</storyId>
+    <title>Outlook Integration (pywin32)</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-2.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>the application to connect to my Outlook account</iWant>
+    <soThat>I can analyze and manage my emails directly from MailMind without switching applications</soThat>
+    <tasks>
+### Task 1: Outlook COM Interface Setup (AC1)
+- Create `OutlookConnector` class in `src/mailmind/integrations/outlook_connector.py`
+- Implement `connect()` method using `win32com.client.Dispatch("Outlook.Application")`
+- Implement `detect_outlook_installed()` static method checking registry or COM registration
+- Implement `is_outlook_running()` method detecting active Outlook process
+- Create custom exception classes: `OutlookNotInstalledException`, `OutlookNotRunningException`
+- Write unit tests for connection logic using mocks (10+ test cases)
+
+### Task 2: Email Fetching with Pagination (AC2)
+- Implement `get_folder(folder_name: str)` method to retrieve folder objects
+- Implement `fetch_emails(folder, limit=50, offset=0)` method with pagination
+- Cache `Application.Session.Folders` structure to avoid repeated COM calls
+- Implement folder traversal for nested folders (recursive search)
+- Add performance logging for fetch operations (track time per 50 emails)
+- Write integration tests with mock Outlook data (5+ scenarios)
+
+### Task 3: Email Property Extraction (AC3, AC4)
+- Implement `extract_email_properties(mail_item)` method returning structured dict
+- Extract all required properties with null-safe access (handle missing properties)
+- Implement thread context extraction (ConversationID, ConversationTopic)
+- Handle both HTML and plain text body formats gracefully
+- Create `OutlookEmail` dataclass for type-safe property storage
+- Write unit tests for property extraction with edge cases (15+ tests)
+
+### Task 4: Outlook Actions Implementation (AC5)
+- Implement `move_email(message_id, destination_folder)` method
+- Implement `mark_as_read(message_id, is_read=True)` method
+- Implement `create_reply_draft(message_id)` method returning draft object
+- Implement `delete_email(message_id)` method (move to Deleted Items)
+- Add error handling for action failures (email no longer exists, folder locked, etc.)
+- Write integration tests for all actions (10+ tests)
+
+### Task 5: Connection Monitoring &amp; Reconnection (AC6, AC7)
+- Implement `ConnectionMonitor` class with state machine (Connected/Reconnecting/Disconnected)
+- Add background thread for periodic connection health checks (every 30 seconds)
+- Implement exponential backoff retry logic: `RetryPolicy(initial_delay=1s, max_delay=30s, max_retries=5)`
+- Create event system for connection state changes (emit events on state transition)
+- Implement operation queue during disconnection (store pending actions)
+- Add connection status to UI integration points
+- Write unit tests for reconnection logic (8+ scenarios)
+
+### Task 6: Error Handling &amp; User Feedback (AC8)
+- Create `OutlookErrorHandler` class mapping COM error codes to user messages
+- Implement error detection for common scenarios (not installed, not running, no profile)
+- Generate actionable error messages with next steps (e.g., "Please start Outlook and try again")
+- Add comprehensive error logging with context (timestamp, error code, operation, stack trace)
+- Create error message templates for UI display
+- Write unit tests for error scenarios (12+ edge cases)
+
+### Task 7: Multi-Account Support (AC9)
+- Implement `get_accounts()` method returning list of configured accounts
+- Add account selection UI integration (return account metadata for UI)
+- Implement account-specific folder navigation (each account has separate folder tree)
+- Store user's selected accounts in preferences database
+- Handle switching between accounts gracefully
+- Write integration tests for multi-account scenarios (6+ tests)
+
+### Task 8: Testing &amp; Documentation
+- Write comprehensive unit tests (target: 80%+ coverage on OutlookConnector)
+- Write integration tests with mock Outlook COM objects
+- Create manual testing checklist for Outlook integration
+- Write code documentation (docstrings for all public methods)
+- Create developer guide: "Working with Outlook COM Interface"
+- Update CHANGELOG.md with Story 2.1 features
+
+### Task 9: Integration with Existing Codebase
+- Integrate with `EmailPreprocessor` from Story 1.2 (pass Outlook emails to preprocessing pipeline)
+- Integrate with `EmailAnalysisEngine` from Story 1.3 (analyze fetched emails)
+- Connect to SQLite database from Story 2.2 (cache email metadata)
+- Create example script: `examples/outlook_integration_demo.py`
+- Update README.md with Outlook integration setup instructions
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC1: Outlook Connection via pywin32 COM
+- Successfully establish connection to Outlook via `win32com.client.Dispatch("Outlook.Application")`
+- Detect Outlook installation on system startup
+- Handle cases where Outlook is not installed with user-friendly error message
+- Handle cases where Outlook is installed but not running (provide guidance to start Outlook)
+
+### AC2: Fetch Inbox Emails with Pagination
+- Retrieve emails from Inbox folder with pagination support (50-100 emails per page)
+- Support folder navigation (Inbox, Sent, Drafts, custom folders)
+- Implement efficient pagination to avoid performance issues with large folders (>1000 emails)
+- Cache folder structure to minimize COM calls
+
+### AC3: Read Email Properties
+- Extract email properties: `Subject`, `SenderEmailAddress`, `SenderName`, `Body`, `HTMLBody`, `ReceivedTime`
+- Extract thread information: `ConversationID`, `ConversationTopic`, `InReplyTo` (if available)
+- Extract email identifiers: `EntryID` (unique message ID), `MessageClass`
+- Read email state: `UnRead` status, `Importance` level, `FlagStatus`
+
+### AC4: Handle HTML and Plain Text Formats
+- Retrieve both `Body` (plain text) and `HTMLBody` properties
+- Gracefully handle emails that only have one format
+- Preserve formatting information for downstream preprocessing (Story 1.2 integration)
+
+### AC5: Support Common Outlook Actions
+- **Move Email**: Move email to specified folder using `MailItem.Move(DestinationFolder)`
+- **Mark as Read/Unread**: Toggle `UnRead` property
+- **Reply**: Create reply draft using `MailItem.Reply()` method
+- **Delete**: Move email to Deleted Items folder using `MailItem.Delete()`
+- Provide confirmation for destructive operations (optional in MVP)
+
+### AC6: Automatic Reconnection
+- Detect connection loss (Outlook closed, crashed, or COM error)
+- Implement retry logic with exponential backoff (initial: 1s, max: 30s, 5 retries)
+- Display connection status changes to user ("Connected", "Reconnecting", "Disconnected")
+- Gracefully queue operations during reconnection attempts
+
+### AC7: Display Connection Status in UI
+- Show real-time connection status indicator (e.g., green dot = connected, yellow = reconnecting, red = disconnected)
+- Display last successful connection timestamp
+- Provide manual "Reconnect" button for user-initiated retry
+- Show connection diagnostic information in status bar
+
+### AC8: Graceful Handling of Outlook Errors
+- Detect and handle common error scenarios:
+  - Outlook not installed (error code -2147221005)
+  - Outlook not running (error code -2147023174)
+  - Outlook profile not configured
+  - Permission denied errors
+- Provide actionable error messages with next steps
+- Log errors with sufficient context for debugging
+
+### AC9: Support Multiple Email Accounts
+- Detect all email accounts configured in Outlook using `Application.Session.Accounts`
+- Allow user to select which account(s) to monitor
+- Display account information (email address, account name) in UI
+- Handle account-specific folders correctly (each account has its own Inbox)
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/epic-stories.md</path>
+        <title>Story 2.1 Specification</title>
+        <section>Epic 2: Story 2.1: Outlook Integration (pywin32)</section>
+        <snippet>Story describes connecting to Outlook via pywin32 COM interface with pagination (50-100 emails), reading properties, handling HTML/text formats, supporting common actions (Move, Mark as Read, Reply, Delete), automatic reconnection, connection status display, error handling for Outlook not running/installed, and multiple account support. Known limitations: pywin32 pagination slow for >1000 emails, no calendar integration in MVP. Technical notes: Use win32com.client for COM automation, implement retry logic with exponential backoff, cache folder structure for performance.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epic-stories.md</path>
+        <title>Epic 2 Overview</title>
+        <section>Epic 2: Desktop Application &amp; User Experience</section>
+        <snippet>Epic goal: Create a polished Windows desktop application with Outlook integration, modern UI, and seamless onboarding. Success criteria include application start in <10s, Outlook connection success rate >95%, onboarding completion >60%. Dependencies: Windows 10/11, Microsoft Outlook installed and configured, Ollama installed separately.</snippet>
+      </artifact>
+      <artifact>
+        <path>README.md</path>
+        <title>Current Project Features</title>
+        <section>Story 1.1-1.5 Implementation Details</section>
+        <snippet>Epic 1 complete (5/5 stories): Ollama Integration (1.1), Email Preprocessing Pipeline (1.2), Email Analysis Engine (1.3), Priority Classification (1.4), Response Generation (1.5). Project demonstrates successful integration patterns: OllamaManager for LLM, EmailPreprocessor for parsing, EmailAnalysisEngine for analysis, SQLite caching, comprehensive testing (140+ unit tests), and performance targets met.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/project-workflow-status-2025-10-13.md</path>
+        <title>Project Workflow Status</title>
+        <section>Implementation Progress</section>
+        <snippet>Current status: Phase 4 Implementation, Epic 1 100% complete (36/36 points), Epic 2 in progress with Story 2.1 ready for development. Overall progress: 51% (36/72 story points). Story 2.1 moved from TODO to IN PROGRESS, context not yet generated, ready for implementation.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/mailmind/core/email_preprocessor.py</path>
+        <kind>class</kind>
+        <symbol>EmailPreprocessor</symbol>
+        <lines>91-765</lines>
+        <reason>Story 1.2 implementation. Use preprocess_email() to convert Outlook email objects (dict format) to structured JSON format for LLM analysis. Critical integration: Pass Outlook MailItem properties as dict with 'from', 'subject', 'body', 'body_html' (HTMLBody), 'date', 'message_id' keys.</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>class</kind>
+        <symbol>EmailAnalysisEngine</symbol>
+        <lines>44-777</lines>
+        <reason>Story 1.3 implementation. After fetching Outlook emails with OutlookConnector, pass them to EmailAnalysisEngine.analyze_email() for AI analysis. Provides priority classification, summarization, and action items. Demonstrates end-to-end pipeline: Outlook → Preprocessor → Analysis.</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/cache_manager.py</path>
+        <kind>class</kind>
+        <symbol>CacheManager</symbol>
+        <lines>37-417</lines>
+        <reason>Story 1.6 implementation. Use for caching email metadata and analysis results to avoid redundant processing. Critical for performance with large Outlook folders. Methods: get_cached_analysis(), cache_analysis(), get_cache_stats().</reason>
+      </artifact>
+      <artifact>
+        <path>tests/unit/test_email_preprocessor.py</path>
+        <kind>test</kind>
+        <symbol>TestEmailPreprocessor</symbol>
+        <lines>1-670</lines>
+        <reason>Story 1.2 tests demonstrating comprehensive test patterns: metadata extraction, HTML parsing, attachment handling, security sanitization. Use as reference for OutlookConnector test structure (60+ unit tests planned).</reason>
+      </artifact>
+      <artifact>
+        <path>tests/unit/test_cache_manager.py</path>
+        <kind>test</kind>
+        <symbol>TestCacheManager</symbol>
+        <lines>1-313</lines>
+        <reason>Story 1.6 tests demonstrating SQLite caching patterns, LRU eviction, and performance testing. Reference for integration with Outlook email caching (AC2 pagination caching).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pywin32" version=">=306" usage="COM automation for Outlook (win32com.client.Dispatch)"/>
+        <package name="beautifulsoup4" version=">=4.12.0" usage="HTML email parsing (shared with Story 1.2)"/>
+        <package name="lxml" version=">=4.9.0" usage="Fast HTML parser backend"/>
+        <package name="pysqlite3" version=">=0.5.0" usage="SQLite database for caching (shared with Stories 1.3, 1.6)"/>
+        <package name="python-dateutil" version=">=2.8.2" usage="Date parsing for email timestamps"/>
+        <package name="pytest" version=">=7.4.0" usage="Testing framework (60+ unit tests)"/>
+        <package name="pytest-mock" version=">=3.11.1" usage="Mocking Outlook COM objects for tests"/>
+      </python>
+      <external>
+        <dependency name="Microsoft Outlook" type="application" requirement="Must be installed and running on Windows 10/11"/>
+        <dependency name="Outlook Profile" type="configuration" requirement="At least one email account configured in Outlook"/>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+**Architecture Patterns (from Dev Notes):**
+- **Adapter Pattern**: OutlookConnector acts as adapter between MailMind's internal email representation and Outlook's COM interface
+- **Isolation Principle**: Isolate pywin32 dependency to single module (src/mailmind/integrations/) for easier v2.0 migration to Microsoft Graph API
+- **Error Handling**: Wrap ALL COM calls in try-except blocks catching pywintypes.com_error, translate COM error codes to domain-specific exceptions, use retry decorators for transient failures
+
+**Performance Requirements:**
+- Target: <500ms to fetch 50 emails from Inbox
+- Cache folder structure to minimize COM calls
+- Use batch operations where possible
+- Implement lazy loading for email bodies (fetch on-demand)
+- Pagination: 50-100 emails per page to avoid COM thrashing
+
+**Technical Constraints (pywin32 Limitations):**
+1. **Windows-only**: Requires Windows OS with Outlook installed
+2. **Outlook must be running**: COM interface requires active Outlook process
+3. **Thread safety**: COM objects are not thread-safe; use single thread or careful synchronization
+4. **Pagination performance**: Slows down with folders >1000 emails (Items collection iteration)
+5. **No offline mode**: Cannot access emails when Outlook is closed
+
+**Testing Requirements:**
+- Unit tests: 60+ tests with mocks (80%+ coverage target on OutlookConnector)
+- Integration tests: 25+ tests with mock Outlook COM objects
+- Test scenarios: Outlook not installed/running, multiple accounts, large folders, connection loss
+- Performance benchmarks: Time to fetch 50/100/500 emails
+
+**Code Style (from Epic 1 patterns):**
+- Use type hints for all public methods
+- Comprehensive docstrings (Google style: Args, Returns, Raises)
+- Logging at INFO level for user actions, DEBUG for internal operations
+- Error messages must be user-friendly with actionable next steps
+- Performance metrics logged for all major operations
+  </constraints>
+  <interfaces>
+**EmailPreprocessor (Story 1.2) - Critical Integration:**
+```python
+from src.mailmind.core.email_preprocessor import EmailPreprocessor
+
+preprocessor = EmailPreprocessor()
+
+# Convert Outlook MailItem to preprocessed format
+outlook_email = {
+    'from': mail_item.SenderEmailAddress + ' (' + mail_item.SenderName + ')',
+    'subject': mail_item.Subject,
+    'body': mail_item.Body,
+    'body_html': mail_item.HTMLBody,  # or 'HTMLBody': mail_item.HTMLBody
+    'date': mail_item.ReceivedTime.isoformat(),
+    'message_id': mail_item.EntryID,
+    'attachments': [{'filename': att.FileName, 'size': att.Size} for att in mail_item.Attachments]
+}
+
+preprocessed = preprocessor.preprocess_email(outlook_email)
+# Returns: {'metadata': {...}, 'content': {...}, 'thread_context': {...}}
+```
+
+**EmailAnalysisEngine (Story 1.3) - Pipeline Integration:**
+```python
+from src.mailmind.core.email_analysis_engine import EmailAnalysisEngine
+
+# Pass Outlook emails to analysis engine
+analysis = engine.analyze_email(outlook_email_dict)
+# Returns: {'priority': 'High', 'summary': '...', 'tags': [...], 'sentiment': '...'}
+```
+
+**CacheManager (Story 1.6) - Email Metadata Caching:**
+```python
+from src.mailmind.core.cache_manager import CacheManager
+
+cache = CacheManager('data/mailmind.db')
+
+# Check cache before fetching from Outlook
+cached_metadata = cache.get_cached_analysis(email_id, current_model_version)
+if cached_metadata:
+    return cached_metadata
+
+# After processing, cache result
+cache.cache_analysis(email_id, email_metadata, model_version)
+```
+
+**Outlook COM Interface (pywin32) - Core API:**
+```python
+import win32com.client
+
+# Connect to Outlook
+outlook = win32com.client.Dispatch("Outlook.Application")
+namespace = outlook.GetNamespace("MAPI")
+
+# Get Inbox folder
+inbox = namespace.GetDefaultFolder(6)  # 6 = olFolderInbox
+
+# Fetch emails with pagination
+items = inbox.Items
+items.Sort("[ReceivedTime]", True)  # Sort descending by received time
+
+for i in range(50):  # Fetch first 50 emails
+    mail_item = items.Item(i + 1)  # COM indexing starts at 1
+    subject = mail_item.Subject
+    sender = mail_item.SenderEmailAddress
+    body = mail_item.Body
+    html_body = mail_item.HTMLBody
+
+# Email actions
+mail_item.Move(destination_folder)  # Move to folder
+mail_item.UnRead = False  # Mark as read
+reply = mail_item.Reply()  # Create reply draft
+mail_item.Delete()  # Move to Deleted Items
+```
+
+**Error Handling Pattern (from Story 1.1):**
+```python
+try:
+    # COM operation
+    outlook = win32com.client.Dispatch("Outlook.Application")
+except pywintypes.com_error as e:
+    error_code = e.args[0]
+    if error_code == -2147221005:
+        raise OutlookNotInstalledException("Outlook is not installed")
+    elif error_code == -2147023174:
+        raise OutlookNotRunningException("Outlook is not running. Please start Outlook.")
+    else:
+        raise OutlookConnectionError(f"Outlook connection failed: {e}")
+```
+  </interfaces>
+  <tests>
+    <standards>
+**Testing Framework:** pytest with pytest-mock for COM object mocking
+
+**Test Structure (from Epic 1 patterns):**
+- **Unit Tests**: Test individual methods in isolation using mocks
+  - Location: tests/unit/test_outlook_connector.py (60+ tests target)
+  - Coverage: 80%+ on OutlookConnector class
+  - Fixtures: Mock Outlook COM objects, mock MailItems, temp databases
+
+- **Integration Tests**: Test with mock Outlook COM data
+  - Location: tests/integration/test_outlook_integration.py (25+ tests target)
+  - Scenarios: Connection → Fetch → Extract → Actions pipeline
+  - Performance: Benchmarks for fetch operations (50/100/500 emails)
+
+**Test Class Organization (from test_email_preprocessor.py pattern):**
+- TestOutlookConnection (AC1): Connection establishment, detection, errors
+- TestEmailFetching (AC2): Pagination, folder navigation, sorting
+- TestEmailProperties (AC3, AC4): Property extraction, HTML/text handling
+- TestOutlookActions (AC5): Move, mark as read, reply, delete operations
+- TestConnectionMonitoring (AC6, AC7): Reconnection logic, status display
+- TestErrorHandling (AC8): Outlook not installed/running, COM errors
+- TestMultiAccount (AC9): Multiple account detection and selection
+
+**Mocking Strategy:**
+- Mock win32com.client.Dispatch() to return mock Outlook object
+- Mock namespace.GetDefaultFolder() to return mock Folder
+- Mock folder.Items collection with configurable email count
+- Mock MailItem objects with properties (Subject, SenderEmailAddress, Body, etc.)
+- Use pytest-mock for COM error simulation (pywintypes.com_error)
+
+**Performance Testing (from test_email_analysis_engine.py pattern):**
+- Time assertions: <500ms for 50 email fetch, <100ms cache retrieval
+- Resource monitoring: Track COM call counts to verify caching effectiveness
+- Pagination benchmarks: Test with 0, 50, 500, 5000 email folders
+    </standards>
+    <locations>
+tests/unit/test_outlook_connector.py        # 60+ unit tests (AC1-AC9)
+tests/unit/test_outlook_models.py           # Data class tests
+tests/unit/test_outlook_errors.py           # Exception handling tests
+tests/integration/test_outlook_integration.py  # 25+ integration tests
+examples/outlook_integration_demo.py        # Demo script (6+ scenarios)
+    </locations>
+    <ideas>
+**AC1: Outlook Connection Tests**
+1. Test successful connection to mock Outlook application
+2. Test Outlook detection when installed vs not installed
+3. Test Outlook running detection (process check)
+4. Test connection error handling (Outlook not running)
+5. Test connection error messages are user-friendly
+6. Test multiple connection attempts (idempotent connect)
+7. Test connection state tracking (connected/disconnected)
+8. Test graceful disconnect on cleanup
+
+**AC2: Email Fetching Tests**
+9. Test fetch first 50 emails from Inbox with pagination
+10. Test fetch with offset (skip first 50, get next 50)
+11. Test folder navigation (Inbox, Sent, Drafts, Custom folders)
+12. Test nested folder traversal (recursive folder search)
+13. Test folder structure caching (minimize COM calls)
+14. Test empty folder handling (0 emails)
+15. Test large folder performance (>1000 emails with pagination)
+16. Test sorting by ReceivedTime descending
+17. Test pagination boundary conditions (last page with < 50 emails)
+
+**AC3: Email Property Extraction Tests**
+18. Test extract all required properties (Subject, Sender, Body, etc.)
+19. Test thread information extraction (ConversationID, ConversationTopic)
+20. Test email identifier extraction (EntryID, MessageClass)
+21. Test email state reading (UnRead, Importance, FlagStatus)
+22. Test null-safe property access (missing properties don't crash)
+23. Test special characters in subject/body (Unicode, emoji)
+24. Test attachment metadata extraction (count, names, sizes)
+25. Test very long subject lines (>255 chars)
+
+**AC4: HTML/Text Format Tests**
+26. Test retrieve plain text Body property
+27. Test retrieve HTML HTMLBody property
+28. Test emails with only plain text (no HTML)
+29. Test emails with only HTML (no plain text)
+30. Test emails with both formats (prefer HTML)
+31. Test malformed HTML handling (corrupted tags)
+32. Test integration with EmailPreprocessor for HTML parsing
+33. Test preserve formatting for downstream Story 1.2 integration
+
+**AC5: Outlook Actions Tests**
+34. Test move email to specified folder (success case)
+35. Test move email error handling (folder doesn't exist)
+36. Test mark email as read (UnRead = False)
+37. Test mark email as unread (UnRead = True)
+38. Test create reply draft (Reply() method)
+39. Test delete email (moves to Deleted Items)
+40. Test action confirmation prompts (optional destructive ops)
+41. Test action error handling (email no longer exists)
+42. Test action error handling (folder locked/permission denied)
+
+**AC6: Reconnection Logic Tests**
+43. Test detect connection loss (Outlook closed)
+44. Test exponential backoff retry (1s, 2s, 4s, 8s, 16s, 30s max)
+45. Test max 5 retry attempts before giving up
+46. Test successful reconnection after transient failure
+47. Test operation queuing during disconnection
+48. Test queue replay after reconnection
+49. Test connection status callbacks (Connected → Reconnecting → Connected)
+50. Test permanent failure handling (max retries exceeded)
+
+**AC7: Connection Status UI Tests**
+51. Test status indicator update (green/yellow/red)
+52. Test last successful connection timestamp tracking
+53. Test manual reconnect button functionality
+54. Test connection diagnostic information display
+55. Test status bar integration (show connection state)
+
+**AC8: Error Handling Tests**
+56. Test Outlook not installed error (code -2147221005)
+57. Test Outlook not running error (code -2147023174)
+58. Test Outlook profile not configured error
+59. Test permission denied error handling
+60. Test actionable error messages (include next steps)
+61. Test error logging with context (timestamp, error code, operation)
+62. Test COM error code mapping to user-friendly messages
+63. Test unexpected COM error handling (unknown error codes)
+
+**AC9: Multi-Account Tests**
+64. Test detect all configured accounts (Application.Session.Accounts)
+65. Test account information extraction (email, name)
+66. Test account selection UI integration
+67. Test account-specific folder navigation
+68. Test store selected accounts in preferences
+69. Test switch between accounts gracefully
+70. Test single account scenario (most common)
+71. Test account without Inbox (error handling)
+
+**Integration Tests (test_outlook_integration.py)**
+72. Test complete pipeline: Connect → Fetch → Extract → Analyze
+73. Test integration with EmailPreprocessor (Outlook → dict → preprocessed)
+74. Test integration with EmailAnalysisEngine (Outlook → Analysis)
+75. Test integration with CacheManager (cache email metadata)
+76. Test performance benchmark: 50 emails in <500ms
+77. Test performance benchmark: 100 emails in <1s
+78. Test reconnection scenario: Close Outlook → Reconnect → Resume
+79. Test large folder scenario: 5000 emails with pagination
+80. Test multi-account scenario: 2 accounts, switch between them
+81. Test error recovery: Connection loss → Reconnect → Continue
+    </ideas>
+  </tests>
+</story-context>
