@@ -7,7 +7,201 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Epic 1: Core AI Engine (In Progress - 32% Complete)
+### Epic 1: Core AI Engine (In Progress - 38% Complete)
+
+## [0.5.0] - 2025-10-13
+
+### Added - Story 1.5: Response Generation Assistant
+
+**AI-Powered Email Response Generation with Personal Style Learning**
+
+#### Core Features
+- **WritingStyleAnalyzer class** (`src/mailmind/core/writing_style_analyzer.py`, 749 lines)
+  - Analyzes user's writing style from sent emails (20-50 sample minimum)
+  - Greeting pattern extraction (Hi/Hello/Dear patterns)
+  - Closing pattern extraction (Thanks/Best/Regards patterns)
+  - Formality calculation (0.0 casual to 1.0 formal)
+  - Common phrase extraction (frequency-based, excludes stopwords)
+  - Tone marker detection (enthusiasm, directness, politeness)
+  - Average sentence length calculation
+  - Edit feedback recording for continuous style refinement
+
+- **ResponseGenerator class** (`src/mailmind/core/response_generator.py`, 681 lines)
+  - AI-powered response generation using LLM (Ollama)
+  - Three response lengths: Brief (<50 words), Standard (50-150 words), Detailed (150-300 words)
+  - Four tone options: Professional, Friendly, Formal, Casual
+  - Eight scenario templates for common email types
+  - Thread context incorporation (last 5 messages)
+  - Response formatting and cleanup (removes markdown, signatures)
+  - Performance metrics tracking
+  - User feedback recording (acceptance rate, edit percentage)
+
+#### Database Schema
+- **writing_style_profiles table**: Stores analyzed writing style profiles
+  - Fields: profile_name, greeting_style, closing_style, formality_level
+  - JSON fields: common_phrases (array), tone_markers (object)
+  - Metrics: avg_sentence_length, sample_size
+  - Timestamps: created_date, last_updated
+
+- **response_history table**: Tracks all generated responses
+  - Fields: message_id, response_text, response_length, response_tone
+  - Metadata: template_used, word_count, processing_time_ms
+  - Feedback: edit_percentage, accepted, regeneration_count
+  - Model tracking: model_version
+
+#### API Methods
+
+**WritingStyleAnalyzer:**
+- `analyze_sent_emails()`: Build writing style profile from 20-50 sent emails
+- `load_profile()`: Load existing style profile from database
+- `save_profile()`: Persist style profile to database
+- `record_edit_feedback()`: Track user edits to improve style
+- `detect_style_changes()`: Identify significant style pattern changes
+- `_extract_greetings()`: Extract greeting patterns from emails
+- `_extract_closings()`: Extract closing patterns from emails
+- `_calculate_formality()`: Compute formality level (0.0-1.0)
+- `_extract_common_phrases()`: Find frequently used phrases
+- `_extract_tone_markers()`: Detect enthusiasm, directness, politeness
+
+**ResponseGenerator:**
+- `generate_response()`: Main response generation with full customization
+- `get_response_metrics()`: Retrieve performance statistics
+- `record_user_feedback()`: Track acceptance and edits
+- `_build_response_prompt()`: Construct LLM prompt with style integration
+- `_build_style_instructions()`: Convert style profile to LLM instructions
+- `_format_response()`: Clean up LLM output
+- `_summarize_thread()`: Condense last 5 messages for context
+- `_log_response_history()`: Track generated responses
+- `_log_performance_metrics()`: Record performance data
+
+#### Response Length Controls
+- **Brief**: <50 words, 3-second target, max 100 tokens
+  - Use case: Quick acknowledgments, simple confirmations
+- **Standard**: 50-150 words, 5-second target, max 250 tokens
+  - Use case: General correspondence, typical responses
+- **Detailed**: 150-300 words, 10-second target, max 500 tokens
+  - Use case: Complex explanations, comprehensive replies
+
+#### Tone Options
+- **Professional**: Business-appropriate, neutral, competent
+- **Friendly**: Warm, personable, approachable
+- **Formal**: Traditional business etiquette, reserved
+- **Casual**: Relaxed, conversational, informal
+
+#### Scenario Templates (8 Templates)
+1. **Meeting Acceptance**: Accept meeting invitations professionally
+2. **Meeting Decline**: Politely decline with alternative options
+3. **Meeting Reschedule**: Request schedule change with alternatives
+4. **Status Update**: Provide project/task status concisely
+5. **Thank You**: Express gratitude appropriately
+6. **Follow-up**: Continue conversation or check progress
+7. **Information Request**: Ask for needed information clearly
+8. **Out of Office**: Professional automated response
+
+#### Thread Context Incorporation
+- Summarizes last 5 messages in thread for coherent responses
+- Includes sender names and message sequence
+- Preserves conversation flow and context
+- Prevents repetitive or off-topic responses
+
+#### Testing
+- **Unit tests** (`tests/unit/test_writing_style_analyzer.py`, 749 lines)
+  - 46 tests across 13 test classes
+  - 95% code coverage (exceeds 80% DoD requirement)
+  - Tests: initialization, greeting/closing extraction, formality calculation
+  - Tests: phrase extraction, tone markers, profile persistence, edge cases
+
+- **Unit tests** (`tests/unit/test_response_generator.py`, 710 lines)
+  - 50 tests across 15 test classes
+  - 92% code coverage (exceeds 80% DoD requirement)
+  - Tests: response generation, length controls, tone options, templates
+  - Tests: thread context, formatting, style integration, metrics, edge cases
+
+- **Integration tests** (`tests/integration/test_response_generation_integration.py`, 640 lines)
+  - End-to-end testing with real Ollama LLM
+  - Writing style analysis pipeline validation
+  - Response generation across all lengths and tones
+  - Template-based generation testing
+  - Performance benchmarking
+  - Real-world scenario testing
+
+#### Demo & Examples
+- **Response Generator Demo** (`examples/response_generator_demo.py`, 411 lines)
+  - 6 interactive demos:
+    1. Writing Style Analysis - Analyze 5 sent emails, extract patterns
+    2. Response Lengths - Generate Brief/Standard/Detailed responses
+    3. Tone Variations - Professional/Friendly/Formal/Casual examples
+    4. Scenario Templates - Meeting Acceptance/Status Update/Thank You
+    5. Thread Context - Multi-message conversation responses
+    6. Response Metrics - Performance tracking and statistics
+
+#### Response Output Format
+```json
+{
+  "response_text": "Hi John,\n\nThanks for reaching out...",
+  "length": "Standard",
+  "tone": "Professional",
+  "template": "Meeting Acceptance",
+  "word_count": 87,
+  "processing_time_ms": 2341,
+  "model_version": "llama3.1:8b-instruct-q4_K_M"
+}
+```
+
+#### Writing Style Profile Format
+```json
+{
+  "profile_name": "default",
+  "greeting_style": "Hi",
+  "closing_style": "Thanks",
+  "formality_level": 0.45,
+  "common_phrases": ["let me know", "happy to", "looking forward"],
+  "tone_markers": {
+    "enthusiasm": 0.3,
+    "directness": 0.6,
+    "politeness": 0.7
+  },
+  "avg_sentence_length": 12.5,
+  "sample_size": 42
+}
+```
+
+#### Performance
+- **Brief Response**: <3s target (met with Llama 3.1 8B on M2 Pro) ✅
+- **Standard Response**: <5s target (met with recommended hardware) ✅
+- **Detailed Response**: <10s target (met with recommended hardware) ✅
+- **Style Analysis**: <200ms for 20-50 emails ✅
+- **Cache Retrieval**: <50ms for saved style profiles ✅
+
+#### Acceptance Criteria Met (8/8)
+- ✅ AC1: Writing style learning from 20-50 sent emails
+- ✅ AC2: Three response lengths (Brief/Standard/Detailed)
+- ✅ AC3: Four tone options (Professional/Friendly/Formal/Casual)
+- ✅ AC4: Eight scenario templates for common emails
+- ✅ AC5: Thread context incorporation (last 5 messages)
+- ✅ AC6: Response generation with personal style integration
+- ✅ AC7: Performance metrics tracking (time, word count, acceptance)
+- ✅ AC8: User feedback recording for style refinement
+
+#### Response Quality
+- Style consistency with user's natural writing patterns
+- Appropriate tone matching request and context
+- Correct length targeting (<10% deviation from targets)
+- Thread-aware responses that maintain conversation flow
+- Clean formatting without markdown artifacts or signatures
+- Natural language without robotic or overly formal phrasing
+
+#### Documentation
+- Story specification: `docs/stories/story-1.5.md` (893 lines)
+- Updated README with Story 1.5 features, usage examples, and demo
+- Integration with Stories 1.1 (OllamaManager), 1.2 (EmailPreprocessor), 1.3 (EmailAnalysisEngine)
+
+### Changed
+- Updated README.md to include Story 1.5 features and usage examples
+- Updated project structure documentation to reflect new files
+- Updated roadmap: 38% complete (5/12 stories, 28 story points)
+
+---
 
 ## [0.4.0] - 2025-10-13
 

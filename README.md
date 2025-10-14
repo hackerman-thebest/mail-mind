@@ -7,7 +7,7 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 ## Current Status
 
 **Phase:** Implementation (Phase 4)
-**Current Story:** 1.4 - Priority Classification System ✅ IMPLEMENTED
+**Current Story:** 1.5 - Response Generation Assistant ✅ IMPLEMENTED
 
 ## Features (Current)
 
@@ -96,6 +96,48 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 - Applies correction patterns to future emails
 - Accuracy improves from ~60% to >85% over 30 days
 - Weights recent corrections (last 30 days) more heavily
+
+### ✅ Story 1.5: Response Generation Assistant (COMPLETE)
+
+- **AI-Powered Response Generation:** Generate contextual email responses using local LLM
+- **Personal Style Learning:** Analyzes 20-50 sent emails to learn your writing patterns
+- **Three Response Lengths:** Brief (<50 words), Standard (50-150 words), Detailed (150-300 words)
+- **Four Tone Options:** Professional, Friendly, Formal, Casual
+- **Eight Scenario Templates:** Meeting acceptance/decline, status updates, thank you, follow-up, etc.
+- **Thread Context Awareness:** Incorporates last 5 messages for coherent responses
+- **Style Integration:** Uses your greeting style, closing style, formality level, and common phrases
+- **Performance Metrics:** Tracks generation time, word count, acceptance rate, edit percentage
+- **Response Formatting:** Cleans markdown, removes signatures, formats naturally
+- **Performance:** Brief <3s, Standard <5s, Detailed <10s on recommended hardware
+
+**Writing Style Profile:**
+```json
+{
+  "greeting_style": "Hi",
+  "closing_style": "Thanks",
+  "formality_level": 0.45,
+  "common_phrases": ["let me know", "happy to", "looking forward"],
+  "tone_markers": {
+    "enthusiasm": 0.3,
+    "directness": 0.6,
+    "politeness": 0.7
+  },
+  "avg_sentence_length": 12.5
+}
+```
+
+**Response Output:**
+```json
+{
+  "response_text": "Hi John,\n\nThanks for reaching out about the project...",
+  "length": "Standard",
+  "tone": "Professional",
+  "template": "Meeting Acceptance",
+  "word_count": 87,
+  "processing_time_ms": 2341,
+  "model_version": "llama3.1:8b-instruct-q4_K_M"
+}
+```
 
 ## Prerequisites
 
@@ -290,6 +332,177 @@ Now classifying a NEW email from the same sender:
    • No user correction needed - system learned the pattern!
 ```
 
+### Response Generator Demo
+
+```bash
+python examples/response_generator_demo.py
+```
+
+This interactive demo showcases the response generation system (Story 1.5):
+1. **Demo 1: Writing Style Analysis** - Analyze 5 sent emails, extract writing patterns
+2. **Demo 2: Response Lengths** - Generate Brief/Standard/Detailed responses with performance timing
+3. **Demo 3: Tone Variations** - Professional/Friendly/Formal/Casual tone examples
+4. **Demo 4: Scenario Templates** - Meeting Acceptance/Status Update/Thank You templates
+5. **Demo 5: Thread Context** - Multi-message conversation awareness
+6. **Demo 6: Response Metrics** - Performance tracking and statistics
+
+Expected output:
+```
+======================================================================
+DEMO 1: Writing Style Analysis
+======================================================================
+
+Analyzing writing style from sent emails...
+
+✓ Writing style profile created from 5 emails
+
+Profile Details:
+  Greeting Style: Hi
+  Closing Style: Thanks
+  Formality Level: 0.45 (0.0=casual, 1.0=formal)
+  Avg Sentence Length: 12 words
+  Common Phrases: thanks for, let me know, looking forward
+
+Tone Markers:
+  Enthusiasm: 0.30
+  Directness: 0.60
+  Politeness: 0.70
+
+----------------------------------------------------------------------
+DEMO 2: Response Lengths (Brief / Standard / Detailed)
+----------------------------------------------------------------------
+
+Original Email:
+  From: John Smith
+  Subject: Team Meeting Next Week
+
+  Body:
+  Hi Alice,
+
+  I wanted to schedule a team meeting for next Tuesday at 2pm to
+  discuss the Q4 roadmap and upcoming priorities.
+
+  Would you be available?
+
+  Thanks,
+  John
+
+----------------------------------------------------------------------
+Brief Response
+----------------------------------------------------------------------
+
+Generated in 2.45s (2450ms)
+Word count: 32
+
+Response:
+Hi John,
+
+Thanks for reaching out. Yes, I'm available Tuesday at 2pm.
+Looking forward to discussing Q4 priorities.
+
+Thanks,
+Alice
+
+✓ Performance: EXCELLENT (under 3s target)
+```
+
+### Using the ResponseGenerator
+
+```python
+from src.mailmind.core.ollama_manager import OllamaManager
+from src.mailmind.core.email_preprocessor import EmailPreprocessor
+from src.mailmind.core.writing_style_analyzer import WritingStyleAnalyzer
+from src.mailmind.core.response_generator import ResponseGenerator
+from src.mailmind.utils.config import load_config, get_ollama_config
+
+# Initialize Ollama
+config = load_config()
+ollama_config = get_ollama_config(config)
+ollama = OllamaManager(ollama_config)
+ollama.initialize()
+
+# Analyze writing style from sent emails
+sent_emails = [
+    {'body': 'Hi John,\n\nThanks for reaching out...', 'subject': 'Re: Project'},
+    # ... more sent emails (20-50 recommended)
+]
+
+analyzer = WritingStyleAnalyzer(db_path='data/mailmind.db')
+profile = analyzer.analyze_sent_emails(sent_emails, profile_name='alice')
+
+print(f"✓ Style profile created: {profile['greeting_style']}, {profile['closing_style']}")
+
+# Generate response to incoming email
+preprocessor = EmailPreprocessor()
+generator = ResponseGenerator(ollama, db_path='data/mailmind.db')
+
+incoming_email = preprocessor.preprocess_email({
+    'from': 'john.smith@company.com',
+    'subject': 'Team Meeting Next Week',
+    'body': 'Hi Alice,\n\nI wanted to schedule a team meeting for next Tuesday at 2pm...',
+    'date': '2025-10-13T10:00:00Z',
+    'message_id': 'msg_001'
+})
+
+# Generate response with customization
+result = generator.generate_response(
+    incoming_email,
+    length='Standard',        # Brief, Standard, or Detailed
+    tone='Professional',      # Professional, Friendly, Formal, or Casual
+    template='Meeting Acceptance'  # Optional: use scenario template
+)
+
+print(f"Response ({result['word_count']} words, {result['processing_time_ms']}ms):")
+print(result['response_text'])
+
+# Generate with thread context
+thread = [previous_email_1, previous_email_2, previous_email_3]
+result = generator.generate_response(
+    incoming_email,
+    length='Standard',
+    tone='Professional',
+    thread_context=thread  # Last 5 messages for context
+)
+
+# Get response metrics
+metrics = generator.get_response_metrics(days=30)
+print(f"Total responses: {metrics['total_generated']}")
+print(f"Acceptance rate: {metrics.get('acceptance_rate_percent', 0):.1f}%")
+```
+
+### Using the WritingStyleAnalyzer
+
+```python
+from src.mailmind.core.writing_style_analyzer import WritingStyleAnalyzer
+
+# Create analyzer
+analyzer = WritingStyleAnalyzer(db_path='data/mailmind.db')
+
+# Analyze sent emails
+sent_emails = [
+    {'body': 'Hi John,\n\nThanks for your email...', 'subject': 'Re: Meeting'},
+    # ... 20-50 sent emails for best results
+]
+
+profile = analyzer.analyze_sent_emails(sent_emails, profile_name='default')
+
+print(f"Greeting: {profile['greeting_style']}")
+print(f"Closing: {profile['closing_style']}")
+print(f"Formality: {profile['formality_level']:.2f}")
+print(f"Common phrases: {', '.join(profile['common_phrases'][:5])}")
+
+# Load existing profile
+profile = analyzer.load_profile('default')
+
+# Record edit feedback for improvement
+analyzer.record_edit_feedback(
+    message_id='msg_001',
+    original_response='Original generated text...',
+    edited_response='User-edited text...',
+    profile_name='default'
+)
+```
+
 ### Using the EmailAnalysisEngine
 
 ```python
@@ -370,27 +583,33 @@ mail-mind/
 ├── src/
 │   └── mailmind/
 │       ├── core/              # Core business logic
-│       │   ├── ollama_manager.py         # Story 1.1: LLM integration
-│       │   ├── email_preprocessor.py     # Story 1.2: Email preprocessing
-│       │   ├── email_analysis_engine.py  # Story 1.3: AI analysis
-│       │   └── priority_classifier.py    # Story 1.4: Priority learning
+│       │   ├── ollama_manager.py            # Story 1.1: LLM integration
+│       │   ├── email_preprocessor.py        # Story 1.2: Email preprocessing
+│       │   ├── email_analysis_engine.py     # Story 1.3: AI analysis
+│       │   ├── priority_classifier.py       # Story 1.4: Priority learning
+│       │   ├── writing_style_analyzer.py    # Story 1.5: Style analysis
+│       │   └── response_generator.py        # Story 1.5: Response generation
 │       ├── ui/                # User interface (coming in Story 2.3)
 │       ├── utils/             # Utilities
 │       │   └── config.py
 │       └── models/            # Data models
 ├── tests/
-│   ├── unit/                  # Unit tests (80+ tests, 86% coverage)
-│   │   ├── test_ollama_manager.py            # Story 1.1 tests
-│   │   ├── test_email_preprocessor.py        # Story 1.2 tests
-│   │   ├── test_email_analysis_engine.py     # Story 1.3 tests
-│   │   └── test_priority_classifier.py       # Story 1.4 tests (34 tests)
+│   ├── unit/                  # Unit tests (140+ tests, >85% coverage)
+│   │   ├── test_ollama_manager.py               # Story 1.1 tests
+│   │   ├── test_email_preprocessor.py           # Story 1.2 tests
+│   │   ├── test_email_analysis_engine.py        # Story 1.3 tests
+│   │   ├── test_priority_classifier.py          # Story 1.4 tests (34 tests)
+│   │   ├── test_writing_style_analyzer.py       # Story 1.5 tests (46 tests)
+│   │   └── test_response_generator.py           # Story 1.5 tests (50 tests)
 │   └── integration/           # Integration tests
-│       ├── test_email_analysis_integration.py        # Story 1.3 integration
-│       └── test_priority_classifier_integration.py   # Story 1.4 integration
+│       ├── test_email_analysis_integration.py           # Story 1.3 integration
+│       ├── test_priority_classifier_integration.py      # Story 1.4 integration
+│       └── test_response_generation_integration.py      # Story 1.5 integration
 ├── examples/
-│   ├── email_preprocessing_demo.py           # Story 1.2 demo
-│   ├── email_analysis_demo.py                # Story 1.3 demo (6 scenarios)
-│   └── priority_classifier_demo.py           # Story 1.4 demo (5 scenarios)
+│   ├── email_preprocessing_demo.py              # Story 1.2 demo
+│   ├── email_analysis_demo.py                   # Story 1.3 demo (6 scenarios)
+│   ├── priority_classifier_demo.py              # Story 1.4 demo (5 scenarios)
+│   └── response_generator_demo.py               # Story 1.5 demo (6 scenarios)
 ├── config/
 │   └── default.yaml           # Default configuration
 ├── data/
@@ -400,7 +619,8 @@ mail-mind/
 │   │   ├── story-1.1.md       # Ollama Integration
 │   │   ├── story-1.2.md       # Email Preprocessing
 │   │   ├── story-1.3.md       # Email Analysis Engine
-│   │   └── story-1.4.md       # Priority Classification System
+│   │   ├── story-1.4.md       # Priority Classification System
+│   │   └── story-1.5.md       # Response Generation Assistant
 │   ├── epic-stories.md        # Epic breakdown
 │   └── project-workflow-status-2025-10-13.md
 ├── main.py                    # Application entry point
@@ -418,14 +638,17 @@ pytest tests/unit/
 pytest --cov=src/mailmind --cov-report=html
 
 # Run specific story tests
-pytest tests/unit/test_ollama_manager.py           # Story 1.1 tests
-pytest tests/unit/test_email_preprocessor.py       # Story 1.2 tests
-pytest tests/unit/test_email_analysis_engine.py    # Story 1.3 tests
-pytest tests/unit/test_priority_classifier.py      # Story 1.4 tests (34 tests)
+pytest tests/unit/test_ollama_manager.py                  # Story 1.1 tests
+pytest tests/unit/test_email_preprocessor.py              # Story 1.2 tests
+pytest tests/unit/test_email_analysis_engine.py           # Story 1.3 tests
+pytest tests/unit/test_priority_classifier.py             # Story 1.4 tests (34 tests)
+pytest tests/unit/test_writing_style_analyzer.py          # Story 1.5 tests (46 tests)
+pytest tests/unit/test_response_generator.py              # Story 1.5 tests (50 tests)
 
 # Run integration tests (requires Ollama running)
 pytest tests/integration/test_email_analysis_integration.py -v
 pytest tests/integration/test_priority_classifier_integration.py -v
+pytest tests/integration/test_response_generation_integration.py -v
 
 # Run specific test class
 pytest tests/unit/test_email_analysis_engine.py::TestQuickPriorityHeuristic
@@ -450,16 +673,16 @@ ollama:
 
 ## Roadmap
 
-### ✅ Completed (4/12 stories - 32% progress)
+### ✅ Completed (5/12 stories - 38% progress)
 
 - **Story 1.1:** Ollama Integration & Model Setup (5 points) ✅
 - **Story 1.2:** Email Preprocessing Pipeline (5 points) ✅
 - **Story 1.3:** Real-Time Email Analysis Engine (8 points) ✅
 - **Story 1.4:** Priority Classification System (5 points) ✅
+- **Story 1.5:** Response Generation Assistant (8 points) ✅
 
 ### 🔄 Next Up
 
-- **Story 1.5:** Response Generation Assistant (8 points)
 - **Story 1.6:** Performance Optimization & Caching (5 points)
 
 ### Epic 2: Desktop Application
@@ -516,7 +739,7 @@ For issues and questions:
 
 ---
 
-**Project Status:** 32% Complete (Phase 4 - Implementation)
-**Stories Completed:** 4/12 (23 story points out of 72 total)
-**Current Story:** 1.4 ✅ COMPLETE
-**Next Story:** 1.5 - Response Generation Assistant
+**Project Status:** 38% Complete (Phase 4 - Implementation)
+**Stories Completed:** 5/12 (28 story points out of 72 total)
+**Current Story:** 1.5 ✅ COMPLETE
+**Next Story:** 1.6 - Performance Optimization & Caching

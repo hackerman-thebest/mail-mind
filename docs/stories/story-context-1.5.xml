@@ -1,0 +1,290 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.5</storyId>
+    <title>Response Generation Assistant</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>AI to draft contextual email replies in my writing style</iWant>
+    <soThat>I can respond faster to routine emails</soThat>
+    <tasks>
+      <task id="1">Create WritingStyleAnalyzer class to extract writing patterns from sent emails</task>
+      <task id="2">Implement ResponseGenerator class with LLM integration for response generation</task>
+      <task id="3">Build response length controls (Brief/Standard/Detailed)</task>
+      <task id="4">Implement 8 scenario templates (meeting acceptance, decline, status update, etc.)</task>
+      <task id="5">Add 4 tone adjustment options (Professional, Friendly, Formal, Casual)</task>
+      <task id="6">Create database schema for writing_style_profiles and response_history</task>
+      <task id="7">Implement performance monitoring and metrics tracking</task>
+      <task id="8">Write comprehensive unit and integration tests (>80% coverage)</task>
+      <task id="9">Create demo script showcasing response generation capabilities</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <title>Multiple Response Lengths</title>
+      <description>Generate responses in three lengths: Brief (&lt;50 words), Standard (50-150 words), Detailed (150-300 words) with ±20% tolerance</description>
+    </criterion>
+    <criterion id="AC2">
+      <title>Thread Context Incorporation</title>
+      <description>Include full email thread in generation prompt, reference previous messages, maintain conversation continuity, limit thread context to last 5 messages for token efficiency</description>
+    </criterion>
+    <criterion id="AC3">
+      <title>Writing Style Analysis &amp; Matching</title>
+      <description>Analyze user's sent items (20-50 emails) to extract writing patterns: greeting style, closing style, formality level, common phrases, tone markers. Apply learned style to all generated responses.</description>
+    </criterion>
+    <criterion id="AC4">
+      <title>Common Scenario Templates</title>
+      <description>Provide 8 pre-built templates: Meeting Acceptance, Meeting Decline, Status Update, Thank You, Information Request, Acknowledgment, Follow-up, Out of Office. Templates adapt to user's writing style.</description>
+    </criterion>
+    <criterion id="AC5">
+      <title>Tone Adjustment Controls</title>
+      <description>Support 4 tone options: Professional (formal business, no contractions), Friendly (warm, some informality), Formal (very formal, titles), Casual (relaxed, conversational). Default tone inferred from original email.</description>
+    </criterion>
+    <criterion id="AC6">
+      <title>Offline Generation Performance</title>
+      <description>Brief responses in &lt;3s (target), &lt;5s (acceptable); Standard responses in &lt;5s (target), &lt;8s (acceptable); Detailed responses in &lt;10s (target), &lt;15s (acceptable). CPU-only: 2x longer acceptable.</description>
+    </criterion>
+    <criterion id="AC7">
+      <title>Editable Draft in UI</title>
+      <description>Display generated response in editable text area with full editing capability, track edit percentage, provide Regenerate/Accept/Cancel buttons, auto-save drafts every 30 seconds</description>
+    </criterion>
+    <criterion id="AC8">
+      <title>Response Metrics Tracking</title>
+      <description>Track generation time, response length, tone selected, template used, edit percentage, acceptance rate, regeneration count. Store in performance_metrics table. Display metrics in settings/statistics panel.</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-stories.md</path>
+        <title>Epic Breakdown - Story 1.5 Specification</title>
+        <section>Story 1.5: Response Generation Assistant</section>
+        <snippet>
+          Generate responses in three lengths: Brief (&lt;50 words), Standard (50-150 words), Detailed (150-300 words)
+          Incorporate full email thread context for coherent replies
+          Analyze user's sent items to match writing tone and style
+          Provide response templates for common scenarios
+          Allow tone adjustment: Professional, Friendly, Formal, Casual
+          Generate responses entirely offline in &lt;5 seconds (standard length)
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.3.md</path>
+        <title>Story 1.3 - Email Analysis Engine (Dependency)</title>
+        <section>Prompt Engineering Example</section>
+        <snippet>
+          Shows LLM prompt structure and JSON response parsing patterns.
+          Demonstrates progressive disclosure, caching, and batch processing.
+          Database schema patterns for email_analysis and performance_metrics tables.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.4.md</path>
+        <title>Story 1.4 - Priority Classifier (Dependency)</title>
+        <section>User Learning System</section>
+        <snippet>
+          Shows user correction recording and sender importance tracking patterns.
+          Demonstrates incremental learning and adaptive confidence scoring.
+          Database schema for user_corrections and sender_importance tables.
+        </snippet>
+      </doc>
+      <doc>
+        <path>README.md</path>
+        <title>Project README with Usage Examples</title>
+        <section>Current Features</section>
+        <snippet>
+          Documents Stories 1.1-1.4 features and usage patterns.
+          Shows integration patterns for OllamaManager, EmailPreprocessor, EmailAnalysisEngine.
+          Performance targets and hardware requirements.
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/mailmind/core/ollama_manager.py</path>
+        <kind>class</kind>
+        <symbol>OllamaManager</symbol>
+        <lines>32-292</lines>
+        <reason>Core LLM inference interface. ResponseGenerator will use client.generate() method for response generation with temperature=0.7 for creativity</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/ollama_manager.py</path>
+        <kind>method</kind>
+        <symbol>OllamaManager.get_model_info()</symbol>
+        <lines>214-229</lines>
+        <reason>Returns current model name/version for tracking which model generated each response</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_preprocessor.py</path>
+        <kind>class</kind>
+        <symbol>EmailPreprocessor</symbol>
+        <lines>91-765</lines>
+        <reason>Provides email parsing and metadata extraction. ResponseGenerator will use preprocess_email() to parse incoming emails and extract thread context</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine._build_analysis_prompt()</symbol>
+        <lines>328-386</lines>
+        <reason>Example of prompt engineering pattern for LLM. Shows how to structure prompts with metadata, thread context, and output format instructions</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine._parse_analysis_response()</symbol>
+        <lines>388-453</lines>
+        <reason>Example of robust JSON response parsing with fallback heuristics. ResponseGenerator should follow similar pattern for parsing LLM responses</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>database</kind>
+        <symbol>EmailAnalysisEngine._init_database()</symbol>
+        <lines>98-158</lines>
+        <reason>Shows SQLite database initialization pattern. ResponseGenerator needs similar tables: writing_style_profiles, response_templates, response_history</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/utils/config.py</path>
+        <kind>module</kind>
+        <symbol>load_config, get_ollama_config</symbol>
+        <lines>1-80</lines>
+        <reason>Configuration loading utilities. ResponseGenerator will need similar config for default response length, tone, templates</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="ollama" version=">=0.1.6" />
+        <package name="beautifulsoup4" version=">=4.12.0" />
+        <package name="lxml" version=">=4.9.0" />
+        <package name="pysqlite3" version=">=0.5.0" />
+        <package name="pyyaml" version=">=6.0" />
+        <package name="python-dateutil" version=">=2.8.2" />
+        <package name="pytest" version=">=7.4.0" scope="test" />
+        <package name="pytest-cov" version=">=4.1.0" scope="test" />
+        <package name="pytest-mock" version=">=3.11.1" scope="test" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>All response generation must happen entirely offline using local Ollama LLM - no network calls</constraint>
+    <constraint>Database operations must complete in &lt;100ms to maintain responsive UI</constraint>
+    <constraint>LLM temperature should be 0.7 (higher than analysis) for creative response generation</constraint>
+    <constraint>Writing style analysis should process 20-50 sent emails minimum for accuracy</constraint>
+    <constraint>Response prompts must include user's writing style profile to ensure authentic responses</constraint>
+    <constraint>All generated responses must be editable before sending - never auto-send</constraint>
+    <constraint>Performance targets: Brief &lt;3s, Standard &lt;5s, Detailed &lt;10s on recommended hardware (mid-GPU)</constraint>
+    <constraint>Code must maintain &gt;80% test coverage per project standards</constraint>
+    <constraint>Follow existing patterns from Stories 1.1-1.4 for consistency (logging, error handling, database operations)</constraint>
+    <constraint>Use pytest for all testing (unit tests in tests/unit/, integration tests in tests/integration/)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>OllamaManager.client.generate()</name>
+      <kind>method</kind>
+      <signature>
+        client.generate(
+          model: str,
+          prompt: str,
+          options: Dict[str, Any]
+        ) -&gt; Dict[str, Any]
+      </signature>
+      <path>src/mailmind/core/ollama_manager.py:189-196</path>
+      <usage>Main LLM inference call. Use temperature=0.7 for response generation (higher than 0.3 used for analysis). Returns dict with 'response' field containing generated text and 'total_duration', 'eval_count' for performance metrics.</usage>
+    </interface>
+    <interface>
+      <name>EmailPreprocessor.preprocess_email()</name>
+      <kind>method</kind>
+      <signature>
+        preprocess_email(
+          raw_email: Any,
+          max_chars: int = 10000
+        ) -&gt; Dict[str, Any]
+      </signature>
+      <path>src/mailmind/core/email_preprocessor.py:117-191</path>
+      <usage>Parse raw email into structured format. Returns dict with 'metadata' (sender, subject, date), 'content' (body, attachments), 'thread_context' (is_reply, thread_length). Use this to extract email details before generating responses.</usage>
+    </interface>
+    <interface>
+      <name>EmailAnalysisEngine.analyze_email()</name>
+      <kind>method</kind>
+      <signature>
+        analyze_email(
+          raw_email: Any,
+          use_cache: bool = True,
+          force_reanalyze: bool = False
+        ) -&gt; Dict[str, Any]
+      </signature>
+      <path>src/mailmind/core/email_analysis_engine.py:160-274</path>
+      <usage>Analyze email to get priority, sentiment, summary, tags, action items. Use analysis results to inform response generation (e.g., urgent emails need different tone, action items should be addressed in response).</usage>
+    </interface>
+    <interface>
+      <name>SQLite Connection Pattern</name>
+      <kind>pattern</kind>
+      <signature>
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SQL...")
+        conn.commit()
+        conn.close()
+      </signature>
+      <path>src/mailmind/core/email_analysis_engine.py:100-156</path>
+      <usage>Standard SQLite connection pattern used throughout project. ResponseGenerator should follow same pattern for writing_style_profiles, response_templates, and response_history tables.</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses pytest framework with comprehensive test coverage requirements:
+      - Unit tests in tests/unit/ directory
+      - Integration tests in tests/integration/ directory
+      - Test files named test_&lt;module&gt;.py
+      - Target: &gt;80% code coverage (verified with pytest-cov)
+      - Test classes group related tests (e.g., TestResponseGenerator, TestWritingStyleAnalyzer)
+      - Mock external dependencies (Ollama LLM calls) in unit tests
+      - Integration tests use real Ollama for end-to-end validation
+      - Performance tests validate generation time targets
+      - Edge case tests for malformed emails, empty sent folders, etc.
+    </standards>
+    <locations>
+      <location>tests/unit/test_response_generator.py</location>
+      <location>tests/unit/test_writing_style_analyzer.py</location>
+      <location>tests/integration/test_response_generation_integration.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">Test Brief response generation (&lt;50 words) with mock LLM</idea>
+      <idea ac="AC1">Test Standard response generation (50-150 words) with mock LLM</idea>
+      <idea ac="AC1">Test Detailed response generation (150-300 words) with mock LLM</idea>
+      <idea ac="AC2">Test thread context incorporation (5-message thread)</idea>
+      <idea ac="AC2">Test thread summarization for token efficiency</idea>
+      <idea ac="AC3">Test WritingStyleAnalyzer with sample sent emails (greeting/closing extraction)</idea>
+      <idea ac="AC3">Test formality calculation (0.0-1.0 scale)</idea>
+      <idea ac="AC3">Test common phrase extraction from sent emails</idea>
+      <idea ac="AC4">Test all 8 template types (meeting acceptance, decline, status update, etc.)</idea>
+      <idea ac="AC4">Test template instructions injection into prompts</idea>
+      <idea ac="AC5">Test all 4 tone options (Professional, Friendly, Formal, Casual)</idea>
+      <idea ac="AC5">Test tone adjustment preserves core message content</idea>
+      <idea ac="AC6">Performance test: Brief response in &lt;3s</idea>
+      <idea ac="AC6">Performance test: Standard response in &lt;5s</idea>
+      <idea ac="AC6">Performance test: Detailed response in &lt;10s</idea>
+      <idea ac="AC7">Test edit percentage calculation (chars changed / total chars)</idea>
+      <idea ac="AC7">Test draft auto-save functionality</idea>
+      <idea ac="AC8">Test metrics logging to performance_metrics table</idea>
+      <idea ac="AC8">Test acceptance rate calculation</idea>
+      <idea ac="AC8">Test average edit percentage reporting</idea>
+      <idea ac="ALL">Integration test: Full pipeline (email → preprocess → generate → format)</idea>
+      <idea ac="ALL">Integration test: Real Ollama inference with all response lengths</idea>
+      <idea ac="ALL">Edge case: Empty sent folder (use default style)</idea>
+      <idea ac="ALL">Edge case: Very long email thread (&gt;10 messages)</idea>
+      <idea ac="ALL">Edge case: LLM generates invalid/inappropriate response</idea>
+      <idea ac="ALL">Edge case: User has no sent items (default professional style)</idea>
+    </ideas>
+  </tests>
+</story-context>
