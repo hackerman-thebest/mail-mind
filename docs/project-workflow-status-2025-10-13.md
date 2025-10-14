@@ -10,9 +10,9 @@
 ## Workflow Status Tracker
 
 **Current Phase:** 4-Implementation
-**Current Workflow:** Story 2.3 COMPLETE ✅ - Ready for Story 2.4
-**Current Agent:** SM (for drafting Story 2.4) OR DEV (continue with backend integration)
-**Overall Progress:** 79% (57/72 story points complete - Epic 1: 100% ✅, Epic 2: 50% - 3/6 complete)
+**Current Workflow:** Story 2.4 DRAFTED ✏️ - Needs review via story-ready
+**Current Agent:** SM (for story-ready approval) OR User (review Story 2.4)
+**Overall Progress:** 81% (57/72 story points complete + Story 2.4 drafted - Epic 1: 100% ✅, Epic 2: 50% - 3/6 complete)
 
 ### Phase Completion Status
 
@@ -64,18 +64,19 @@
 - SM agent uses story information from this table to draft new stories
 - Story order follows recommended implementation sequence from epic-stories.md
 
-#### TODO (Needs Drafting)
+#### TODO (Needs Review)
 
 - **Story ID:** 2.4
 - **Story Title:** Settings & Configuration System
 - **Story File:** `docs/stories/story-2.4.md`
 - **Story Points:** 5
-- **Status:** Not yet created
-- **Action:** SM should run `create-story` workflow to draft this story
+- **Status:** Draft (needs review via story-ready workflow)
+- **Created:** 2025-10-14
+- **Action:** User should review story and run `story-ready` to approve for development
 
 #### IN PROGRESS (Approved for Development)
 
-None - Ready for Story 2.4
+None - Ready for Story 2.4 (pending review and approval)
 
 #### DONE (Completed Stories)
 
@@ -131,9 +132,9 @@ None - Ready for Story 2.4
 
 ### Next Action Required
 
-**What to do next:** Draft Story 2.4 (Settings & Configuration System)
+**What to do next:** Review Story 2.4 and run story-ready workflow
 
-**Current Status:** 🎉 **Story 2.3 COMPLETE** (CustomTkinter UI Framework - 95% done, 282 tests passing)
+**Current Status:** ✏️ **Story 2.4 DRAFTED** (Settings & Configuration System - ready for review)
 
 **Epic Progress:**
 - **Epic 1:** 6/6 complete (100% - all stories done) ✅
@@ -156,24 +157,26 @@ None - Ready for Story 2.4
 **Story 2.4 (Next in Queue - TODO):**
 - **Title:** Settings & Configuration System
 - **Story Points:** 5
-- **Status:** Not yet drafted
-- **Priority:** P0 (Critical Path)
-- **File:** docs/stories/story-2.4.md (to be created)
-- **Action Required:** SM should draft Story 2.4
+- **Status:** Draft (needs review)
+- **Priority:** P1 (Important)
+- **File:** docs/stories/story-2.4.md ✅ Created
+- **Created:** 2025-10-14
+- **Action Required:** User should review and run story-ready to approve
 
 **Next Steps:**
 
-1. **Recommended:** Run SM agent with `create-story` workflow to draft Story 2.4
-   - Settings persistence system
-   - Integration with Story 2.2 (DatabaseManager)
-   - Integration with Story 2.3 (SettingsDialog UI component)
+1. **Recommended:** Review Story 2.4 and run SM agent with `story-ready` workflow
+   - Review comprehensive story specification (9 ACs, 9 tasks)
+   - Review settings schema with 19 settings across 5 categories
+   - Review integration with Stories 2.2 (DatabaseManager) and 2.3 (SettingsDialog)
+   - Approve story for development via story-ready workflow
 
 2. **Alternative:** Continue with backend integration work for Story 2.3
    - Implement EmailController
    - Add threading for background tasks
    - Write integration tests
 
-**Agent to load:** SM (for create-story) OR DEV (for integration work)
+**Agent to load:** SM (for story-ready) OR DEV (for Story 2.3 integration work)
 
 ---
 
@@ -1108,6 +1111,61 @@ This will:
   - Epic 1 progress: 6/6 complete (100% done) ✅
   - Epic 2 progress: 3/6 complete (50% done)
   - Set next action: Draft Story 2.4 (Settings & Configuration System)
+
+### 2025-10-14 - SM Agent (Fourteenth Session - create-story workflow - Story 2.4)
+
+- Phase: 4-Implementation (story drafting)
+- Session: Settings & Configuration System story creation
+- Changes:
+  - Drafted Story 2.4: Settings & Configuration System
+  - Story includes comprehensive acceptance criteria (AC1-AC9):
+    - AC1: Settings storage in user_preferences table (19 settings, 5 categories)
+    - AC2: YAML config file backup for power users
+    - AC3: Centralized SettingsManager class with singleton pattern
+    - AC4: Integration with SettingsDialog UI from Story 2.3
+    - AC5: Immediate settings application (theme, logging) vs restart required (model, GPU)
+    - AC6: Settings validation (temperature 0.0-1.0, batch size 1-20, etc.)
+    - AC7: Default settings matching epic specifications
+    - AC8: Observer pattern for settings change notifications
+    - AC9: Settings export/import functionality
+  - Complete settings schema definition:
+    - General: theme, startup_behavior, show_notifications, minimize_to_tray (4 settings)
+    - AI Model: model, temperature, response_length_default, response_tone_default (4 settings)
+    - Performance: batch_size, cache_size_mb, use_gpu, max_concurrent (4 settings)
+    - Privacy: enable_telemetry, enable_crash_reports, log_level (3 settings)
+    - Advanced: database_path, debug_mode, auto_backup, backup_frequency_hours (4 settings)
+  - Implementation details:
+    - 9 tasks with 40+ subtasks
+    - SettingsManager class with singleton and observer patterns
+    - Integration with DatabaseManager's user_preferences table (Story 2.2)
+    - Integration with SettingsDialog UI component (Story 2.3)
+    - YAML configuration file support with comments
+    - Validation logic for all 19 settings (type checking, range validation, enum validation)
+    - Settings change notifications to subscribers (ThemeManager, OllamaManager, etc.)
+    - Export/import functionality with conflict resolution
+  - Integration points identified:
+    - Story 2.2 (DatabaseManager): Uses user_preferences table for persistence
+    - Story 2.3 (SettingsDialog): Provides UI component - this story adds backend logic
+    - Story 1.1 (OllamaManager): Consumes model and temperature settings
+    - Story 1.6 (PerformanceTracker): Consumes performance settings
+    - ThemeManager: Subscribes to theme setting changes
+  - Testing strategy defined:
+    - 40+ unit tests planned (SettingsManager operations, validation, observers)
+    - 20+ integration tests (DatabaseManager, SettingsDialog, component integration)
+  - Documentation:
+    - Complete settings schema with defaults and validation rules
+    - YAML configuration file format examples
+    - Observer pattern implementation examples
+    - Integration patterns with existing components
+  - Story points: 5 (P1 - Important)
+  - Story file created: docs/stories/story-2.4.md
+  - Story status: Draft (needs review via story-ready workflow)
+  - Updated workflow status:
+    - TODO section updated with Story 2.4 draft status
+    - Next action: User should review and run story-ready to approve
+    - Current workflow: create-story (Story 2.4) - Complete
+    - Progress: 81% (includes Story 2.4 draft completion)
+  - Set next action: Review Story 2.4 and run story-ready workflow
 
 ---
 
