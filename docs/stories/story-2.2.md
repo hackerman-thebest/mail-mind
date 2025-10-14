@@ -35,11 +35,12 @@ Story 2.2 implements the foundational data persistence layer for MailMind, conso
 ## Acceptance Criteria
 
 ### AC1: Complete Database Schema Definition
-- ✅ Define production-ready schema for 4 core tables:
+- ✅ Define production-ready schema for 5 core tables:
   - `email_analysis`: Email AI analysis results with full metadata
   - `performance_metrics`: System performance tracking and trends
   - `user_preferences`: Application settings and user choices
   - `user_corrections`: User feedback for ML improvement
+  - `schema_version`: Database migration tracking
 - ✅ Add proper indexes for common query patterns (message_id, received_date, priority)
 - ✅ Add foreign key constraints where appropriate
 - ✅ Include schema version tracking for migrations
@@ -221,6 +222,10 @@ Story 2.2 implements the foundational data persistence layer for MailMind, conso
 **Complete Production Schema:**
 
 ```sql
+-- Enable Write-Ahead Logging (WAL) mode for better concurrency
+PRAGMA journal_mode=WAL;
+PRAGMA synchronous=NORMAL;
+
 -- Schema version tracking
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
@@ -252,13 +257,7 @@ CREATE TABLE IF NOT EXISTS email_analysis (
 
     -- Metadata
     processed_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    user_feedback TEXT,  -- For future learning
-
-    -- Indexes
-    INDEX idx_message_id (message_id),
-    INDEX idx_priority (priority),
-    INDEX idx_received_date (received_date),
-    INDEX idx_processed_date (processed_date)
+    user_feedback TEXT  -- For future learning
 );
 
 -- Performance metrics (extends Story 1.6 schema)
@@ -271,10 +270,7 @@ CREATE TABLE IF NOT EXISTS performance_metrics (
     memory_usage_mb INTEGER,
     processing_time_ms INTEGER,
     database_size_mb INTEGER,  -- For size monitoring
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX idx_operation (operation),
-    INDEX idx_timestamp (timestamp)
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- User preferences for all settings
@@ -284,9 +280,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     default_value TEXT,
     value_type TEXT CHECK(value_type IN ('string', 'int', 'float', 'bool', 'json')),
     category TEXT,  -- 'general', 'ai_model', 'performance', 'privacy', 'advanced'
-    updated_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX idx_category (category)
+    updated_date DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- User corrections for learning system (Story 1.4 integration)
@@ -298,11 +292,26 @@ CREATE TABLE IF NOT EXISTS user_corrections (
     user_choice TEXT NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (message_id) REFERENCES email_analysis(message_id),
-    INDEX idx_message_id (message_id),
-    INDEX idx_correction_type (correction_type),
-    INDEX idx_timestamp (timestamp)
+    FOREIGN KEY (message_id) REFERENCES email_analysis(message_id)
 );
+
+-- Indexes for email_analysis table
+CREATE INDEX idx_email_message_id ON email_analysis(message_id);
+CREATE INDEX idx_email_priority ON email_analysis(priority);
+CREATE INDEX idx_email_received_date ON email_analysis(received_date);
+CREATE INDEX idx_email_processed_date ON email_analysis(processed_date);
+
+-- Indexes for performance_metrics table
+CREATE INDEX idx_perf_operation ON performance_metrics(operation);
+CREATE INDEX idx_perf_timestamp ON performance_metrics(timestamp);
+
+-- Indexes for user_preferences table
+CREATE INDEX idx_pref_category ON user_preferences(category);
+
+-- Indexes for user_corrections table
+CREATE INDEX idx_corr_message_id ON user_corrections(message_id);
+CREATE INDEX idx_corr_correction_type ON user_corrections(correction_type);
+CREATE INDEX idx_corr_timestamp ON user_corrections(timestamp);
 ```
 
 ### Project Structure Notes
@@ -564,6 +573,19 @@ for email in emails:
   - Testing strategy defined (50+ unit tests, 20+ integration tests)
 - **Status**: Draft (awaiting review via story-ready workflow)
 - **Next**: User should review story and run `story-ready` to approve for development
+
+### 2025-10-14 - SM Agent (post-review fixes)
+- **Action**: Applied critical fixes from story review
+- **Details**:
+  - **Fix 1**: Updated AC1 to correctly state "5 core tables" (was "4") and added `schema_version` to list
+  - **Fix 2**: Fixed SQL INDEX syntax - converted inline INDEX definitions to separate CREATE INDEX statements (SQLite requirement)
+    - Moved 4 indexes from email_analysis table
+    - Moved 2 indexes from performance_metrics table
+    - Moved 1 index from user_preferences table
+    - Moved 3 indexes from user_corrections table
+  - **Fix 3**: Added WAL mode PRAGMA statements at schema initialization for better concurrency
+- **Status**: Ready for story-ready workflow
+- **Next**: Run `story-ready` workflow to approve for development
 
 ---
 

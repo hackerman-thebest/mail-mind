@@ -66,14 +66,19 @@
 - SM agent uses story information from this table to draft new stories
 - Story order follows recommended implementation sequence from epic-stories.md
 
-#### TODO (Drafted - Awaiting Approval)
+#### TODO (Reviewed - Ready for Approval)
 
 - **Story ID:** 2.2
 - **Story Title:** SQLite Database & Caching Layer
 - **Story File:** `docs/stories/story-2.2.md`
 - **Story Points:** 5
-- **Status:** Draft (created 2025-10-14)
-- **Action:** User should review story and run `story-ready` workflow to approve for development
+- **Status:** Reviewed (fixes applied 2025-10-14)
+- **Review Status:** ⭐⭐⭐⭐ A- (Critical fixes applied - ready for approval)
+- **Fixes Applied:**
+  - ✅ AC1: Updated to correctly list 5 tables (added schema_version)
+  - ✅ SQL INDEX syntax fixed (inline → separate CREATE INDEX statements)
+  - ✅ WAL mode PRAGMA statements added for concurrency
+- **Action:** Run `story-ready` workflow to approve for development
 
 #### IN PROGRESS (Approved for Development)
 
@@ -868,6 +873,7 @@ This will:
 ### 2025-10-14 - SM Agent (Tenth Session - create-story workflow - Story 2.2)
 
 - Phase: 4-Implementation (story drafting)
+- Session: Initial story drafting
 - Changes:
   - Drafted story-2.2.md (SQLite Database & Caching Layer)
   - Story includes comprehensive acceptance criteria (AC1-AC9):
@@ -914,6 +920,34 @@ This will:
     - Current agent: SM (ready to approve Story 2.2)
     - Overall progress: 62% (Story 2.2 drafted, not yet approved)
   - Set next action: story-ready (user review and approval of Story 2.2)
+
+### 2025-10-14 - SM Agent (Eleventh Session - Story 2.2 review and fixes)
+
+- Phase: 4-Implementation (story review and corrections)
+- Session: Post-draft review and critical fixes
+- Changes:
+  - Conducted comprehensive review of Story 2.2
+  - Review grade: ⭐⭐⭐⭐ A- (Excellent with critical fixes needed)
+  - Applied 3 critical fixes to story-2.2.md:
+    - **Fix 1 (AC1):** Updated AC1 to correctly state "5 core tables" (was "4")
+      - Added `schema_version` to explicit table list
+      - Fixed line 38-43 in story file
+    - **Fix 2 (SQL Syntax):** Fixed SQLite INDEX syntax errors
+      - Removed inline INDEX definitions from all 4 tables (invalid SQLite syntax)
+      - Moved 10 indexes to separate CREATE INDEX statements (lines 294-310)
+      - Renamed indexes to avoid conflicts (idx_email_*, idx_perf_*, idx_pref_*, idx_corr_*)
+      - Fixed tables: email_analysis (4 indexes), performance_metrics (2), user_preferences (1), user_corrections (3)
+    - **Fix 3 (WAL Mode):** Added Write-Ahead Logging PRAGMA statements
+      - Added PRAGMA journal_mode=WAL at schema initialization (line 225-227)
+      - Added PRAGMA synchronous=NORMAL for better concurrency
+      - Addresses SQLite single-writer limitation mentioned in Technical Constraints
+  - Updated Story 2.2 Change Log with post-review fixes section
+  - Updated workflow status TODO section:
+    - Status: Draft → Reviewed (fixes applied)
+    - Added review status and fixes applied checklist
+    - Action updated: Ready for story-ready workflow
+  - Story remains in TODO with "Reviewed" status (awaiting story-ready approval)
+  - Set next action: Run story-ready workflow to approve for development
 
 ---
 
