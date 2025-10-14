@@ -24,7 +24,7 @@ import os
 import sqlite3
 from datetime import datetime, timedelta
 
-from mailmind.core.priority_classifier import PriorityClassifier
+from src.mailmind.core.priority_classifier import PriorityClassifier
 
 
 class TestPriorityClassifier(unittest.TestCase):
