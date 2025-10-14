@@ -24,13 +24,13 @@ import re
 import time
 import json
 import logging
-import sqlite3
 from typing import Dict, Any, List, Optional, Callable, Tuple
 from datetime import datetime
 from pathlib import Path
 
 from src.mailmind.core.ollama_manager import OllamaManager
 from src.mailmind.core.email_preprocessor import EmailPreprocessor
+from mailmind.database import DatabaseManager
 
 
 logger = logging.getLogger(__name__)
@@ -85,77 +85,12 @@ class EmailAnalysisEngine:
         """
         self.ollama = ollama_manager
         self.preprocessor = EmailPreprocessor()
-        self.db_path = db_path
 
-        # Ensure database directory exists
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        # Initialize DatabaseManager (replaces direct SQLite operations)
+        self.db = DatabaseManager(db_path=db_path)
 
-        # Initialize database
-        self._init_database()
+        logger.info(f"EmailAnalysisEngine initialized with DatabaseManager: {db_path}")
 
-        logger.info(f"EmailAnalysisEngine initialized with database: {db_path}")
-
-    def _init_database(self):
-        """Initialize SQLite database with required tables."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        # Create email_analysis table for caching
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS email_analysis (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                message_id TEXT UNIQUE NOT NULL,
-                subject TEXT,
-                sender TEXT,
-                received_date DATETIME,
-
-                -- Analysis results (JSON string)
-                analysis_json TEXT NOT NULL,
-
-                -- Denormalized fields for fast queries
-                priority TEXT CHECK(priority IN ('High', 'Medium', 'Low')),
-                sentiment TEXT CHECK(sentiment IN ('positive', 'neutral', 'negative', 'urgent')),
-                confidence_score REAL,
-
-                -- Performance tracking
-                processing_time_ms INTEGER,
-                tokens_per_second REAL,
-                model_version TEXT,
-                hardware_profile TEXT,
-
-                -- Metadata
-                processed_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                cache_hit BOOLEAN DEFAULT 0,
-
-                -- Indexes
-                UNIQUE(message_id)
-            )
-        ''')
-
-        # Create indexes
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_message_id ON email_analysis(message_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_priority ON email_analysis(priority)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_processed_date ON email_analysis(processed_date)')
-
-        # Create performance_metrics table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS performance_metrics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                operation TEXT NOT NULL,
-                hardware_config TEXT,
-                model_version TEXT,
-                tokens_per_second REAL,
-                memory_usage_mb INTEGER,
-                processing_time_ms INTEGER,
-                batch_size INTEGER,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        conn.commit()
-        conn.close()
-
-        logger.info("Database initialized successfully")
 
     def analyze_email(self, raw_email: Any, use_cache: bool = True,
                      force_reanalyze: bool = False) -> Dict[str, Any]:
@@ -518,7 +453,7 @@ Return ONLY the JSON object, no additional text:"""
 
     def _get_cached_analysis(self, message_id: str) -> Optional[Dict[str, Any]]:
         """
-        Check cache for existing analysis.
+        Check cache for existing analysis using DatabaseManager.
 
         Args:
             message_id: Unique message identifier
@@ -527,27 +462,17 @@ Return ONLY the JSON object, no additional text:"""
             Cached analysis dictionary or None if not found
         """
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            cached_result = self.db.get_email_analysis(message_id)
 
-            cursor.execute('''
-                SELECT analysis_json, model_version
-                FROM email_analysis
-                WHERE message_id = ?
-            ''', (message_id,))
-
-            row = cursor.fetchone()
-            conn.close()
-
-            if row:
-                analysis_json, model_version = row
-
+            if cached_result:
                 # Check if model version matches (invalidate cache if changed)
-                if model_version != self.ollama.current_model:
-                    logger.info(f"Cache invalidated due to model change: {model_version} → {self.ollama.current_model}")
+                cached_model = cached_result.get('model_version')
+                if cached_model != self.ollama.current_model:
+                    logger.info(f"Cache invalidated due to model change: {cached_model} → {self.ollama.current_model}")
                     return None
 
-                analysis = json.loads(analysis_json)
+                # Extract analysis from cached result
+                analysis = cached_result.get('analysis', {})
                 logger.debug(f"Cache hit for message_id={message_id}")
                 return analysis
 
@@ -560,7 +485,7 @@ Return ONLY the JSON object, no additional text:"""
     def _cache_analysis(self, message_id: str, email: Dict[str, Any],
                        analysis: Dict[str, Any]):
         """
-        Store analysis results in cache.
+        Store analysis results in cache using DatabaseManager.
 
         Args:
             message_id: Unique message identifier
@@ -568,35 +493,21 @@ Return ONLY the JSON object, no additional text:"""
             analysis: Analysis results
         """
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-
             metadata = email['metadata']
 
-            cursor.execute('''
-                INSERT OR REPLACE INTO email_analysis (
-                    message_id, subject, sender, received_date,
-                    analysis_json, priority, sentiment, confidence_score,
-                    processing_time_ms, tokens_per_second, model_version,
-                    cache_hit
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                message_id,
-                metadata['subject'],
-                metadata['from'],
-                metadata['date'],
-                json.dumps(analysis),
-                analysis['priority'],
-                analysis['sentiment'],
-                analysis['confidence'],
-                analysis['processing_time_ms'],
-                analysis.get('tokens_per_second', 0.0),
-                analysis['model_version'],
-                0  # Not a cache hit on first store
-            ))
-
-            conn.commit()
-            conn.close()
+            # Insert using DatabaseManager
+            self.db.insert_email_analysis(
+                message_id=message_id,
+                analysis=analysis,
+                metadata={
+                    'subject': metadata['subject'],
+                    'sender': metadata['from'],
+                    'received_date': metadata['date'],
+                    'model_version': analysis['model_version'],
+                    'processing_time_ms': analysis['processing_time_ms'],
+                    'tokens_per_second': analysis.get('tokens_per_second', 0.0)
+                }
+            )
 
             logger.debug(f"Analysis cached for message_id={message_id}")
 
@@ -632,7 +543,7 @@ Return ONLY the JSON object, no additional text:"""
     def _log_performance(self, analysis: Dict[str, Any], operation: str = 'email_analysis',
                         batch_size: int = 1):
         """
-        Log performance metrics to database.
+        Log performance metrics to database using DatabaseManager.
 
         Args:
             analysis: Analysis results with performance data
@@ -640,24 +551,13 @@ Return ONLY the JSON object, no additional text:"""
             batch_size: Number of emails processed (for batch operations)
         """
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-
-            cursor.execute('''
-                INSERT INTO performance_metrics (
-                    operation, model_version, tokens_per_second,
-                    processing_time_ms, batch_size
-                ) VALUES (?, ?, ?, ?, ?)
-            ''', (
-                operation,
-                analysis.get('model_version', 'unknown'),
-                analysis.get('tokens_per_second', 0.0),
-                analysis.get('processing_time_ms', 0),
-                batch_size
-            ))
-
-            conn.commit()
-            conn.close()
+            self.db.insert_performance_metric(
+                operation=operation,
+                processing_time_ms=analysis.get('processing_time_ms', 0),
+                tokens_per_second=analysis.get('tokens_per_second', 0.0),
+                model_version=analysis.get('model_version', 'unknown'),
+                batch_size=batch_size
+            )
 
             logger.debug(f"Performance logged: {operation}, {analysis.get('processing_time_ms', 0)}ms")
 
@@ -727,47 +627,40 @@ Return ONLY the JSON object, no additional text:"""
 
     def get_analysis_stats(self) -> Dict[str, Any]:
         """
-        Get analysis statistics from database.
+        Get analysis statistics from database using DatabaseManager.
 
         Returns:
             Statistics dictionary with counts, averages, etc.
         """
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            # Get counts by priority
+            high_count = len(self.db.get_emails_by_priority('High'))
+            medium_count = len(self.db.get_emails_by_priority('Medium'))
+            low_count = len(self.db.get_emails_by_priority('Low'))
+            total_analyses = high_count + medium_count + low_count
 
-            # Total analyses
-            cursor.execute('SELECT COUNT(*) FROM email_analysis')
-            total_analyses = cursor.fetchone()[0]
+            priority_dist = {
+                'High': high_count,
+                'Medium': medium_count,
+                'Low': low_count
+            }
 
-            # Priority distribution
-            cursor.execute('''
-                SELECT priority, COUNT(*)
-                FROM email_analysis
-                GROUP BY priority
-            ''')
-            priority_dist = dict(cursor.fetchall())
+            # Get performance metrics (last 365 days)
+            metrics = self.db.get_performance_metrics(days=365, operation='email_analysis')
 
-            # Average processing time
-            cursor.execute('SELECT AVG(processing_time_ms) FROM email_analysis WHERE cache_hit = 0')
-            avg_processing_time = cursor.fetchone()[0] or 0
-
-            # Cache hit rate
-            cursor.execute('SELECT COUNT(*) FROM email_analysis WHERE cache_hit = 1')
-            cache_hits = cursor.fetchone()[0]
-            cache_hit_rate = (cache_hits / total_analyses * 100) if total_analyses > 0 else 0
-
-            # Average tokens/sec
-            cursor.execute('SELECT AVG(tokens_per_second) FROM email_analysis WHERE tokens_per_second > 0')
-            avg_tokens_per_sec = cursor.fetchone()[0] or 0
-
-            conn.close()
+            # Calculate averages from metrics
+            avg_processing_time = 0
+            avg_tokens_per_sec = 0
+            if metrics:
+                avg_processing_time = sum(m['processing_time_ms'] for m in metrics) / len(metrics)
+                tokens_metrics = [m['tokens_per_second'] for m in metrics if m.get('tokens_per_second', 0) > 0]
+                if tokens_metrics:
+                    avg_tokens_per_sec = sum(tokens_metrics) / len(tokens_metrics)
 
             return {
                 'total_analyses': total_analyses,
                 'priority_distribution': priority_dist,
                 'avg_processing_time_ms': round(avg_processing_time, 2),
-                'cache_hit_rate_percent': round(cache_hit_rate, 2),
                 'avg_tokens_per_second': round(avg_tokens_per_sec, 2)
             }
 
