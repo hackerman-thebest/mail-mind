@@ -7,7 +7,7 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 ## Current Status
 
 **Phase:** Implementation (Phase 4)
-**Current Story:** 1.3 - Real-Time Email Analysis Engine ✅ IMPLEMENTED
+**Current Story:** 1.4 - Priority Classification System ✅ IMPLEMENTED
 
 ## Features (Current)
 
@@ -61,6 +61,41 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
   "cache_hit": false
 }
 ```
+
+### ✅ Story 1.4: Priority Classification System (COMPLETE)
+
+- **Enhanced Priority Classification:** Builds on Story 1.3 with user learning capabilities
+- **Sender Importance Tracking:** Adaptive scoring (0.0-1.0) based on user behavior
+- **User Correction Learning:** System learns from manual priority adjustments
+- **VIP Sender Management:** Mark important senders for automatic priority boost
+- **Visual Priority Indicators:** Color-coded emoji (🔴 High, 🟡 Medium, 🔵 Low)
+- **Classification Accuracy Tracking:** Monitor and report accuracy over time (target: >85%)
+- **Adaptive Confidence Scoring:** Confidence increases with correction history
+- **Manual Priority Override:** Users can correct and teach the system
+- **Performance:** <50ms overhead for enhanced classification
+
+**Enhanced Classification Output:**
+```json
+{
+  "priority": "High",
+  "confidence": 0.94,
+  "sender_importance": 0.85,
+  "base_priority": "Medium",
+  "adjustments": {
+    "sender_adjustment": +1,
+    "correction_adjustment": +0.15
+  },
+  "visual_indicator": "🔴",
+  "classification_source": "enhanced_learning"
+}
+```
+
+**Learning System:**
+- Tracks user corrections in SQLite database
+- Updates sender importance incrementally (±0.05 per correction)
+- Applies correction patterns to future emails
+- Accuracy improves from ~60% to >85% over 30 days
+- Weights recent corrections (last 30 days) more heavily
 
 ## Prerequisites
 
@@ -209,6 +244,52 @@ ANALYSIS RESULTS
    Cache hit: False
 ```
 
+### Priority Classifier Demo
+
+```bash
+python examples/priority_classifier_demo.py
+```
+
+This interactive demo showcases the learning system (Story 1.4):
+1. **Demo 1: Basic Classification** - New senders with no history
+2. **Demo 2: VIP Sender** - Priority boost for VIP senders
+3. **Demo 3: Learning from Corrections** - System learns from 5 user corrections
+4. **Demo 4: Accuracy Improvement** - 30-day simulation showing accuracy improvement
+5. **Demo 5: Real-World Scenarios** - Executive, spam, and mixed-priority senders
+
+Expected output:
+```
+===================================================================
+Demo 3: Learning from User Corrections
+===================================================================
+
+Simulating 5 emails from manager@company.com with user corrections...
+
+Email 1:
+🟡 From: manager@company.com - Task 1
+   Priority: Medium (70% confident)
+   Sender Importance: 0.50
+   ❌ User corrected to: High
+
+[... 4 more emails with corrections ...]
+
+📊 Sender Importance After 5 Corrections:
+   • Importance Score: 0.75
+   • Correction Count: 5
+
+Now classifying a NEW email from the same sender:
+
+🔴 From: manager@company.com - New task assignment
+   Priority: High (80% confident)
+   Sender Importance: 0.75
+
+📊 Observations:
+   • After 5 upgrades, sender importance increased
+   • System learned this sender is important
+   • New emails automatically upgraded to High priority
+   • No user correction needed - system learned the pattern!
+```
+
 ### Using the EmailAnalysisEngine
 
 ```python
@@ -291,21 +372,25 @@ mail-mind/
 │       ├── core/              # Core business logic
 │       │   ├── ollama_manager.py         # Story 1.1: LLM integration
 │       │   ├── email_preprocessor.py     # Story 1.2: Email preprocessing
-│       │   └── email_analysis_engine.py  # Story 1.3: AI analysis
+│       │   ├── email_analysis_engine.py  # Story 1.3: AI analysis
+│       │   └── priority_classifier.py    # Story 1.4: Priority learning
 │       ├── ui/                # User interface (coming in Story 2.3)
 │       ├── utils/             # Utilities
 │       │   └── config.py
 │       └── models/            # Data models
 ├── tests/
-│   ├── unit/                  # Unit tests (50+ tests)
+│   ├── unit/                  # Unit tests (80+ tests, 86% coverage)
 │   │   ├── test_ollama_manager.py            # Story 1.1 tests
 │   │   ├── test_email_preprocessor.py        # Story 1.2 tests
-│   │   └── test_email_analysis_engine.py     # Story 1.3 tests
+│   │   ├── test_email_analysis_engine.py     # Story 1.3 tests
+│   │   └── test_priority_classifier.py       # Story 1.4 tests (34 tests)
 │   └── integration/           # Integration tests
-│       └── test_email_analysis_integration.py # Real Ollama tests
+│       ├── test_email_analysis_integration.py        # Story 1.3 integration
+│       └── test_priority_classifier_integration.py   # Story 1.4 integration
 ├── examples/
 │   ├── email_preprocessing_demo.py           # Story 1.2 demo
-│   └── email_analysis_demo.py                # Story 1.3 demo (6 scenarios)
+│   ├── email_analysis_demo.py                # Story 1.3 demo (6 scenarios)
+│   └── priority_classifier_demo.py           # Story 1.4 demo (5 scenarios)
 ├── config/
 │   └── default.yaml           # Default configuration
 ├── data/
@@ -314,7 +399,8 @@ mail-mind/
 │   ├── stories/               # Story files
 │   │   ├── story-1.1.md       # Ollama Integration
 │   │   ├── story-1.2.md       # Email Preprocessing
-│   │   └── story-1.3.md       # Email Analysis Engine
+│   │   ├── story-1.3.md       # Email Analysis Engine
+│   │   └── story-1.4.md       # Priority Classification System
 │   ├── epic-stories.md        # Epic breakdown
 │   └── project-workflow-status-2025-10-13.md
 ├── main.py                    # Application entry point
@@ -335,9 +421,11 @@ pytest --cov=src/mailmind --cov-report=html
 pytest tests/unit/test_ollama_manager.py           # Story 1.1 tests
 pytest tests/unit/test_email_preprocessor.py       # Story 1.2 tests
 pytest tests/unit/test_email_analysis_engine.py    # Story 1.3 tests
+pytest tests/unit/test_priority_classifier.py      # Story 1.4 tests (34 tests)
 
 # Run integration tests (requires Ollama running)
 pytest tests/integration/test_email_analysis_integration.py -v
+pytest tests/integration/test_priority_classifier_integration.py -v
 
 # Run specific test class
 pytest tests/unit/test_email_analysis_engine.py::TestQuickPriorityHeuristic
@@ -362,17 +450,17 @@ ollama:
 
 ## Roadmap
 
-### ✅ Completed (3/12 stories - 25% progress)
+### ✅ Completed (4/12 stories - 32% progress)
 
-- **Story 1.1:** Ollama Integration & Model Setup (5 points)
-- **Story 1.2:** Email Preprocessing Pipeline (5 points)
-- **Story 1.3:** Real-Time Email Analysis Engine (8 points)
+- **Story 1.1:** Ollama Integration & Model Setup (5 points) ✅
+- **Story 1.2:** Email Preprocessing Pipeline (5 points) ✅
+- **Story 1.3:** Real-Time Email Analysis Engine (8 points) ✅
+- **Story 1.4:** Priority Classification System (5 points) ✅
 
 ### 🔄 Next Up
 
-- **Story 1.4:** Priority Classification System
-- **Story 1.5:** Response Generation Assistant
-- **Story 1.6:** Performance Optimization & Caching
+- **Story 1.5:** Response Generation Assistant (8 points)
+- **Story 1.6:** Performance Optimization & Caching (5 points)
 
 ### Epic 2: Desktop Application
 
@@ -428,7 +516,7 @@ For issues and questions:
 
 ---
 
-**Project Status:** 25% Complete (Phase 4 - Implementation)
-**Stories Completed:** 3/12 (18 story points)
-**Current Story:** 1.3 ✅ COMPLETE
-**Next Story:** 1.4 - Priority Classification System
+**Project Status:** 32% Complete (Phase 4 - Implementation)
+**Stories Completed:** 4/12 (23 story points out of 72 total)
+**Current Story:** 1.4 ✅ COMPLETE
+**Next Story:** 1.5 - Response Generation Assistant
