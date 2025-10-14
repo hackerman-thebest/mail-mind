@@ -1,0 +1,435 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.6</storyId>
+    <title>Performance Optimization & Caching</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-1.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>intelligent caching and optimization</iWant>
+    <soThat>repeated operations are near-instant and system resources are managed efficiently</soThat>
+    <tasks>
+      <task id="1" ac="AC1">Implement CacheManager class with SQLite backend for analysis result caching</task>
+      <task id="2" ac="AC2">Implement HardwareProfiler class to detect CPU, RAM, GPU, and classify hardware tier</task>
+      <task id="3" ac="AC3">Implement PerformanceTracker class for real-time metrics monitoring</task>
+      <task id="4" ac="AC4">Create batch processing queue system with pause/resume capability</task>
+      <task id="5" ac="AC5">Implement memory monitoring and hard limits (<8GB with model loaded)</task>
+      <task id="6" ac="AC6">Add graceful degradation logic under memory pressure</task>
+      <task id="7" ac="AC7">Implement performance trend analysis with 7/30-day averages</task>
+      <task id="8" ac="AC8">Implement cache invalidation strategy by model version</task>
+      <task id="9" ac="AC9">Add hardware-specific optimization for CPU-only vs GPU modes</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="P0">
+      <title>SQLite Result Caching</title>
+      <description>Cache all email analysis results in SQLite database with message_id as key. Cache hit returns complete analysis results in &lt;100ms. Store analysis results with model version for cache invalidation.</description>
+      <verificationCriteria>
+        - analysis_cache table created with message_id primary key
+        - Cache retrieval completes in &lt;50ms average, &lt;100ms max
+        - Model version stored and checked for cache invalidation
+        - Cache includes: priority, summary, tags, sentiment, action items, processing time
+        - Manual cache clear option functional
+        - Cache hit ratio tracked and displayed
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC2" priority="P0">
+      <title>Hardware Profiling on Startup</title>
+      <description>Detect CPU cores, RAM, GPU presence/VRAM on application startup. Calculate recommended model configuration based on hardware. Classify hardware into Minimum/Recommended/Optimal tiers.</description>
+      <verificationCriteria>
+        - HardwareProfiler detects CPU cores and architecture
+        - RAM total and available detected (in GB)
+        - GPU detection works for NVIDIA cards (py3nvml)
+        - Hardware tier classification: Insufficient/Minimum/Recommended/Optimal
+        - Expected tokens/second estimated based on hardware
+        - Hardware profile stored in database
+        - Profiling completes in &lt;5 seconds
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC3" priority="P0">
+      <title>Real-Time Performance Metrics</title>
+      <description>Track and display tokens/second, memory usage, processing time for each operation. Display queue depth for batch processing. Show cache hit rate percentage. Log performance metrics to database.</description>
+      <verificationCriteria>
+        - Tokens/second tracked during LLM inference
+        - Memory usage monitored (current/peak/available)
+        - Processing time recorded for each operation
+        - Queue depth displayed during batch processing
+        - Cache hit rate calculated and displayed
+        - Performance metrics logged to performance_metrics table
+        - Metrics UI updates in real-time during operations
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC4" priority="P1">
+      <title>Batch Processing Queue Management</title>
+      <description>Queue system for processing multiple emails sequentially. Target throughput: 10-15 emails/minute on recommended hardware. Progress indicator showing current email and queue position. Ability to pause/resume batch processing.</description>
+      <verificationCriteria>
+        - Sequential email processing queue implemented
+        - Target throughput met: 10-15 emails/minute on recommended hardware
+        - Progress indicator shows current/total emails
+        - Pause/resume functionality works correctly
+        - Priority queue support (high priority emails processed first)
+        - Cancel individual queued items or entire batch
+        - Queue persistence across application restarts
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC5" priority="P0">
+      <title>Memory Management & Caps</title>
+      <description>Hard memory limit: &lt;8GB RAM with model loaded. Monitor memory usage every 5 seconds during operations. Trigger garbage collection when memory &gt;85% of limit. Reduce batch size automatically under memory pressure.</description>
+      <verificationCriteria>
+        - Memory usage stays under 8GB with model loaded
+        - Memory monitored every 5 seconds during operations
+        - Garbage collection triggered at 85% memory usage
+        - Batch size reduced automatically under memory pressure
+        - User warned if memory consistently exceeds 90% of limit
+        - Memory warnings logged to application logs
+        - Model reload/swap considered if memory issues persist
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC6" priority="P1">
+      <title>Graceful Degradation Under Load</title>
+      <description>Detect insufficient memory before operations and warn user. Automatically reduce batch size if processing fails. Fall back to CPU-only mode if GPU memory exhausted. Suggest closing other applications if RAM critically low.</description>
+      <verificationCriteria>
+        - Insufficient memory detected before operations
+        - Batch size reduced automatically on failure
+        - CPU-only fallback when GPU memory exhausted
+        - User-friendly suggestions when RAM critically low
+        - Queue management with smart throttling under load
+        - New work rejected when at capacity to prevent crashes
+        - Error messages avoid technical jargon
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC7" priority="P1">
+      <title>Performance Trend Analysis</title>
+      <description>Store performance metrics in database with timestamps. Calculate average tokens/second over last 7/30 days. Track performance degradation trends over time. Alert user if performance degrades &gt;20% from baseline.</description>
+      <verificationCriteria>
+        - Performance metrics stored with timestamps
+        - 7-day and 30-day averages calculated
+        - Performance degradation trends tracked
+        - User alerted if &gt;20% degradation from baseline
+        - Performance data exportable to CSV
+        - Performance trends displayed in settings/diagnostics panel
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC8" priority="P0">
+      <title>Cache Strategy & Invalidation</title>
+      <description>Cache all analysis results indefinitely by default. Invalidate cache entries when model version changes. Provide "Clear Cache" button in settings with confirmation. Show cache statistics: entries, total size, hit rate, oldest entry.</description>
+      <verificationCriteria>
+        - All analysis results cached indefinitely by default
+        - Cache invalidated automatically when model version changes
+        - "Clear Cache" button in settings with confirmation dialog
+        - Cache statistics display: total entries, size, hit rate, oldest entry
+        - Optional cache size limit with LRU eviction
+        - Database indexes on message_id for &lt;10ms lookups
+        - Cache warming on startup (optional): pre-analyze recent emails
+      </verificationCriteria>
+    </criterion>
+    <criterion id="AC9" priority="P1">
+      <title>Hardware-Specific Optimization</title>
+      <description>CPU-only mode: Optimize for slower inference (reduce batch size, increase timeout). GPU mode: Maximize parallelism and batch size for throughput. Auto-adjust temperature/sampling based on hardware performance. Warn users on minimum hardware if performance will be poor.</description>
+      <verificationCriteria>
+        - CPU-only mode optimizations applied (reduced batch size, longer timeouts)
+        - GPU mode optimizations applied (increased batch size, parallelism)
+        - Temperature/sampling adjusted based on hardware performance
+        - Minimum hardware users warned about expected performance
+        - Hardware upgrade recommendations provided in settings
+        - Model selection based on available VRAM (8B vs 7B vs 3B)
+        - Apple Silicon Metal acceleration detection (future)
+      </verificationCriteria>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-stories.md</path>
+        <title>Epic 1 - Story 1.6 Specification</title>
+        <section>Story 1.6: Performance Optimization & Caching</section>
+        <snippet>
+          Cache Strategy:
+          - Cache all analysis results indefinitely
+          - Invalidate cache if model version changes
+          - Provide manual cache clear option in settings
+
+          Hardware Profiler output format:
+          {
+            "cpu_cores": 8,
+            "ram_available_gb": 24,
+            "gpu_detected": "NVIDIA RTX 4060",
+            "gpu_vram_gb": 8,
+            "recommended_model": "llama3.1:8b-instruct-q4_K_M",
+            "expected_tokens_per_second": 85
+          }
+        </snippet>
+        <relevance>Defines acceptance criteria, cache strategy, and hardware profiling requirements for Story 1.6</relevance>
+      </doc>
+      <doc>
+        <path>README.md</path>
+        <title>Current Features and Integration Patterns</title>
+        <section>Story 1.3: Real-Time Email Analysis Engine</section>
+        <snippet>
+          - **SQLite Caching:** Sub-100ms cache retrieval for analyzed emails
+          - **Batch Processing:** Analyze multiple emails with progress tracking
+          - **Performance Monitoring:** Tokens/second, processing time metrics
+          - **Model Version Tracking:** Automatic cache invalidation on model changes
+
+          Output Format includes:
+          {
+            "processing_time_ms": 1847,
+            "tokens_per_second": 52.3,
+            "model_version": "llama3.1:8b-instruct-q4_K_M",
+            "cache_hit": false
+          }
+        </snippet>
+        <relevance>Shows existing caching and performance tracking patterns in Story 1.3 that Story 1.6 will enhance</relevance>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.3.md</path>
+        <title>Real-Time Analysis Engine - Existing Caching Implementation</title>
+        <section>Performance Targets and Caching</section>
+        <snippet>
+          Story 1.3 already implements basic caching:
+          - email_analysis table for caching results
+          - performance_metrics table for logging
+          - Cache hit returns results in &lt;100ms
+          - Model version tracking for cache invalidation
+
+          Story 1.6 enhances this with:
+          - CacheManager abstraction layer
+          - Hardware profiling and optimization
+          - Advanced memory management
+          - Batch queue management
+        </snippet>
+        <relevance>Story 1.6 builds on and enhances the caching foundation from Story 1.3</relevance>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>class</kind>
+        <symbol>EmailAnalysisEngine</symbol>
+        <lines>44-777</lines>
+        <reason>Contains existing caching implementation (_get_cached_analysis, _cache_analysis), performance tracking (_log_performance), and database schema patterns that Story 1.6 will enhance and abstract</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine._init_database</symbol>
+        <lines>98-158</lines>
+        <reason>Shows existing database schema for email_analysis and performance_metrics tables. Story 1.6 will add analysis_cache table with enhanced schema</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine._get_cached_analysis</symbol>
+        <lines>519-558</lines>
+        <reason>Existing cache retrieval logic that Story 1.6 will move into CacheManager class with enhanced features</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine._cache_analysis</symbol>
+        <lines>560-605</lines>
+        <reason>Existing cache storage logic that Story 1.6 will move into CacheManager class with model version tracking</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine._log_performance</symbol>
+        <lines>632-665</lines>
+        <reason>Existing performance logging that Story 1.6 will enhance with PerformanceTracker class</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/email_analysis_engine.py</path>
+        <kind>method</kind>
+        <symbol>EmailAnalysisEngine.analyze_batch</symbol>
+        <lines>667-726</lines>
+        <reason>Existing batch processing that Story 1.6 will enhance with queue management, pause/resume, and memory monitoring</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/core/ollama_manager.py</path>
+        <kind>class</kind>
+        <symbol>OllamaManager</symbol>
+        <lines>1-300</lines>
+        <reason>Story 1.6 will integrate with OllamaManager to get current_model version for cache invalidation and hardware-optimized settings</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="ollama" version=">=0.1.6">LLM integration (existing)</package>
+        <package name="pysqlite3" version=">=0.5.0">SQLite database for caching (existing)</package>
+        <package name="beautifulsoup4" version=">=4.12.0">HTML parsing (existing)</package>
+        <package name="lxml" version=">=4.9.0">HTML parser backend (existing)</package>
+        <package name="pytest" version=">=7.4.0">Testing framework (existing)</package>
+        <package name="psutil" version="NEEDED">System resource monitoring for HardwareProfiler - MUST BE ADDED</package>
+        <package name="py3nvml" version="OPTIONAL">NVIDIA GPU detection - OPTIONAL, graceful fallback if not available</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Performance: Cache retrieval must complete in &lt;100ms (target: &lt;50ms)</constraint>
+    <constraint>Performance: Hardware profiling must complete in &lt;5 seconds on startup</constraint>
+    <constraint>Performance: Batch processing target 10-15 emails/minute on recommended hardware</constraint>
+    <constraint>Memory: Hard limit &lt;8GB RAM with model loaded, monitoring every 5 seconds</constraint>
+    <constraint>Architecture: CacheManager must be a standalone class that can be used independently</constraint>
+    <constraint>Architecture: HardwareProfiler must be a standalone class with static methods</constraint>
+    <constraint>Architecture: PerformanceTracker must integrate with existing performance_metrics table</constraint>
+    <constraint>Compatibility: Must work with existing EmailAnalysisEngine without breaking changes</constraint>
+    <constraint>Database: Reuse existing email_analysis and performance_metrics tables where possible</constraint>
+    <constraint>Testing: Unit tests for CacheManager, HardwareProfiler, PerformanceTracker required (&gt;80% coverage)</constraint>
+    <constraint>Testing: Integration tests with EmailAnalysisEngine for end-to-end caching required</constraint>
+    <constraint>Testing: Performance benchmarks to verify &lt;100ms cache hits and throughput targets</constraint>
+    <constraint>Error Handling: GPU detection failure must gracefully fallback to CPU-only mode</constraint>
+    <constraint>Error Handling: Database connection failure during caching must not crash analysis</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CacheManager.__init__</name>
+      <kind>constructor</kind>
+      <signature>def __init__(self, db_path: str)</signature>
+      <path>src/mailmind/core/cache_manager.py (NEW FILE)</path>
+      <description>Initialize CacheManager with SQLite database path. Creates analysis_cache table if not exists.</description>
+    </interface>
+    <interface>
+      <name>CacheManager.get_cached_analysis</name>
+      <kind>method</kind>
+      <signature>def get_cached_analysis(self, message_id: str, current_model_version: str) -> Optional[Dict[str, Any]]</signature>
+      <path>src/mailmind/core/cache_manager.py (NEW FILE)</path>
+      <description>Retrieve cached analysis result if available and valid. Returns None if not cached or model version mismatch. Must complete in &lt;100ms.</description>
+    </interface>
+    <interface>
+      <name>CacheManager.cache_analysis</name>
+      <kind>method</kind>
+      <signature>def cache_analysis(self, message_id: str, analysis: Dict[str, Any], model_version: str)</signature>
+      <path>src/mailmind/core/cache_manager.py (NEW FILE)</path>
+      <description>Store analysis result in cache with model version for future invalidation.</description>
+    </interface>
+    <interface>
+      <name>CacheManager.invalidate_by_model_version</name>
+      <kind>method</kind>
+      <signature>def invalidate_by_model_version(self, old_model_version: str) -> int</signature>
+      <path>src/mailmind/core/cache_manager.py (NEW FILE)</path>
+      <description>Invalidate all cache entries for a specific model version. Returns count of deleted entries.</description>
+    </interface>
+    <interface>
+      <name>CacheManager.get_cache_stats</name>
+      <kind>method</kind>
+      <signature>def get_cache_stats(self) -> Dict[str, Any]</signature>
+      <path>src/mailmind/core/cache_manager.py (NEW FILE)</path>
+      <description>Return cache statistics: total entries, size, oldest entry, by-model breakdown.</description>
+    </interface>
+    <interface>
+      <name>HardwareProfiler.detect_hardware</name>
+      <kind>static_method</kind>
+      <signature>@staticmethod def detect_hardware() -> Dict[str, Any]</signature>
+      <path>src/mailmind/core/hardware_profiler.py (NEW FILE)</path>
+      <description>Detect system hardware (CPU, RAM, GPU) and return hardware profile dict with tier classification and performance estimates. Must complete in &lt;5 seconds.</description>
+    </interface>
+    <interface>
+      <name>HardwareProfiler.monitor_resources</name>
+      <kind>static_method</kind>
+      <signature>@staticmethod def monitor_resources() -> Dict[str, Any]</signature>
+      <path>src/mailmind/core/hardware_profiler.py (NEW FILE)</path>
+      <description>Monitor current resource usage (CPU%, RAM%, available RAM) for real-time tracking.</description>
+    </interface>
+    <interface>
+      <name>PerformanceTracker.__init__</name>
+      <kind>constructor</kind>
+      <signature>def __init__(self, db_path: str)</signature>
+      <path>src/mailmind/core/performance_tracker.py (NEW FILE)</path>
+      <description>Initialize PerformanceTracker with SQLite database path. Uses existing performance_metrics table.</description>
+    </interface>
+    <interface>
+      <name>PerformanceTracker.log_operation</name>
+      <kind>method</kind>
+      <signature>def log_operation(self, operation: str, processing_time_ms: int, tokens_per_second: float = None, memory_usage_mb: int = None)</signature>
+      <path>src/mailmind/core/performance_tracker.py (NEW FILE)</path>
+      <description>Log performance metrics for an operation to database.</description>
+    </interface>
+    <interface>
+      <name>PerformanceTracker.get_metrics_summary</name>
+      <kind>method</kind>
+      <signature>def get_metrics_summary(self, days: int = 7) -> Dict[str, Any]</signature>
+      <path>src/mailmind/core/performance_tracker.py (NEW FILE)</path>
+      <description>Get performance metrics summary for last N days with averages by operation type.</description>
+    </interface>
+    <interface>
+      <name>OllamaManager.current_model</name>
+      <kind>property</kind>
+      <signature>@property current_model</signature>
+      <path>src/mailmind/core/ollama_manager.py (EXISTING)</path>
+      <description>Get current LLM model version (e.g., "llama3.1:8b-instruct-q4_K_M") for cache invalidation checks. EXISTING interface from Story 1.1.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards for MailMind project:
+      - Framework: pytest with pytest-cov for coverage reporting
+      - Target: &gt;80% code coverage for all new classes
+      - Unit tests in tests/unit/ directory
+      - Integration tests in tests/integration/ directory
+      - Test file naming: test_{module_name}.py
+      - Test class naming: TestClassName for class tests, TestFunctionName for function tests
+      - Mock external dependencies (Ollama, database) in unit tests
+      - Use real dependencies in integration tests
+      - Performance tests should verify targets (cache &lt;100ms, throughput 10-15/min)
+      - All tests must pass before story completion
+    </standards>
+    <locations>
+      <location>tests/unit/test_cache_manager.py (NEW FILE)</location>
+      <location>tests/unit/test_hardware_profiler.py (NEW FILE)</location>
+      <location>tests/unit/test_performance_tracker.py (NEW FILE)</location>
+      <location>tests/integration/test_caching_integration.py (NEW FILE)</location>
+      <location>tests/integration/test_email_analysis_integration.py (EXISTING - may need updates)</location>
+    </locations>
+    <ideas>
+      <!-- Cache Manager Tests -->
+      <test ac="AC1" file="test_cache_manager.py">Test CacheManager initialization and database schema creation</test>
+      <test ac="AC1" file="test_cache_manager.py">Test cache hit with valid cached entry returns result in &lt;100ms</test>
+      <test ac="AC1" file="test_cache_manager.py">Test cache miss when entry not found returns None</test>
+      <test ac="AC1" file="test_cache_manager.py">Test cache invalidation by message_id removes entry</test>
+      <test ac="AC8" file="test_cache_manager.py">Test cache invalidation by model version removes all matching entries</test>
+      <test ac="AC8" file="test_cache_manager.py">Test cache statistics calculation (entries, size, oldest)</test>
+      <test ac="AC1" file="test_cache_manager.py">Test cache with corrupted JSON data handles gracefully</test>
+      <test ac="AC1" file="test_cache_manager.py">Test access count increments on cache hits</test>
+      <test ac="AC8" file="test_cache_manager.py">Test clear_all removes all cache entries</test>
+      <test ac="AC1" file="test_cache_manager.py">Test cache performance: 1000 sequential lookups in &lt;50ms average</test>
+
+      <!-- Hardware Profiler Tests -->
+      <test ac="AC2" file="test_hardware_profiler.py">Test HardwareProfiler detects CPU cores correctly</test>
+      <test ac="AC2" file="test_hardware_profiler.py">Test HardwareProfiler detects RAM total and available</test>
+      <test ac="AC2" file="test_hardware_profiler.py">Test HardwareProfiler GPU detection (mock NVIDIA GPU)</test>
+      <test ac="AC2" file="test_hardware_profiler.py">Test HardwareProfiler GPU detection failure fallback to CPU-only</test>
+      <test ac="AC2" file="test_hardware_profiler.py">Test hardware tier classification logic (Optimal/Recommended/Minimum/Insufficient)</test>
+      <test ac="AC2" file="test_hardware_profiler.py">Test performance estimation based on hardware tier</test>
+      <test ac="AC9" file="test_hardware_profiler.py">Test model recommendation based on VRAM availability</test>
+      <test ac="AC3" file="test_hardware_profiler.py">Test monitor_resources returns current CPU/RAM usage</test>
+      <test ac="AC2" file="test_hardware_profiler.py">Test hardware detection completes in &lt;5 seconds</test>
+
+      <!-- Performance Tracker Tests -->
+      <test ac="AC3" file="test_performance_tracker.py">Test PerformanceTracker initialization with database</test>
+      <test ac="AC3" file="test_performance_tracker.py">Test log_operation stores metrics in database</test>
+      <test ac="AC3" file="test_performance_tracker.py">Test get_metrics_summary calculates averages correctly</test>
+      <test ac="AC7" file="test_performance_tracker.py">Test metrics summary for 7-day and 30-day periods</test>
+      <test ac="AC7" file="test_performance_tracker.py">Test performance degradation detection (&gt;20% from baseline)</test>
+      <test ac="AC3" file="test_performance_tracker.py">Test metrics logging overhead is &lt;5ms per operation</test>
+
+      <!-- Integration Tests -->
+      <test ac="AC1,AC8" file="test_caching_integration.py">Test end-to-end caching: analyze → cache → retrieve with EmailAnalysisEngine</test>
+      <test ac="AC1" file="test_caching_integration.py">Test cache performance: retrieval in &lt;100ms with real database</test>
+      <test ac="AC8" file="test_caching_integration.py">Test cache invalidation when model version changes in EmailAnalysisEngine</test>
+      <test ac="AC4" file="test_caching_integration.py">Test batch processing with queue management and progress tracking</test>
+      <test ac="AC5" file="test_caching_integration.py">Test memory monitoring during batch operations</test>
+      <test ac="AC6" file="test_caching_integration.py">Test graceful degradation under simulated memory pressure</test>
+      <test ac="AC4" file="test_caching_integration.py">Test batch processing throughput: 10-15 emails/minute on test hardware</test>
+    </ideas>
+  </tests>
+</story-context>
