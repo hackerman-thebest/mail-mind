@@ -10,9 +10,9 @@
 ## Workflow Status Tracker
 
 **Current Phase:** 4-Implementation
-**Current Workflow:** Story 2.4 DRAFTED ✏️ - Needs review via story-ready
-**Current Agent:** SM (for story-ready approval) OR User (review Story 2.4)
-**Overall Progress:** 81% (57/72 story points complete + Story 2.4 drafted - Epic 1: 100% ✅, Epic 2: 50% - 3/6 complete)
+**Current Workflow:** Story 2.4 READY FOR DEVELOPMENT ✅ - Generate context or implement
+**Current Agent:** SM (for story-context) OR DEV (for dev-story)
+**Overall Progress:** 82% (57/72 story points complete + Story 2.4 approved - Epic 1: 100% ✅, Epic 2: 50% - 3/6 complete)
 
 ### Phase Completion Status
 
@@ -54,29 +54,35 @@
 
 | Epic | Story | ID  | Title | File |
 | ---- | ----- | --- | ----- | ---- |
-| 2 | 5 | 2.5 | Hardware Profiling & Onboarding Wizard | docs/stories/story-2.5.md |
 | 2 | 6 | 2.6 | Error Handling, Logging & Installer | docs/stories/story-2.6.md |
 
-**Total in backlog:** 2 stories (10 story points)
+**Total in backlog:** 1 story (8 story points)
 
 **Instructions:**
 - Stories move from BACKLOG → TODO when Phase 4 begins
 - SM agent uses story information from this table to draft new stories
 - Story order follows recommended implementation sequence from epic-stories.md
 
-#### TODO (Needs Review)
+#### TODO (Needs Drafting)
+
+- **Story ID:** 2.5
+- **Story Title:** Hardware Profiling & Onboarding Wizard
+- **Story File:** `docs/stories/story-2.5.md`
+- **Story Points:** 5
+- **Status:** Not yet created
+- **Action:** SM should run `create-story` workflow to draft this story
+
+#### IN PROGRESS (Approved for Development)
 
 - **Story ID:** 2.4
 - **Story Title:** Settings & Configuration System
 - **Story File:** `docs/stories/story-2.4.md`
 - **Story Points:** 5
-- **Status:** Draft (needs review via story-ready workflow)
+- **Story Status:** Ready
 - **Created:** 2025-10-14
-- **Action:** User should review story and run `story-ready` to approve for development
-
-#### IN PROGRESS (Approved for Development)
-
-None - Ready for Story 2.4 (pending review and approval)
+- **Approved:** 2025-10-14
+- **Context File:** Not yet generated (run `story-context` workflow)
+- **Action:** SM should run `story-context` workflow to generate implementation context, then DEV should run `dev-story` to implement
 
 #### DONE (Completed Stories)
 
@@ -100,14 +106,14 @@ None - Ready for Story 2.4 (pending review and approval)
 **Total Epics:** 2
 **Total Stories:** 12
 **Total Story Points:** 72
-**Stories in Backlog:** 2 (10 points)
-**Stories in TODO:** 1 (Story 2.4 - 5 points)
-**Stories in IN PROGRESS:** 0
+**Stories in Backlog:** 1 (Story 2.6 - 8 points)
+**Stories in TODO:** 1 (Story 2.5 - 5 points)
+**Stories in IN PROGRESS:** 1 (Story 2.4 - 5 points)
 **Stories DONE:** 9 (Stories 1.1-1.6, 2.1-2.3 - 57 points total)
 
 **Epic Breakdown:**
 - Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 6/6 complete (100% done) ✅
-- Epic 2: Desktop Application & User Experience (6 stories, 36 points) - 3/6 complete (50% done, Stories 2.1-2.3 complete, Story 2.4 in TODO, 2 in backlog)
+- Epic 2: Desktop Application & User Experience (6 stories, 36 points) - 3/6 complete (50% done, Stories 2.1-2.3 complete, Story 2.4 in progress, Story 2.5 in TODO, 1 in backlog)
 
 ### Artifacts Generated
 
@@ -132,13 +138,13 @@ None - Ready for Story 2.4 (pending review and approval)
 
 ### Next Action Required
 
-**What to do next:** Review Story 2.4 and run story-ready workflow
+**What to do next:** Generate context for Story 2.4, then implement it
 
-**Current Status:** ✏️ **Story 2.4 DRAFTED** (Settings & Configuration System - ready for review)
+**Current Status:** ✅ **Story 2.4 READY FOR DEVELOPMENT** (Settings & Configuration System - approved and ready)
 
 **Epic Progress:**
 - **Epic 1:** 6/6 complete (100% - all stories done) ✅
-- **Epic 2:** 3/6 complete (50% - Stories 2.1-2.3 done, Story 2.4 in TODO, 2 in backlog)
+- **Epic 2:** 3/6 complete (50% - Stories 2.1-2.3 done, Story 2.4 in progress, Story 2.5 in TODO, 1 in backlog)
 
 **Story 2.3 Completion Summary:**
 - **Title:** CustomTkinter UI Framework
@@ -154,29 +160,35 @@ None - Ready for Story 2.4 (pending review and approval)
   - Professional UX with themes, shortcuts, loading states
   - Clean MVC architecture ready for integration
 
-**Story 2.4 (Next in Queue - TODO):**
+**Story 2.4 (IN PROGRESS):**
 - **Title:** Settings & Configuration System
 - **Story Points:** 5
-- **Status:** Draft (needs review)
+- **Status:** Ready (approved for development)
 - **Priority:** P1 (Important)
 - **File:** docs/stories/story-2.4.md ✅ Created
 - **Created:** 2025-10-14
-- **Action Required:** User should review and run story-ready to approve
+- **Approved:** 2025-10-14
+- **Action Required:** Generate context, then implement
+
+**Story 2.5 (Next in Queue - TODO):**
+- **Title:** Hardware Profiling & Onboarding Wizard
+- **Story Points:** 5
+- **Status:** Not yet created
+- **File:** docs/stories/story-2.5.md
+- **Action Required:** SM should draft Story 2.5
 
 **Next Steps:**
 
-1. **Recommended:** Review Story 2.4 and run SM agent with `story-ready` workflow
-   - Review comprehensive story specification (9 ACs, 9 tasks)
-   - Review settings schema with 19 settings across 5 categories
-   - Review integration with Stories 2.2 (DatabaseManager) and 2.3 (SettingsDialog)
-   - Approve story for development via story-ready workflow
+1. **Recommended:** Run SM agent with `story-context` workflow
+   - Generate comprehensive context XML for Story 2.4
+   - Include integration details with Stories 2.2 (DatabaseManager) and 2.3 (SettingsDialog)
+   - Provide full implementation context for DEV agent
 
-2. **Alternative:** Continue with backend integration work for Story 2.3
-   - Implement EmailController
-   - Add threading for background tasks
-   - Write integration tests
+2. **Alternative:** Skip context generation and run DEV agent with `dev-story` workflow
+   - Faster start, but less implementation context
+   - Only recommended if story is very straightforward
 
-**Agent to load:** SM (for story-ready) OR DEV (for Story 2.3 integration work)
+**Agent to load:** SM (for story-context - recommended) OR DEV (for dev-story)
 
 ---
 
@@ -318,6 +330,8 @@ This will:
   - Schema consolidation strategy for 5 tables
   - Updated story-2.2.md with context reference in Dev Agent Record section
   - Next: DEV agent should run dev-story to implement Story 2.2
+
+- **2025-10-14**: Story 2.4 (Settings & Configuration System) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 2.5 (Hardware Profiling & Onboarding Wizard) moved from BACKLOG → TODO.
 
 ---
 
@@ -1166,6 +1180,26 @@ This will:
     - Current workflow: create-story (Story 2.4) - Complete
     - Progress: 81% (includes Story 2.4 draft completion)
   - Set next action: Review Story 2.4 and run story-ready workflow
+
+### 2025-10-14 - SM Agent (Fifteenth Session - story-ready workflow - Story 2.4)
+
+- Phase: 4-Implementation (story approval)
+- Changes:
+  - User approved Story 2.4 for development
+  - Story 2.4 moved from TODO to IN PROGRESS
+  - Updated story status in story-2.4.md: Draft → Ready
+  - Added approval date to story file (2025-10-14)
+  - Moved Story 2.5 (Hardware Profiling & Onboarding Wizard) from BACKLOG to TODO
+  - Updated backlog count: 2 → 1 stories (10 → 8 points)
+  - Updated workflow status counts:
+    - BACKLOG: 2 → 1 stories (8 points)
+    - TODO: 1 story (Story 2.5 - 5 points)
+    - IN PROGRESS: 0 → 1 (Story 2.4 - 5 points)
+    - DONE: 9 stories (57 points - Epic 1 complete, Epic 2: 3/6)
+  - Updated artifacts list: Story 2.4 status Draft → Ready
+  - Updated progress to 82%
+  - Set next action: story-context (recommended) OR dev-story (implement Story 2.4)
+  - Epic 2 status: 3/6 complete (Story 2.4 in progress, Story 2.5 in TODO, 1 in backlog)
 
 ---
 

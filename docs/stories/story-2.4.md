@@ -1,6 +1,6 @@
 # Story 2.4: Settings & Configuration System
 
-**Status:** Draft
+**Status:** Ready
 **Epic:** 2 - Desktop Application & User Experience
 **Story Points:** 5
 **Priority:** P1 (Important)
