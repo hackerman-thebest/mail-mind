@@ -81,8 +81,8 @@
 - **Story Status:** Ready
 - **Created:** 2025-10-14
 - **Approved:** 2025-10-14
-- **Context File:** Not yet generated (run `story-context` workflow)
-- **Action:** SM should run `story-context` workflow to generate implementation context, then DEV should run `dev-story` to implement
+- **Context File:** `docs/stories/story-context-2.4.xml` ✅ Generated 2025-10-14
+- **Action:** DEV should run `dev-story` workflow to implement Story 2.4
 
 #### DONE (Completed Stories)
 
@@ -133,6 +133,9 @@
 | Story 2.1 Context | Complete ✅ | docs/stories/story-context-2.1.xml | 2025-10-14 |
 | Story 2.2 File | Complete ✅ | docs/stories/story-2.2.md | 2025-10-14 |
 | Story 2.2 Context | Complete ✅ | docs/stories/story-context-2.2.xml | 2025-10-14 |
+| Story 2.3 File | Complete ✅ | docs/stories/story-2.3.md | 2025-10-14 |
+| Story 2.4 File | Complete ✅ | docs/stories/story-2.4.md | 2025-10-14 |
+| Story 2.4 Context | Complete ✅ | docs/stories/story-context-2.4.xml | 2025-10-14 |
 | CHANGELOG | Complete | CHANGELOG.md | 2025-10-13 |
 | Verification Report | Complete | docs/VERIFICATION-REPORT.md | 2025-10-13 |
 
@@ -179,16 +182,13 @@
 
 **Next Steps:**
 
-1. **Recommended:** Run SM agent with `story-context` workflow
-   - Generate comprehensive context XML for Story 2.4
-   - Include integration details with Stories 2.2 (DatabaseManager) and 2.3 (SettingsDialog)
-   - Provide full implementation context for DEV agent
+1. **Recommended:** Run DEV agent with `dev-story` workflow
+   - Implement Story 2.4 using comprehensive context XML
+   - Context file includes 4 doc artifacts, 4 code artifacts, 10 constraints, 8 interfaces
+   - Full integration patterns with Stories 2.2 (DatabaseManager) and 2.3 (SettingsDialog)
+   - 95+ test ideas mapped to all 9 acceptance criteria
 
-2. **Alternative:** Skip context generation and run DEV agent with `dev-story` workflow
-   - Faster start, but less implementation context
-   - Only recommended if story is very straightforward
-
-**Agent to load:** SM (for story-context - recommended) OR DEV (for dev-story)
+**Agent to load:** DEV (for dev-story implementation)
 
 ---
 

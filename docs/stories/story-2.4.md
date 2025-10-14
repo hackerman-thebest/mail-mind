@@ -683,7 +683,13 @@ def validate_setting(key: str, value: any) -> Optional[str]:
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+**Context File:** `/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-context-2.4.xml`
+**Generated:** 2025-10-14
+**Workflow:** story-context (BMAD v1.0)
+**Artifacts Included:** 4 documentation artifacts, 4 code artifacts
+**Constraints:** 10 architectural constraints
+**Interfaces:** 8 integration interfaces
+**Test Plan:** 95+ test ideas mapped to all 9 acceptance criteria
 
 ### Agent Model Used
 

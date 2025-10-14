@@ -1,0 +1,795 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.4</storyId>
+    <title>Settings & Configuration System</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>a comprehensive settings system to customize MailMind's behavior</iWant>
+    <soThat>the application works according to my preferences and all settings persist across sessions</soThat>
+    <tasks>
+### Task 1: SettingsManager Core Implementation (AC1, AC3, AC6)
+- Create src/mailmind/core/settings_manager.py
+- Implement SettingsManager class with singleton pattern
+- Define all 19 settings with metadata (key, default, type, category, validation rules)
+- Implement load_settings() - read from database or use defaults
+- Implement save_settings(dict) - validate and write to database
+- Implement get_setting(key) - retrieve single setting value
+- Implement set_setting(key, value) - validate and update setting
+- Implement reset_to_defaults() - restore all defaults
+- Add validation logic for each setting type (range checks, enum validation)
+- Add thread-safety via locks for concurrent access
+- Write unit tests for SettingsManager operations
+
+### Task 2: Database Integration (AC1)
+- Use DatabaseManager's user_preferences table for storage
+- Implement CRUD operations via DatabaseManager
+- Populate default settings on first run
+- Handle setting retrieval with fallback to defaults
+- Store setting metadata (category, value_type) in database
+- Write integration tests with DatabaseManager
+
+### Task 3: YAML Config File Support (AC2)
+- Create config/ directory for YAML files
+- Implement YAML export: export_to_yaml(filepath) method
+- Implement YAML import: load_from_yaml(filepath) method
+- Generate commented YAML with setting descriptions
+- Sync YAML changes to database on startup
+- Handle YAML parsing errors gracefully
+- Write unit tests for YAML export/import
+
+### Task 4: SettingsDialog Integration (AC4)
+- Update SettingsDialog to use SettingsManager
+- Replace _get_default_settings() with SettingsManager.load_settings()
+- Update _on_save_clicked() to call SettingsManager.save_settings()
+- Update _on_reset_clicked() to call SettingsManager.reset_to_defaults()
+- Add validation error handling with user-friendly messages
+- Display toast notifications on successful save
+- Write integration tests with SettingsDialog
+
+### Task 5: Settings Change Notification System (AC8)
+- Implement Observer pattern for settings changes
+- Create SettingChangeListener interface
+- Implement subscribe(setting_key, callback) method
+- Implement unsubscribe(setting_key, callback) method
+- Notify observers when settings change via set_setting() or save_settings()
+- Add example observer: ThemeManager subscribes to "theme" setting
+- Write unit tests for observer pattern
+
+### Task 6: Immediate Settings Application (AC5)
+- Identify settings requiring restart vs immediate application
+- Implement immediate application for theme changes (ThemeManager.set_theme())
+- Implement immediate application for log level (logging.setLevel())
+- Display warning dialog for settings requiring restart
+- Add "Restart Now" button for restart-required settings
+- Write tests for immediate vs deferred application
+
+### Task 7: Export/Import Feature (AC9)
+- Add Export/Import buttons to Settings Dialog Advanced tab
+- Implement timestamped export: settings-backup-2025-10-14.yaml
+- Implement import with file picker dialog
+- Validate imported settings (schema, types, ranges)
+- Handle conflicts: prompt user to keep existing or use imported
+- Show success/error messages after export/import
+- Write tests for export/import with various scenarios
+
+### Task 8: Component Integration Examples
+- ThemeManager subscribes to "theme" setting
+- OllamaManager subscribes to "model" and "temperature" settings
+- BatchQueueManager subscribes to "batch_size" setting
+- PerformanceTracker subscribes to "use_gpu" and "max_concurrent" settings
+- StatusBar displays warning icon if settings require restart
+- Write integration examples in examples/settings_integration_demo.py
+
+### Task 9: Testing and Documentation
+- Write comprehensive unit tests (target: >85% coverage)
+- Write integration tests with DatabaseManager and SettingsDialog
+- Test all 19 settings load/save correctly
+- Test validation rejects invalid values
+- Test observer notifications work correctly
+- Create demo script: examples/settings_demo.py
+- Document settings categories and validation rules
+- Update README with settings management instructions
+- Update CHANGELOG with Story 2.4 completion
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC1: Settings Storage in user_preferences Table
+- All 19 settings stored in DatabaseManager's user_preferences table
+- Settings organized by category: general (4), ai_model (4), performance (4), privacy (3), advanced (4)
+- Each setting has: key, value, default_value, value_type, category
+- Value types properly enforced: string, int, float, bool, json
+- Settings loaded on application startup with defaults if not found
+
+### AC2: YAML Config File Backup
+- Export settings to YAML file: config/user-settings.yaml
+- YAML file organized by category matching Settings Dialog tabs
+- Load settings from YAML file if database unavailable
+- Manual YAML edits sync to database on next startup
+- YAML file includes comments describing each setting
+
+### AC3: Settings Manager Class
+- Create centralized SettingsManager class for all settings operations
+- Methods: load_settings(), save_settings(dict), get_setting(key), set_setting(key, value), reset_to_defaults()
+- Singleton pattern for global access: SettingsManager.get_instance()
+- Thread-safe operations for concurrent access
+- Validation of setting values before saving (type checking, range validation)
+
+### AC4: Integration with SettingsDialog UI
+- SettingsDialog loads current settings from SettingsManager on open
+- Save button writes settings via SettingsManager.save_settings()
+- Reset to Defaults button calls SettingsManager.reset_to_defaults()
+- Settings changes propagated to application components via observer pattern
+- Invalid settings rejected with user-friendly error messages
+
+### AC5: Immediate Settings Application
+- Theme changes apply immediately (dark/light mode switch)
+- Model selection requires restart (display warning in UI)
+- Performance settings (batch size, GPU toggle) apply to next operation
+- Privacy settings (telemetry, logging level) apply immediately
+- Database path changes require restart (display warning)
+
+### AC6: Settings Validation
+- Temperature range: 0.0 to 1.0 (float)
+- Batch size range: 1 to 20 (int)
+- Cache size: 100 to 5000 MB (int)
+- Max concurrent: 1 to 5 (int)
+- Backup frequency: 1 to 168 hours (int)
+- Enum validation: theme (dark/light), startup_behavior (normal/minimized/tray), log_level (DEBUG/INFO/WARNING/ERROR)
+
+### AC7: Default Settings
+- All settings have documented default values
+- Defaults match those specified in Epic 2 (epic-stories.md lines 399-421)
+- First-run initialization populates database with defaults
+- Reset to Defaults option available in Settings Dialog
+
+### AC8: Settings Change Notifications
+- Observer pattern for components to subscribe to setting changes
+- Observers receive callbacks when specific settings change
+- Example: ThemeManager subscribes to "theme" setting
+- Example: OllamaManager subscribes to "model" and "temperature" settings
+
+### AC9: Settings Export/Import
+- Export current settings to timestamped YAML file: settings-backup-2025-10-14.yaml
+- Import settings from YAML file with validation
+- Merge imported settings with existing (prompt for conflicts)
+- Export/Import accessible from Settings Dialog Advanced tab
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Documentation artifact 1: Story 2.4 specification from epic-stories.md -->
+      <doc>
+        <path>docs/epic-stories.md</path>
+        <title>Story 2.4: Settings & Configuration System (Epic 2 Specifications)</title>
+        <section>lines 382-424</section>
+        <snippet>
+**Acceptance Criteria:**
+- Settings dialog with tabs: General, AI Model, Performance, Privacy, Advanced
+- General settings: Theme (dark/light), startup behavior, notifications
+- AI Model settings: Model selection (Llama/Mistral), temperature, response length defaults
+- Performance settings: Batch size, cache size limit, hardware optimization toggles
+- Privacy settings: Telemetry opt-in (default: off), crash reports, usage logging
+- Advanced settings: Database location, log level, debug mode
+- All settings stored in user_preferences table
+- Settings changes apply immediately without restart where possible
+- Reset to defaults option with confirmation
+- YAML config file backup for manual editing if needed
+
+**Default Settings:**
+- theme: "dark"
+- startup_behavior: "minimize_to_tray"
+- temperature: 0.3
+- batch_size: 10
+- cache_limit_mb: 500
+- telemetry: false
+- crash_reports: false
+        </snippet>
+      </doc>
+
+      <!-- Documentation artifact 2: Story 2.2 user_preferences table schema -->
+      <doc>
+        <path>docs/stories/story-2.2.md</path>
+        <title>Story 2.2: DatabaseManager user_preferences Table Schema</title>
+        <section>lines 276-284</section>
+        <snippet>
+-- User preferences for all settings
+CREATE TABLE IF NOT EXISTS user_preferences (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    default_value TEXT,
+    value_type TEXT CHECK(value_type IN ('string', 'int', 'float', 'bool', 'json')),
+    category TEXT,  -- 'general', 'ai_model', 'performance', 'privacy', 'advanced'
+    updated_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Database integration API:
+DatabaseManager.get_user_preference(key: str) -> dict | None
+DatabaseManager.set_user_preference(key: str, value: str, value_type: str, category: str)
+        </snippet>
+      </doc>
+
+      <!-- Documentation artifact 3: Story 2.3 SettingsDialog UI component -->
+      <doc>
+        <path>docs/stories/story-2.3-completion-summary.md</path>
+        <title>Story 2.3: SettingsDialog UI Component Implementation</title>
+        <section>lines 160-177</section>
+        <snippet>
+### ✅ Task 8: SettingsDialog (COMPLETE)
+**Lines of Code:** 590+
+**Features:**
+- Modal dialog with tabbed interface
+- **5 Tabs:**
+  1. **General:** Theme, startup behavior, notifications
+  2. **AI Model:** Model selection, temperature slider, response defaults
+  3. **Performance:** Batch size, cache size, GPU toggle, max concurrent
+  4. **Privacy:** Telemetry, crash reports, logging level
+  5. **Advanced:** Database path, debug mode, auto-backup settings
+- Save/Cancel/Reset to Defaults buttons
+- Confirmation dialog for reset
+- Input validation
+- Immediate application (no restart required)
+
+**Files:**
+- `src/mailmind/ui/dialogs/settings_dialog.py` (590 lines)
+
+**Integration:**
+- SettingsDialog(master, current_settings=dict, on_save=handler)
+- Callback-based integration for clean separation
+- Ready for backend integration with SettingsManager
+        </snippet>
+      </doc>
+
+      <!-- Documentation artifact 4: Complete settings schema from story-2.4.md -->
+      <doc>
+        <path>docs/stories/story-2.4.md</path>
+        <title>Story 2.4: Complete Settings Schema with 19 Settings</title>
+        <section>lines 195-339</section>
+        <snippet>
+SETTINGS_SCHEMA = {
+    # General (4 settings)
+    "theme": {"default": "dark", "type": "string", "validation": "enum:dark,light", "restart_required": False},
+    "startup_behavior": {"default": "normal", "type": "string", "validation": "enum:normal,minimized,tray", "restart_required": True},
+    "show_notifications": {"default": True, "type": "bool", "restart_required": False},
+    "minimize_to_tray": {"default": False, "type": "bool", "restart_required": False},
+
+    # AI Model (4 settings)
+    "model": {"default": "llama3:8b", "type": "string", "validation": "enum:llama3:8b,llama3:13b,mistral:7b,phi3:mini", "restart_required": True},
+    "temperature": {"default": 0.7, "type": "float", "validation": "range:0.0-1.0", "restart_required": False},
+    "response_length_default": {"default": "Standard", "type": "string", "validation": "enum:Brief,Standard,Detailed", "restart_required": False},
+    "response_tone_default": {"default": "Professional", "type": "string", "validation": "enum:Professional,Friendly,Formal,Casual", "restart_required": False},
+
+    # Performance (4 settings)
+    "batch_size": {"default": 5, "type": "int", "validation": "range:1-20", "restart_required": False},
+    "cache_size_mb": {"default": 500, "type": "int", "validation": "range:100-5000", "restart_required": False},
+    "use_gpu": {"default": False, "type": "bool", "restart_required": True},
+    "max_concurrent": {"default": 3, "type": "int", "validation": "range:1-5", "restart_required": False},
+
+    # Privacy (3 settings)
+    "enable_telemetry": {"default": False, "type": "bool", "restart_required": False},
+    "enable_crash_reports": {"default": True, "type": "bool", "restart_required": False},
+    "log_level": {"default": "INFO", "type": "string", "validation": "enum:DEBUG,INFO,WARNING,ERROR", "restart_required": False},
+
+    # Advanced (4 settings)
+    "database_path": {"default": "data/mailmind.db", "type": "string", "restart_required": True},
+    "debug_mode": {"default": False, "type": "bool", "restart_required": False},
+    "auto_backup": {"default": True, "type": "bool", "restart_required": False},
+    "backup_frequency_hours": {"default": 24, "type": "int", "validation": "range:1-168", "restart_required": False}
+}
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Code artifact 1: DatabaseManager user preferences API -->
+      <code>
+        <path>src/mailmind/database/database_manager.py</path>
+        <kind>class</kind>
+        <symbol>DatabaseManager</symbol>
+        <lines>73-868 (focus: 476-579 for user_preferences methods)</lines>
+        <reason>Provides the persistence layer for settings - SettingsManager will use these methods</reason>
+        <snippet>
+class DatabaseManager:
+    """Repository Pattern for all database operations with singleton support"""
+
+    # User Preferences Methods (Story 2.4 integration)
+    def get_preference(self, key: str, default: Any = None) -> Any:
+        """
+        Get user preference value with automatic type conversion.
+        Returns: Preference value (int, float, bool, json, or string)
+        """
+
+    def set_preference(self, key: str, value: Any) -> bool:
+        """
+        Set user preference with automatic type detection.
+        Auto-detects type: bool, int, float, dict/list (json), or string
+        Returns: True if successful
+        """
+
+    def get_all_preferences(self, category: Optional[str] = None) -> Dict:
+        """
+        Get all preferences, optionally filtered by category.
+        Returns: Dictionary of key-value pairs with type conversion
+        """
+
+# Integration Example:
+from mailmind.database import DatabaseManager
+
+db = DatabaseManager.get_instance()
+db.set_preference("theme", "dark")
+theme = db.get_preference("theme", default="dark")  # Returns: "dark"
+all_general = db.get_all_preferences(category="general")  # Returns: {theme: "dark", ...}
+        </snippet>
+      </code>
+
+      <!-- Code artifact 2: SettingsDialog UI component -->
+      <code>
+        <path>src/mailmind/ui/dialogs/settings_dialog.py</path>
+        <kind>class</kind>
+        <symbol>SettingsDialog</symbol>
+        <lines>19-593</lines>
+        <reason>Provides the UI component with 19 settings across 5 tabs - SettingsManager will integrate with this</reason>
+        <snippet>
+class SettingsDialog(ctk.CTkToplevel):
+    """
+    Settings dialog with tabbed interface (Story 2.3 AC2, AC7).
+
+    Features:
+    - 5 tabs: General (4), AI Model (4), Performance (4), Privacy (3), Advanced (4)
+    - Save/Cancel/Reset to Defaults buttons
+    - Callback-based integration: on_save callback receives settings dict
+    - All settings bound to Tkinter variables (theme_var, temperature_var, etc.)
+    """
+
+    def __init__(self, master, current_settings: Optional[Dict] = None,
+                 on_save: Optional[Callable[[Dict], None]] = None):
+        """
+        Args:
+            current_settings: Settings dict to populate UI
+            on_save: Callback when Save button clicked - receives settings dict
+        """
+
+    def _get_default_settings(self) -> Dict:
+        """Returns all 19 default settings"""
+
+    def _get_current_settings(self) -> Dict:
+        """Returns current settings from UI variables"""
+
+    def _on_save_clicked(self):
+        """Calls on_save callback with current settings, then destroys dialog"""
+
+# Integration Pattern:
+def handle_save(settings: dict):
+    # SettingsManager.save_settings(settings)
+    pass
+
+dialog = SettingsDialog(root, current_settings=current, on_save=handle_save)
+        </snippet>
+      </code>
+
+      <!-- Code artifact 3: ThemeManager observer pattern example -->
+      <code>
+        <path>src/mailmind/ui/theme_manager.py</path>
+        <kind>class</kind>
+        <symbol>ThemeManager</symbol>
+        <lines>26-254</lines>
+        <reason>Example of observer pattern implementation - SettingsManager should follow this pattern for settings change notifications</reason>
+        <snippet>
+class ThemeManager:
+    """Manages theme with database persistence and observer pattern."""
+
+    def __init__(self, db_manager=None):
+        self._observers = []  # List of callbacks
+        self._current_theme = "dark"
+
+    def add_observer(self, callback):
+        """
+        Register callback for theme changes.
+        Callback signature: (old_theme, new_theme) -> None
+        """
+        if callback not in self._observers:
+            self._observers.append(callback)
+
+    def remove_observer(self, callback):
+        """Unregister callback"""
+        if callback in self._observers:
+            self._observers.remove(callback)
+
+    def _notify_observers(self, old_value, new_value):
+        """Notify all observers of theme change"""
+        for callback in self._observers:
+            try:
+                callback(old_value, new_value)
+            except Exception as e:
+                logger.error(f"Observer failed: {e}")
+
+    def set_theme(self, mode: str):
+        """Change theme and notify observers"""
+        old = self._current_theme
+        self._current_theme = mode
+        self._notify_observers(old, mode)
+
+# Usage Example (SettingsManager should follow this pattern):
+theme_mgr.add_observer(lambda old, new: print(f"Theme changed: {old} → {new}"))
+theme_mgr.set_theme("light")  # Observer callback triggered
+        </snippet>
+      </code>
+
+      <!-- Code artifact 4: Settings schema from story-2.4.md -->
+      <code>
+        <path>docs/stories/story-2.4.md</path>
+        <kind>data</kind>
+        <symbol>SETTINGS_SCHEMA</symbol>
+        <lines>195-339</lines>
+        <reason>Complete schema definition with all 19 settings, types, defaults, validation rules, and restart requirements</reason>
+        <snippet>
+# This is the authoritative settings schema to implement in SettingsManager
+
+SETTINGS_SCHEMA = {
+    # General (4 settings)
+    "theme": {
+        "default": "dark",
+        "type": "string",
+        "category": "general",
+        "validation": "enum:dark,light",
+        "restart_required": False
+    },
+    # ... (18 more settings defined)
+
+    # Validation rules:
+    # - enum:value1,value2,... - Must be one of the enumerated values
+    # - range:min-max - Must be within numeric range (inclusive)
+    # - No validation = any value of the specified type accepted
+
+    # Restart required flag:
+    # - True: Display warning, setting takes effect on next launch
+    # - False: Apply immediately via observer pattern
+}
+        </snippet>
+      </code>
+    </code>
+    <dependencies>
+      <!-- All required dependencies already present in requirements.txt -->
+      <dependency>
+        <name>pyyaml</name>
+        <version>>=6.0</version>
+        <purpose>YAML configuration file export/import (AC2) - already installed</purpose>
+        <usage>yaml.safe_dump() for export, yaml.safe_load() for import. Use safe_* variants for security.</usage>
+      </dependency>
+
+      <dependency>
+        <name>pysqlite3</name>
+        <version>>=0.5.0</version>
+        <purpose>Database persistence via DatabaseManager (AC1) - already installed</purpose>
+        <usage>Indirectly via DatabaseManager methods (get_preference, set_preference, get_all_preferences)</usage>
+      </dependency>
+
+      <dependency>
+        <name>customtkinter</name>
+        <version>>=5.2.0</version>
+        <purpose>UI framework for SettingsDialog integration (AC4) - already installed</purpose>
+        <usage>Indirectly via existing SettingsDialog component from Story 2.3</usage>
+      </dependency>
+
+      <dependency>
+        <name>Standard Library</name>
+        <version>Python 3.9+</version>
+        <purpose>Threading, logging, pathlib for core functionality</purpose>
+        <usage>threading.Lock for thread-safety, logging for debug messages, pathlib.Path for file operations</usage>
+      </dependency>
+
+      <!-- No new dependencies required - Story 2.4 uses existing infrastructure -->
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Constraint 1: Integration with DatabaseManager -->
+    <constraint>
+      <type>Integration</type>
+      <description>SettingsManager must use DatabaseManager's user_preferences table for all persistence operations. Use get_preference(), set_preference(), and get_all_preferences() methods. Do not access SQLite directly.</description>
+    </constraint>
+
+    <!-- Constraint 2: Integration with SettingsDialog -->
+    <constraint>
+      <type>Integration</type>
+      <description>SettingsDialog UI component (Story 2.3) already exists with all 19 settings. SettingsManager must integrate via the on_save callback pattern. Replace _get_default_settings() method with SettingsManager.load_settings(), and update button handlers to call SettingsManager methods.</description>
+    </constraint>
+
+    <!-- Constraint 3: Observer Pattern Requirements -->
+    <constraint>
+      <type>Architecture</type>
+      <description>Use Observer Pattern for settings change notifications (AC8). Follow ThemeManager's implementation pattern: maintain _observers dict mapping setting keys to callback lists, provide subscribe(key, callback) and unsubscribe(key, callback) methods, notify observers when settings change.</description>
+    </constraint>
+
+    <!-- Constraint 4: Singleton Pattern -->
+    <constraint>
+      <type>Architecture</type>
+      <description>SettingsManager must implement Singleton pattern for global access (AC3). Use get_instance() class method with double-checked locking (threading.Lock) to ensure thread-safety. Follow DatabaseManager's singleton implementation pattern.</description>
+    </constraint>
+
+    <!-- Constraint 5: Thread Safety -->
+    <constraint>
+      <type>Performance</type>
+      <description>All SettingsManager operations must be thread-safe. Use threading.Lock() for critical sections (load, save, observers list modifications). Settings are accessed from multiple threads (UI thread, background LLM threads).</description>
+    </constraint>
+
+    <!-- Constraint 6: Settings Validation -->
+    <constraint>
+      <type>Validation</type>
+      <description>All settings must be validated before saving (AC6). Implement validate_setting(key, value) method that checks: type correctness (int, float, bool, string), range validation (e.g., temperature 0.0-1.0), enum validation (e.g., theme in ['dark', 'light']). Return error message if invalid, None if valid.</description>
+    </constraint>
+
+    <!-- Constraint 7: Immediate vs Restart Required -->
+    <constraint>
+      <type>Behavior</type>
+      <description>Settings must categorize as immediate or restart-required (AC5). Immediate settings (theme, log_level, telemetry) apply via observer notifications. Restart-required settings (model, use_gpu, startup_behavior, database_path) display warning in UI. Track via restart_required flag in SETTINGS_SCHEMA.</description>
+    </constraint>
+
+    <!-- Constraint 8: YAML Configuration Support -->
+    <constraint>
+      <type>File Format</type>
+      <description>Support YAML config file backup (AC2). Export settings to config/user-settings.yaml organized by category with comments. Support manual YAML edits syncing to database on startup. Use PyYAML library (already in dependencies). Handle parsing errors gracefully.</description>
+    </constraint>
+
+    <!-- Constraint 9: Default Settings Consistency -->
+    <constraint>
+      <type>Data Integrity</type>
+      <description>Default settings must match Epic 2 specifications (AC7). Cross-reference docs/epic-stories.md lines 399-421 for authoritative defaults. First-run initialization populates database with these defaults. Reset to Defaults restores these exact values.</description>
+    </constraint>
+
+    <!-- Constraint 10: Settings Storage Format -->
+    <constraint>
+      <type>Database</type>
+      <description>All settings stored in user_preferences table with columns: key (PRIMARY KEY), value (TEXT), default_value (TEXT), value_type (string/int/float/bool/json), category (general/ai_model/performance/privacy/advanced), updated_date (TIMESTAMP). DatabaseManager handles type conversion automatically.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Interface 1: DatabaseManager API -->
+    <interface>
+      <name>DatabaseManager.get_preference()</name>
+      <kind>method</kind>
+      <signature>get_preference(key: str, default: Any = None) -> Any</signature>
+      <path>src/mailmind/database/database_manager.py:476-506</path>
+      <description>Get user preference with automatic type conversion based on value_type column. Returns default if key not found.</description>
+    </interface>
+
+    <interface>
+      <name>DatabaseManager.set_preference()</name>
+      <kind>method</kind>
+      <signature>set_preference(key: str, value: Any) -> bool</signature>
+      <path>src/mailmind/database/database_manager.py:507-541</path>
+      <description>Set user preference with automatic type detection. Auto-converts to string for storage and stores type in value_type column. Uses INSERT OR REPLACE for upsert behavior.</description>
+    </interface>
+
+    <interface>
+      <name>DatabaseManager.get_all_preferences()</name>
+      <kind>method</kind>
+      <signature>get_all_preferences(category: Optional[str] = None) -> Dict</signature>
+      <path>src/mailmind/database/database_manager.py:543-579</path>
+      <description>Get all preferences as dict, optionally filtered by category. Returns dict with automatic type conversion for all values.</description>
+    </interface>
+
+    <!-- Interface 2: SettingsDialog Integration -->
+    <interface>
+      <name>SettingsDialog constructor</name>
+      <kind>constructor</kind>
+      <signature>__init__(master, current_settings: Optional[Dict] = None, on_save: Optional[Callable[[Dict], None]] = None)</signature>
+      <path>src/mailmind/ui/dialogs/settings_dialog.py:31-64</path>
+      <description>Initialize dialog with current settings dict and on_save callback. Dialog loads settings into UI variables and calls callback with updated settings dict when Save clicked.</description>
+    </interface>
+
+    <interface>
+      <name>SettingsDialog._get_current_settings()</name>
+      <kind>method</kind>
+      <signature>_get_current_settings() -> Dict</signature>
+      <path>src/mailmind/ui/dialogs/settings_dialog.py:524-555</path>
+      <description>Returns current settings from all UI variables (19 settings total). Dict keys match SETTINGS_SCHEMA keys. Called by _on_save_clicked() before invoking callback.</description>
+    </interface>
+
+    <!-- Interface 3: Observer Pattern -->
+    <interface>
+      <name>SettingsManager.subscribe()</name>
+      <kind>method (to implement)</kind>
+      <signature>subscribe(setting_key: str, callback: Callable[[Any], None])</signature>
+      <path>N/A - to be implemented in settings_manager.py</path>
+      <description>Subscribe to setting changes. Callback receives new value when setting changes. Example: settings_mgr.subscribe("theme", lambda val: theme_mgr.set_theme(val))</description>
+    </interface>
+
+    <interface>
+      <name>SettingsManager.unsubscribe()</name>
+      <kind>method (to implement)</kind>
+      <signature>unsubscribe(setting_key: str, callback: Callable[[Any], None])</signature>
+      <path>N/A - to be implemented in settings_manager.py</path>
+      <description>Unsubscribe from setting changes. Removes callback from observers list for the specified setting.</description>
+    </interface>
+
+    <!-- Interface 4: PyYAML for YAML export/import -->
+    <interface>
+      <name>yaml.safe_dump()</name>
+      <kind>function</kind>
+      <signature>safe_dump(data: Any, stream=None, **kwargs) -> str</signature>
+      <path>External - PyYAML library</path>
+      <description>Export settings dict to YAML format. Use default_flow_style=False for readable formatting, allow_unicode=True for proper encoding, sort_keys=False to preserve category order.</description>
+    </interface>
+
+    <interface>
+      <name>yaml.safe_load()</name>
+      <kind>function</kind>
+      <signature>safe_load(stream: str) -> Any</signature>
+      <path>External - PyYAML library</path>
+      <description>Parse YAML file into Python dict. Use safe_load (not load) for security. Handle yaml.YAMLError exceptions gracefully.</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+**Testing Framework:** pytest with pytest-cov for coverage measurement
+
+**Testing Standards:**
+- Use pytest fixtures for setup/teardown (temp_db_path, settings_manager, mock_db)
+- Organize tests into classes by feature area (e.g., TestSingletonPattern, TestObserverPattern)
+- Test names should be descriptive: test_[feature]_[scenario]_[expected_outcome]
+- Target coverage: >85% for all new code
+- Use tempfile.NamedTemporaryFile for isolated database testing
+- Use pytest-mock for mocking external dependencies (DatabaseManager, SettingsDialog callbacks)
+- Document acceptance criteria coverage at top of test file (e.g., "Tests AC1, AC3, AC6")
+- Use parametrize for testing multiple similar cases (e.g., all 19 settings validation)
+- Test both success and failure paths (valid/invalid inputs, edge cases)
+- Performance assertions: validation <10ms, load_settings <100ms, save_settings <200ms
+
+**Testing Patterns Observed:**
+- Connection management tests verify singleton, thread-safety, context manager
+- CRUD tests cover insert, get, update, delete for each table
+- Edge case tests handle duplicates, missing data, invalid inputs
+- Performance tests measure query execution time with assertions
+- Error handling tests use pytest.raises() for expected exceptions
+    </standards>
+
+    <locations>
+**Primary Test File:**
+- `tests/unit/test_settings_manager.py` - Main SettingsManager unit tests (40+ tests)
+
+**Integration Test File:**
+- `tests/integration/test_settings_integration.py` - Integration tests (20+ tests)
+  - SettingsManager ↔ DatabaseManager integration
+  - SettingsManager ↔ SettingsDialog integration
+  - Observer pattern integration (ThemeManager, OllamaManager subscriptions)
+  - YAML export/import integration
+  - Concurrent access from multiple threads
+
+**Test Fixtures Location:**
+- `tests/conftest.py` - Shared fixtures if needed (or inline in test files)
+
+**Demo/Example Location:**
+- `examples/settings_demo.py` - Demonstrate SettingsManager usage
+- `examples/settings_integration_demo.py` - Component integration examples
+    </locations>
+
+    <ideas>
+<!-- Test ideas mapped to acceptance criteria with ~60 tests total -->
+
+**AC1: Settings Storage in user_preferences Table (8 tests)**
+1. test_load_settings_from_database_all_19_settings - Verify all 19 settings load correctly
+2. test_save_settings_to_database_all_categories - Save settings across all 5 categories
+3. test_settings_persist_across_restarts - Load, modify, save, reload - verify persistence
+4. test_default_values_on_first_run - First run loads defaults from SETTINGS_SCHEMA
+5. test_setting_categories_general_ai_model_performance_privacy_advanced - Verify category organization
+6. test_type_enforcement_int_float_bool_string - Verify DatabaseManager type conversion
+7. test_fallback_to_defaults_on_missing_key - Missing keys return schema defaults
+8. test_partial_settings_load - Some settings in DB, some missing - merge with defaults
+
+**AC2: YAML Config File Backup (7 tests)**
+9. test_export_to_yaml_file_created - Export creates config/user-settings.yaml
+10. test_yaml_organized_by_category_five_sections - YAML has 5 category sections
+11. test_yaml_includes_comments_for_each_setting - Comments describe each setting
+12. test_load_from_yaml_fallback_when_db_unavailable - YAML fallback if DB fails
+13. test_sync_manual_yaml_edits_to_database - Manual edits sync on startup
+14. test_yaml_parsing_errors_handled_gracefully - Invalid YAML doesn't crash
+15. test_yaml_export_preserves_all_19_settings - All settings in exported YAML
+
+**AC3: Settings Manager Class (9 tests)**
+16. test_singleton_pattern_returns_same_instance - get_instance() returns singleton
+17. test_load_settings_returns_dict_with_19_keys - load_settings() completeness
+18. test_save_settings_accepts_dict_validates_and_persists - Full save workflow
+19. test_get_setting_retrieves_single_value - get_setting("theme") returns "dark"
+20. test_set_setting_updates_value_and_notifies - set_setting updates + notifies observers
+21. test_reset_to_defaults_restores_all_19_settings - reset_to_defaults() completeness
+22. test_thread_safe_concurrent_access_from_5_threads - threading.Lock prevents races
+23. test_validation_before_saving_rejects_invalid - Validation runs before DB write
+24. test_settings_manager_initialization_loads_from_db - __init__ loads existing settings
+
+**AC4: Integration with SettingsDialog UI (6 tests)**
+25. test_settings_dialog_loads_from_settings_manager - Dialog constructor integration
+26. test_save_button_calls_settings_manager_save - on_save callback invokes save_settings()
+27. test_reset_button_calls_settings_manager_reset - Reset to Defaults integration
+28. test_invalid_settings_rejected_with_error_message - Validation errors shown in UI
+29. test_settings_changes_propagated_via_observer - Save triggers observer notifications
+30. test_dialog_integration_round_trip - Open dialog, change settings, save, reload - verify
+
+**AC5: Immediate Settings Application (7 tests)**
+31. test_theme_change_applies_immediately - Theme observer triggered on save
+32. test_model_change_requires_restart_warning - restart_required flag checked
+33. test_performance_settings_apply_to_next_operation - batch_size applies immediately
+34. test_privacy_settings_logging_level_applies_immediately - log_level changes logging
+35. test_database_path_change_requires_restart_warning - DB path restart warning
+36. test_restart_required_settings_identified - 5 settings require restart
+37. test_immediate_settings_notify_observers - 14 settings apply immediately via observers
+
+**AC6: Settings Validation (12 tests)**
+38. test_temperature_range_validation_0_to_1 - Reject 1.5, accept 0.7
+39. test_batch_size_range_validation_1_to_20 - Reject 25, accept 10
+40. test_cache_size_range_validation_100_to_5000 - Reject 50, accept 500
+41. test_max_concurrent_range_validation_1_to_5 - Reject 10, accept 3
+42. test_backup_frequency_range_validation_1_to_168 - Reject 200, accept 24
+43. test_theme_enum_validation_dark_or_light - Reject "blue", accept "dark"
+44. test_startup_behavior_enum_validation - Reject "hidden", accept "minimized"
+45. test_log_level_enum_validation - Reject "TRACE", accept "INFO"
+46. test_type_validation_int_not_string - batch_size rejects "five", accepts 5
+47. test_type_validation_bool_not_int - enable_telemetry rejects 1, accepts True
+48. test_validate_all_19_settings_parametrize - Parametrized test for all settings
+49. test_validation_error_messages_user_friendly - Error messages clear and actionable
+
+**AC7: Default Settings (4 tests)**
+50. test_defaults_match_epic_specification - Verify against docs/epic-stories.md:399-421
+51. test_first_run_populates_database_with_defaults - DB initialized with SETTINGS_SCHEMA
+52. test_reset_to_defaults_restores_exact_values - All 19 settings = schema defaults
+53. test_default_values_documented_in_schema - SETTINGS_SCHEMA has all defaults
+
+**AC8: Settings Change Notifications (8 tests)**
+54. test_subscribe_to_setting_change_callback_triggered - subscribe("theme", callback)
+55. test_unsubscribe_removes_callback - unsubscribe stops notifications
+56. test_multiple_observers_all_notified - 3 subscribers all receive notification
+57. test_observer_pattern_theme_manager_example - ThemeManager subscribes to "theme"
+58. test_observer_pattern_ollama_manager_example - OllamaManager subscribes to "model", "temperature"
+59. test_observer_exception_handling - Observer exception doesn't crash SettingsManager
+60. test_observer_receives_new_value_only - Callback signature: callback(new_value)
+61. test_no_notification_if_value_unchanged - set_setting with same value = no notify
+
+**AC9: Settings Export/Import (8 tests)**
+62. test_export_creates_timestamped_yaml - settings-backup-2025-10-14.yaml created
+63. test_import_from_yaml_validates_settings - Invalid settings in YAML rejected
+64. test_import_merge_with_conflicts_prompts_user - Conflict resolution UI
+65. test_export_import_round_trip_all_settings_preserved - Export → Import = identical
+66. test_import_from_malformed_yaml_fails_gracefully - Bad YAML doesn't crash
+67. test_export_yaml_has_comments_for_power_users - Comments explain each setting
+68. test_import_partial_settings_merges_with_existing - Import 5 settings, keep other 14
+69. test_export_import_accessible_from_settings_dialog - UI buttons work correctly
+
+**Integration Tests (20+ tests in separate file)**
+70. test_concurrent_access_5_threads_no_race_conditions - Thread-safe verification
+71. test_database_manager_integration_get_set_all - Full DatabaseManager CRUD cycle
+72. test_settings_dialog_integration_full_workflow - Dialog → SettingsManager → DB
+73. test_theme_manager_observer_integration - Theme change flows through system
+74. test_ollama_manager_observer_integration - Model/temp settings reach OllamaManager
+75. test_performance_tracker_observer_integration - Performance settings applied
+76. test_yaml_export_import_with_database_persistence - YAML + DB consistency
+77. test_first_run_experience_defaults_loaded - Clean install workflow
+78. test_settings_persistence_across_application_restarts - Simulate app restart
+79. test_validation_integration_ui_to_database - Invalid input rejected before DB
+80. test_multiple_setting_changes_single_transaction - Batch update performance
+81. test_observer_notifications_order_of_execution - Notification order deterministic
+82. test_settings_manager_singleton_across_threads - Same instance in all threads
+83. test_memory_usage_with_many_observers - 100 observers doesn't leak memory
+84. test_settings_load_time_under_100ms - Performance target met
+85. test_settings_save_time_under_200ms - Performance target met
+
+**Edge Cases & Error Handling (additional tests)**
+86. test_missing_database_file_creates_new - Database file deleted, recreates on startup
+87. test_corrupted_yaml_file_falls_back_to_database - Corrupted YAML doesn't break app
+88. test_database_write_failure_returns_error - DB write fails, error returned
+89. test_empty_settings_dict_handled - save_settings({}) doesn't crash
+90. test_unknown_setting_key_ignored - Unknown keys in dict ignored gracefully
+91. test_setting_with_none_value - None values handled (use default)
+92. test_very_long_string_setting_truncated - String length limits
+93. test_negative_numeric_values_rejected - Negative batch_size rejected
+94. test_zero_values_for_numeric_settings - Zero handled per validation rules
+95. test_unicode_in_settings_values - Unicode strings saved/loaded correctly
+    </ideas>
+  </tests>
+</story-context>
