@@ -33,6 +33,7 @@ class SettingsDialog(ctk.CTkToplevel):
         master,
         current_settings: Optional[Dict] = None,
         on_save: Optional[Callable[[Dict], None]] = None,
+        on_rerun_wizard: Optional[Callable[[], None]] = None,
         **kwargs
     ):
         """
@@ -42,10 +43,12 @@ class SettingsDialog(ctk.CTkToplevel):
             master: Parent window
             current_settings: Current settings dict
             on_save: Callback when settings are saved (receives settings dict)
+            on_rerun_wizard: Callback to re-run onboarding wizard
         """
         super().__init__(master, **kwargs)
 
         self.on_save_callback = on_save
+        self.on_rerun_wizard_callback = on_rerun_wizard
         self.settings = current_settings or self._get_default_settings()
         self.original_settings = self.settings.copy()
 
@@ -198,6 +201,35 @@ class SettingsDialog(ctk.CTkToplevel):
             text="Minimize to system tray",
             variable=self.minimize_to_tray_var
         ).pack(anchor="w", padx=20, pady=2)
+
+        # Setup Wizard
+        wizard_frame = ctk.CTkFrame(self.tab_general)
+        wizard_frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkLabel(
+            wizard_frame,
+            text="Setup Wizard:",
+            font=("Segoe UI", 11, "bold")
+        ).pack(anchor="w", padx=10, pady=5)
+
+        rerun_btn = ctk.CTkButton(
+            wizard_frame,
+            text="Re-run Setup Wizard",
+            command=self._on_rerun_wizard_clicked,
+            width=180,
+            fg_color="transparent",
+            border_width=1
+        )
+        rerun_btn.pack(anchor="w", padx=20, pady=5)
+
+        wizard_desc = ctk.CTkLabel(
+            wizard_frame,
+            text="Run the setup wizard again to reconfigure hardware detection, Outlook connection, and initial setup.",
+            font=("Segoe UI", 9),
+            wraplength=600,
+            text_color="gray"
+        )
+        wizard_desc.pack(anchor="w", padx=20, pady=2)
 
     def _create_ai_model_tab(self):
         """Create AI Model tab."""
@@ -591,3 +623,14 @@ class SettingsDialog(ctk.CTkToplevel):
             )
 
             logger.debug("Settings reset to defaults")
+
+    def _on_rerun_wizard_clicked(self):
+        """Handle Re-run Setup Wizard button click."""
+        logger.debug("Re-run setup wizard requested")
+
+        # Close settings dialog
+        self.destroy()
+
+        # Call callback to launch wizard
+        if self.on_rerun_wizard_callback:
+            self.on_rerun_wizard_callback()
