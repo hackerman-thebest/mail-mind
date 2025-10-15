@@ -211,9 +211,10 @@ def sanitize_logs(log_text: str) -> str:
         log_text
     )
 
-    # Replace potential API keys (sequences of 20+ alphanumeric characters)
+    # Replace potential API keys (sequences of 20+ alphanumeric characters, underscores, hyphens)
+    # Matches patterns like: sk_1234..., api-key-12345..., etc.
     sanitized = re.sub(
-        r'\b[A-Za-z0-9]{20,}\b',
+        r'\b[A-Za-z0-9_-]{20,}\b',
         '[API_KEY]',
         sanitized
     )
@@ -255,9 +256,19 @@ def export_logs_to_clipboard() -> bool:
         bool: True if successful, False otherwise
     """
     try:
-        # Get log directory and file
-        log_dir = get_log_directory()
-        log_file = log_dir / 'mailmind.log'
+        # Find the actual log file from the logging handlers
+        root_logger = logging.getLogger()
+        log_file = None
+
+        for handler in root_logger.handlers:
+            if isinstance(handler, RotatingFileHandler):
+                log_file = Path(handler.baseFilename)
+                break
+
+        # Fallback to default location if no file handler found
+        if log_file is None:
+            log_dir = get_log_directory()
+            log_file = log_dir / 'mailmind.log'
 
         if not log_file.exists():
             logging.error(f"Log file not found: {log_file}")
@@ -280,8 +291,8 @@ def export_logs_to_clipboard() -> bool:
             logging.info("✅ Logs exported to clipboard (sanitized)")
             return True
         except ImportError:
-            # Fallback: Save to file
-            export_file = log_dir / f'mailmind_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
+            # Fallback: Save to file in same directory as log file
+            export_file = log_file.parent / f'mailmind_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
             with open(export_file, 'w', encoding='utf-8') as f:
                 f.write(sanitized_logs)
             logging.warning(
