@@ -3,6 +3,7 @@ Ollama Manager - Local LLM Integration
 
 Manages connection to Ollama service, model verification, and inference calls.
 Implements Story 1.1: Ollama Integration & Model Setup
+Enhanced with Story 2.6: Model fallback and error handling
 """
 
 import logging
@@ -16,17 +17,20 @@ try:
 except ImportError:
     OLLAMA_AVAILABLE = False
 
+# Import new exception hierarchy (Story 2.6)
+try:
+    from mailmind.core.exceptions import OllamaConnectionError, OllamaModelError
+except ImportError:
+    # Fallback to local exceptions if exceptions.py not available yet
+    class OllamaConnectionError(Exception):
+        """Raised when Ollama service is not available"""
+        pass
+
+    class OllamaModelError(Exception):
+        """Raised when model is not available or fails to load"""
+        pass
+
 logger = logging.getLogger(__name__)
-
-
-class OllamaConnectionError(Exception):
-    """Raised when Ollama service is not available"""
-    pass
-
-
-class OllamaModelError(Exception):
-    """Raised when model is not available or fails to load"""
-    pass
 
 
 class OllamaManager:
@@ -69,19 +73,18 @@ class OllamaManager:
         """
         Establish connection to Ollama service.
 
+        Story 2.6 AC12: Error Scenario - Ollama not installed
+
         Returns:
             bool: True if connection successful, False otherwise
 
         Raises:
-            OllamaConnectionError: If Ollama is not installed or not running
+            OllamaConnectionError: If Ollama is not installed or not running (AC12)
         """
         if not OLLAMA_AVAILABLE:
-            error_msg = (
-                "Ollama Python client not installed. "
-                "Please install with: pip install ollama"
-            )
-            logger.error(error_msg)
-            raise OllamaConnectionError(error_msg)
+            technical_details = "Ollama Python client not installed (pip install ollama)"
+            logger.error(technical_details)
+            raise OllamaConnectionError(technical_details=technical_details)
 
         try:
             logger.info("Attempting to connect to Ollama service...")
@@ -93,26 +96,26 @@ class OllamaManager:
             connection_time = time.time() - start_time
 
             self.is_connected = True
-            logger.info(f"Connected to Ollama service in {connection_time:.3f}s")
+            logger.info(f"✅ Connected to Ollama service in {connection_time:.3f}s")
 
             # Verify model availability (pass models_response to avoid duplicate call)
             return self.verify_model(models_response)
 
+        except OllamaModelError:
+            # Re-raise model errors (don't wrap them)
+            raise
         except Exception as e:
             self.is_connected = False
-            error_msg = (
-                f"Failed to connect to Ollama service: {e}\n\n"
-                "Please ensure:\n"
-                "1. Ollama is installed (https://ollama.com/download)\n"
-                "2. Ollama service is running\n"
-                "3. Run 'ollama serve' in a terminal if not running"
-            )
-            logger.error(error_msg)
-            raise OllamaConnectionError(error_msg)
+            technical_details = f"Ollama connection failed: {e}"
+            logger.error(technical_details)
+            # AC12: Ollama not installed or not running
+            raise OllamaConnectionError(technical_details=technical_details)
 
     def verify_model(self, models_response: Optional[Dict[str, Any]] = None) -> bool:
         """
         Check if the primary model is available. If not, check fallback.
+
+        Story 2.6 AC3: Model fallback (Llama 3.1 → Mistral)
 
         Args:
             models_response: Optional cached models list response from Ollama.
@@ -122,10 +125,12 @@ class OllamaManager:
             bool: True if a model is available, False otherwise
 
         Raises:
-            OllamaModelError: If no models are available
+            OllamaModelError: If no models are available (AC12 - Model not downloaded scenario)
         """
         if not self.is_connected:
-            raise OllamaConnectionError("Not connected to Ollama service")
+            raise OllamaConnectionError(
+                technical_details="verify_model() called without connection"
+            )
 
         try:
             self.model_status = "loading"
@@ -142,34 +147,65 @@ class OllamaManager:
             if self.primary_model in available_models:
                 self.current_model = self.primary_model
                 self.model_status = "ready"
-                logger.info(f"Primary model verified: {self.primary_model}")
+                logger.info(f"✅ Primary model verified: {self.primary_model}")
                 return True
+
+            # AC3: Model fallback - log with WARNING severity
+            logger.warning(
+                f"⚠️  Primary model '{self.primary_model}' not found. "
+                f"Attempting fallback to '{self.fallback_model}'..."
+            )
 
             # Check fallback model
             if self.fallback_model in available_models:
                 self.current_model = self.fallback_model
                 self.model_status = "ready"
                 logger.warning(
-                    f"Primary model not found. Using fallback: {self.fallback_model}"
+                    f"✅ Using fallback model: {self.fallback_model} "
+                    f"(primary model '{self.primary_model}' unavailable)"
                 )
                 return True
 
-            # No models available
+            # AC12: Error Scenario - Model not downloaded
+            # No models available - raise OllamaModelError
             self.model_status = "error"
-            error_msg = (
-                f"Neither primary model ({self.primary_model}) nor "
-                f"fallback model ({self.fallback_model}) are available.\n\n"
-                f"Available models: {', '.join(available_models) if available_models else 'None'}\n\n"
-                "To download the primary model, run:\n"
-                f"  ollama pull {self.primary_model}"
-            )
-            logger.error(error_msg)
-            raise OllamaModelError(error_msg)
+            self.current_model = None
 
+            available_str = ', '.join(available_models) if available_models else 'None'
+            technical_details = (
+                f"Neither primary model ({self.primary_model}) nor "
+                f"fallback model ({self.fallback_model}) are available. "
+                f"Available models: {available_str}"
+            )
+
+            logger.error(f"❌ Model verification failed: {technical_details}")
+
+            # Raise with user-friendly message
+            raise OllamaModelError(
+                model_name=self.primary_model,
+                technical_details=technical_details
+            )
+
+        except OllamaModelError:
+            # Re-raise our custom exception
+            self.model_status = "error"
+            raise
         except ollama.ResponseError as e:
             self.model_status = "error"
-            logger.error(f"Failed to verify model: {e}")
-            raise OllamaModelError(f"Model verification failed: {e}")
+            technical_details = f"Ollama API error during model verification: {e}"
+            logger.error(technical_details)
+            raise OllamaModelError(
+                model_name=self.primary_model,
+                technical_details=technical_details
+            )
+        except Exception as e:
+            self.model_status = "error"
+            technical_details = f"Unexpected error during model verification: {e}"
+            logger.error(technical_details, exc_info=True)
+            raise OllamaModelError(
+                model_name=self.primary_model,
+                technical_details=technical_details
+            )
 
     def test_inference(self) -> bool:
         """

@@ -1,0 +1,615 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.6</storyId>
+    <title>Error Handling, Logging & Installer</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-2.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user and a developer</asA>
+    <iWant>the application to handle errors gracefully and comprehensive logging</iWant>
+    <soThat>issues can be diagnosed and the application can be easily installed</soThat>
+    <tasks>
+- Task 1: Error Handling Framework (AC: #1, #2, #3, #5, #12) - 7 subtasks
+- Task 2: Comprehensive Logging System (AC: #4, #6) - 7 subtasks
+- Task 3: Windows Installer Development (AC: #7, #8, #9) - 9 subtasks
+- Task 4: Uninstaller and Cleanup (AC: #10) - 5 subtasks
+- Task 5: Automatic Update System (AC: #11) - 5 subtasks
+- Task 6: Error Scenario Testing (AC: #12) - 6 subtasks
+- Task 7: Integration Testing (AC: #1-12) - 6 subtasks
+- Task 8: Documentation (AC: #1-12) - 5 subtasks
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <title>Graceful Error Handling</title>
+      <description>Application handles all failure modes with user-friendly messages without crashing</description>
+    </criterion>
+    <criterion id="AC2">
+      <title>Automatic Recovery</title>
+      <description>Automatic recovery from Outlook disconnection with retry logic</description>
+    </criterion>
+    <criterion id="AC3">
+      <title>Model Fallback</title>
+      <description>Automatic fallback to Mistral if Llama 3.1 fails to load</description>
+    </criterion>
+    <criterion id="AC4">
+      <title>Comprehensive Logging</title>
+      <description>Structured logging with rotation (max 10 files of 10MB each) including timestamp, severity, context, stack trace</description>
+    </criterion>
+    <criterion id="AC5">
+      <title>User-Friendly Error Messages</title>
+      <description>Error messages avoid technical jargon and provide actionable next steps</description>
+    </criterion>
+    <criterion id="AC6">
+      <title>Issue Reporting</title>
+      <description>"Report Issue" button copies logs to clipboard for support submission</description>
+    </criterion>
+    <criterion id="AC7">
+      <title>Windows Installer</title>
+      <description>NSIS/Inno Setup installer (.exe) with all dependencies except Ollama</description>
+    </criterion>
+    <criterion id="AC8">
+      <title>Hardware Check</title>
+      <description>Installer includes hardware requirements check with warnings for minimum specs</description>
+    </criterion>
+    <criterion id="AC9">
+      <title>Code Signing</title>
+      <description>Code signing certificate for Windows Defender trust</description>
+    </criterion>
+    <criterion id="AC10">
+      <title>Clean Uninstall</title>
+      <description>Uninstaller with option to preserve or delete database</description>
+    </criterion>
+    <criterion id="AC11">
+      <title>Automatic Updates</title>
+      <description>Optional automatic update check (user-controlled)</description>
+    </criterion>
+    <criterion id="AC12">
+      <title>Error Scenarios Coverage</title>
+      <description>Handle common scenarios: Ollama not installed, model not downloaded, Outlook not running, insufficient memory, database corruption</description>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epic-stories.md</path>
+        <title>Story 2.6 Specification</title>
+        <section>lines 458-497</section>
+        <snippet>Complete Story 2.6 acceptance criteria and error scenarios including: Ollama not installed, model not downloaded, Outlook not running, insufficient memory, database corruption. Installer requirements: NSIS/Inno Setup with all dependencies except Ollama, hardware check, code signing certificate. Logging requirements: RotatingFileHandler with max 10 files x 10MB each, structured format with timestamp/severity/context/stack traces. Error handling patterns: custom exception hierarchy, retry logic with exponential backoff (1s → 16s), model fallback chain (Llama → Mistral), user-friendly error messages.</snippet>
+      </doc>
+      <doc>
+        <path>README.md</path>
+        <title>Project Architecture & Features</title>
+        <section>lines 1-745</section>
+        <snippet>MailMind project overview with architecture (Ollama local LLM, pywin32 Outlook integration, SQLite database, CustomTkinter UI), hardware requirements (16GB RAM minimum, Windows 10/11), completed Epic 1 (Stories 1.1-1.6) with AI-powered email intelligence, and Epic 2 progress (Stories 2.1-2.5) with desktop application features. Troubleshooting section describes common error scenarios.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Ollama Integration & Model Setup</title>
+        <section>lines 1-275</section>
+        <snippet>OllamaManager implementation with custom exceptions (OllamaConnectionError, OllamaModelError), connection management, model verification with fallback logic, and error handling patterns. AC4: Graceful error handling if Ollama not installed, user-friendly error messages with clear next steps, retry logic for transient connection failures, logging of all Ollama-related errors. Model fallback: Llama 3.1 8B → Mistral 7B.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.6.md</path>
+        <title>Performance Optimization & Caching</title>
+        <section>lines 1-1078</section>
+        <snippet>HardwareProfiler for system detection, memory monitoring for error detection, performance metrics logging. AC5: Memory Management with hard memory limit &lt;8GB RAM with model loaded, monitor memory usage every 5 seconds, trigger garbage collection when &gt;85% of limit. AC6: Graceful degradation under load - detect insufficient memory before operations, automatically reduce batch size if processing fails, fall back to CPU-only if GPU memory exhausted, suggest closing applications if RAM critically low.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.1.md</path>
+        <title>Outlook Integration (pywin32)</title>
+        <section>lines 1-394</section>
+        <snippet>OutlookConnector implementation with comprehensive error handling and custom exception hierarchy (OutlookNotInstalledException, OutlookNotRunningException, OutlookConnectionError, OutlookProfileNotConfiguredException, OutlookPermissionDeniedException, OutlookFolderNotFoundException, OutlookEmailNotFoundException). AC6: Automatic Reconnection with retry logic (exponential backoff: 1s, max 30s, 5 retries), connection status tracking (Connected/Reconnecting/Disconnected), graceful operation queuing during reconnection. AC8: Graceful handling of Outlook errors with user-friendly error messages and actionable next steps.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.2.md</path>
+        <title>SQLite Database & Caching Layer</title>
+        <section>lines 1-608</section>
+        <snippet>DatabaseManager with production-ready schema, optional encryption support (SQLCipher), backup/restore functionality with integrity checking, database corruption detection, and complete data deletion option. Error handling: Database corruption detection with automatic backup restoration, transaction rollback on errors. Testing includes database file corruption recovery scenarios.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.3.md</path>
+        <title>CustomTkinter UI Framework</title>
+        <section>lines 1-656</section>
+        <snippet>MainWindow with toast notifications for errors, error states in AnalysisPanel and ResponseEditor components. AC9: Progress indicators for long-running operations with error toasts (red background, 5-second dismiss). Error handling: Display user-friendly error if analysis fails (e.g., "Ollama not responding"), handle all failure modes in UI components, show "Analyzing..." spinner during LLM processing with timeout detection.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.4.md</path>
+        <title>Settings & Configuration System</title>
+        <section>lines 1-731</section>
+        <snippet>SettingsManager with YAML export/import, validation framework for all 19 settings, observer pattern for settings changes. Integration point for AC11: Automatic Updates setting (update_frequency_hours) stored in user_preferences table. Settings validation and error handling patterns.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/mailmind/core/ollama_manager.py</path>
+        <title>Ollama Model Management</title>
+        <lines>1-292</lines>
+        <interface>
+          <class>OllamaManager</class>
+          <methods>
+            <method>__init__(config: Dict[str, Any])</method>
+            <method>connect() -> bool</method>
+            <method>verify_model(models_response: Optional[Dict]) -> bool</method>
+            <method>test_inference() -> bool</method>
+            <method>initialize() -> Tuple[bool, str]</method>
+          </methods>
+          <exceptions>
+            <exception>OllamaConnectionError</exception>
+            <exception>OllamaModelError</exception>
+          </exceptions>
+          <attributes>
+            <attribute>primary_model: str (default: llama3.1:8b-instruct-q4_K_M)</attribute>
+            <attribute>fallback_model: str (default: mistral:7b-instruct-q4_K_M)</attribute>
+            <attribute>current_model: Optional[str]</attribute>
+            <attribute>is_connected: bool</attribute>
+            <attribute>model_status: str (not_initialized/ready/loading/error)</attribute>
+          </attributes>
+          <integrationNotes>
+AC3 Model Fallback: verify_model() checks primary_model, falls back to fallback_model if primary not available. Raises OllamaModelError if neither available.
+AC12 Error Scenario - Ollama not installed: connect() raises OllamaConnectionError with installation instructions.
+AC12 Error Scenario - Model not downloaded: verify_model() raises OllamaModelError with download command prompt.
+Error messages are user-friendly with actionable next steps (AC5).
+          </integrationNotes>
+        </interface>
+      </file>
+      <file>
+        <path>src/mailmind/integrations/outlook_connector.py</path>
+        <title>Outlook COM Interface with Reconnection Logic</title>
+        <lines>1-968</lines>
+        <interface>
+          <class>OutlookConnector</class>
+          <methods>
+            <method>connect() -> bool</method>
+            <method>detect_outlook_installed() -> bool (static)</method>
+            <method>is_outlook_running() -> bool (static)</method>
+            <method>get_folder(folder_name: str) -> Any</method>
+            <method>fetch_emails(folder_name, limit, offset) -> List[OutlookEmail]</method>
+          </methods>
+          <exceptions>
+            <exception>OutlookNotInstalledException(details)</exception>
+            <exception>OutlookNotRunningException(details)</exception>
+            <exception>OutlookConnectionError(message, error_code, details)</exception>
+            <exception>OutlookProfileNotConfiguredException(details)</exception>
+            <exception>OutlookPermissionDeniedException(details)</exception>
+            <exception>OutlookFolderNotFoundException(folder_name, details)</exception>
+            <exception>OutlookEmailNotFoundException(email_id, details)</exception>
+          </exceptions>
+          <attributes>
+            <attribute>connection_state: ConnectionState (status, last_connected, last_error, retry_count)</attribute>
+            <attribute>is_connected: bool (property)</attribute>
+          </attributes>
+          <integrationNotes>
+AC2 Automatic Recovery: Need to add retry logic with exponential backoff wrapper around connect(). Current implementation has error detection but no automatic retry mechanism.
+AC12 Error Scenario - Outlook not running: connect() raises OutlookNotRunningException with process check. Need to integrate with reconnection loop.
+Error messages map COM error codes to user-friendly exceptions (AC5).
+ConnectionState tracks retry attempts and last_error for status display.
+          </integrationNotes>
+        </interface>
+      </file>
+      <file>
+        <path>src/mailmind/core/hardware_profiler.py</path>
+        <title>Hardware Detection & Memory Monitoring</title>
+        <lines>1-356</lines>
+        <interface>
+          <class>HardwareProfiler</class>
+          <methods>
+            <method>detect_hardware() -> Dict[str, Any] (static)</method>
+            <method>monitor_resources() -> Dict[str, Any] (static)</method>
+            <method>check_memory_pressure(threshold_percent=85.0) -> bool (static)</method>
+            <method>get_optimization_settings(profile: Dict) -> Dict (static)</method>
+          </methods>
+          <returns>
+            <detect_hardware>Hardware profile with cpu_cores, ram_total_gb, ram_available_gb, gpu_detected, hardware_tier (Optimal/Recommended/Minimum/Insufficient), expected_tokens_per_second</detect_hardware>
+            <monitor_resources>Current cpu_percent, ram_used_gb, ram_percent, ram_available_gb, timestamp</monitor_resources>
+            <check_memory_pressure>True if memory usage exceeds threshold (default 85%)</check_memory_pressure>
+          </returns>
+          <integrationNotes>
+AC8 Hardware Check: detect_hardware() provides hardware_tier classification. Installer needs to check hardware_tier == 'Insufficient' and show warnings if ram_total_gb &lt; 16.
+AC12 Error Scenario - Insufficient Memory: monitor_resources() and check_memory_pressure() detect low memory conditions. Error handler should suggest closing applications if ram_available_gb &lt; 2.
+Memory monitoring integration: Call monitor_resources() every 5 seconds in background thread, trigger warnings at 85% threshold.
+          </integrationNotes>
+        </interface>
+      </file>
+      <file>
+        <path>src/mailmind/core/settings_manager.py</path>
+        <title>Settings Persistence & Validation</title>
+        <lines>1-651</lines>
+        <interface>
+          <class>SettingsManager</class>
+          <methods>
+            <method>get_instance(db_manager=None) -> SettingsManager (classmethod)</method>
+            <method>load_settings() -> Dict[str, Any]</method>
+            <method>save_settings(settings: Dict) -> None</method>
+            <method>get_setting(key: str, default=None) -> Any</method>
+            <method>set_setting(key: str, value: Any) -> None</method>
+            <method>export_to_yaml(filepath: str) -> None</method>
+            <method>load_from_yaml(filepath: str) -> None</method>
+            <method>subscribe(setting_key: str, callback: Callable) -> None</method>
+          </methods>
+          <exceptions>
+            <exception>SettingsValidationError</exception>
+          </exceptions>
+          <settings>
+            <auto_backup>bool (default: True) - Enable automatic database backups</auto_backup>
+            <backup_frequency_hours>int (default: 24, range: 1-168) - Backup frequency in hours</backup_frequency_hours>
+            <log_level>str (default: INFO, enum: DEBUG/INFO/WARNING/ERROR) - Logging level</log_level>
+          </settings>
+          <integrationNotes>
+AC11 Automatic Updates: Add new settings for update check frequency (e.g., "update_check_enabled": bool, "update_check_frequency_hours": int). Use observer pattern to notify update checker when settings change.
+AC4 Logging Level: get_setting('log_level') to configure logger dynamically. Subscribe to 'log_level' changes to update logging.setLevel() immediately.
+Validation framework can be extended for installer-specific settings (e.g., installation path validation).
+          </integrationNotes>
+        </interface>
+      </file>
+      <file>
+        <path>src/mailmind/integrations/outlook_errors.py</path>
+        <title>Outlook Custom Exception Hierarchy</title>
+        <lines>1-128</lines>
+        <interface>
+          <baseClass>OutlookError(Exception)</baseClass>
+          <exceptions>
+            <exception>OutlookNotInstalledException(OutlookError) - Outlook not installed on system</exception>
+            <exception>OutlookNotRunningException(OutlookError) - Outlook not running</exception>
+            <exception>OutlookConnectionError(OutlookError) - Generic connection failure</exception>
+            <exception>OutlookProfileNotConfiguredException(OutlookError) - No email profile configured</exception>
+            <exception>OutlookPermissionDeniedException(OutlookError) - Permission denied by Outlook</exception>
+            <exception>OutlookFolderNotFoundException(OutlookError) - Folder not found</exception>
+            <exception>OutlookEmailNotFoundException(OutlookError) - Email not found</exception>
+          </exceptions>
+          <attributes>
+            <message>User-friendly error message (AC5)</message>
+            <details>Technical details for logging</details>
+            <error_code>COM error code (optional)</error_code>
+          </attributes>
+          <integrationNotes>
+AC1 Graceful Error Handling: Custom exception hierarchy provides user-friendly messages in 'message' attribute and technical details in 'details' attribute for logging.
+AC5 User-Friendly Error Messages: Each exception includes actionable next steps (e.g., "Please start Outlook and try again").
+Pattern to follow for new ErrorHandler exceptions: inherit from base MailMindException, provide user_message and technical_details attributes.
+          </integrationNotes>
+        </interface>
+      </file>
+    </code>
+    <dependencies>
+      <dependency>
+        <name>pywin32</name>
+        <version>>=306</version>
+        <purpose>Windows COM automation for Outlook integration (Story 2.1)</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>psutil</name>
+        <version>>=5.9.0</version>
+        <purpose>System resource monitoring, memory pressure detection, process detection (Stories 1.6, 2.1)</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>customtkinter</name>
+        <version>>=5.2.0</version>
+        <purpose>Modern UI framework for error dialogs, toast notifications (Story 2.3)</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>pyyaml</name>
+        <version>>=6.0.0</version>
+        <purpose>YAML configuration export/import for settings (Story 2.4)</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>ollama</name>
+        <version>latest</version>
+        <purpose>Ollama Python client for LLM interaction (Story 1.1)</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>pysqlite3</name>
+        <version>latest</version>
+        <purpose>SQLite database with optional encryption support (Story 2.2)</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>cryptography</name>
+        <version>>=41.0.0</version>
+        <purpose>Windows DPAPI key storage for database encryption (Story 2.2)</purpose>
+        <required>false</required>
+      </dependency>
+      <dependency>
+        <name>pytest</name>
+        <version>>=7.4.0</version>
+        <purpose>Testing framework for unit and integration tests</purpose>
+        <required>true</required>
+      </dependency>
+      <dependency>
+        <name>pytest-mock</name>
+        <version>>=3.11.0</version>
+        <purpose>Mocking support for testing error scenarios</purpose>
+        <required>true</required>
+      </dependency>
+      <externalDependency>
+        <name>Ollama</name>
+        <version>latest</version>
+        <downloadUrl>https://ollama.ai/download</downloadUrl>
+        <purpose>Local LLM runtime (not bundled in installer)</purpose>
+        <required>true</required>
+      </externalDependency>
+      <externalDependency>
+        <name>Microsoft Outlook</name>
+        <version>2016/2019/2021/365</version>
+        <purpose>Email client for COM automation</purpose>
+        <required>true</required>
+      </externalDependency>
+      <installerDependency>
+        <name>NSIS or Inno Setup</name>
+        <version>3.0+ or 6.0+</version>
+        <purpose>Windows installer framework</purpose>
+        <required>true</required>
+      </installerDependency>
+      <installerDependency>
+        <name>Code Signing Certificate</name>
+        <type>EV Code Signing</type>
+        <purpose>Windows Defender trust, SmartScreen bypass</purpose>
+        <required>true</required>
+      </installerDependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="arch-1">
+      <title>Custom Exception Hierarchy</title>
+      <description>Create MailMindException base class extending Exception. All error types (OllamaError, OutlookError, DatabaseError, MemoryError) inherit from MailMindException. Each exception includes 'user_message' (AC5) and 'technical_details' (AC4) attributes.</description>
+    </constraint>
+    <constraint id="arch-2">
+      <title>Centralized ErrorHandler Class</title>
+      <description>Create ErrorHandler singleton class responsible for: (1) catching all exceptions, (2) logging with appropriate severity and context, (3) translating technical exceptions to user-friendly messages, (4) triggering recovery strategies (retry, fallback, graceful degradation), (5) updating UI error state via observer pattern.</description>
+    </constraint>
+    <constraint id="arch-3">
+      <title>Retry Logic with Exponential Backoff</title>
+      <description>Implement retry decorator supporting exponential backoff (initial: 1s, multiplier: 2x, max: 16s, max_retries: 5). Apply to: OutlookConnector.connect(), OllamaManager.connect(), DatabaseManager operations. Track retry_count in connection state for status display (AC2).</description>
+    </constraint>
+    <constraint id="arch-4">
+      <title>Model Fallback Chain</title>
+      <description>OllamaManager.verify_model() implements fallback: primary_model (llama3.1:8b-instruct-q4_K_M) → fallback_model (mistral:7b-instruct-q4_K_M) → raise OllamaModelError. Log each fallback attempt with WARNING severity. Update UI to show active model (AC3).</description>
+    </constraint>
+    <constraint id="arch-5">
+      <title>Structured Logging Format</title>
+      <description>Python RotatingFileHandler with format: "[{timestamp}] {level} [{module}:{function}:{line}] {message}". Log directory: %APPDATA%/MailMind/logs/. Rotation: max 10 files of 10MB each. Levels: DEBUG (development), INFO (startup/shutdown), WARNING (fallbacks), ERROR (failures), CRITICAL (crashes). Include stack trace for ERROR+ levels (AC4).</description>
+    </constraint>
+    <constraint id="arch-6">
+      <title>User-Friendly Error Message Templates</title>
+      <description>Map technical exceptions to user messages avoiding jargon. Template format: "{What happened} {Why it happened} {What to do next}". Examples: Ollama not installed → "MailMind requires Ollama to run AI features. Please download from https://ollama.ai/download and restart the application." Include "Report Issue" button in all error dialogs (AC5, AC6).</description>
+    </constraint>
+    <constraint id="arch-7">
+      <title>Memory Monitoring Integration</title>
+      <description>Background thread calling HardwareProfiler.monitor_resources() every 5 seconds. If check_memory_pressure(85.0) returns True: (1) log WARNING, (2) trigger garbage collection, (3) reduce batch size via BatchQueueManager, (4) show toast notification if &gt;90%. If ram_available_gb &lt; 2: show error dialog suggesting to close applications (AC12 - Insufficient Memory).</description>
+    </constraint>
+    <constraint id="arch-8">
+      <title>Database Corruption Detection</title>
+      <description>Wrap all SQLite operations in try-except catching sqlite3.DatabaseError. On corruption: (1) log CRITICAL with full traceback, (2) attempt restoration from latest backup via BackupManager.restore(), (3) if restore fails, offer to recreate database (lose cache, keep YAML settings), (4) show progress dialog during restoration (AC12).</description>
+    </constraint>
+    <constraint id="arch-9">
+      <title>Windows Installer Architecture</title>
+      <description>Choose NSIS or Inno Setup based on: code signing support (both), custom pages (both), hardware check capability (both). Installer bundles: Python 3.9+ runtime, all pip dependencies, application code. Excludes: Ollama (separate download guidance). Registry: HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MailMind. Desktop shortcut optional (checkbox). Startup folder optional (checkbox). Hardware check runs HardwareProfiler.detect_hardware() and warns if hardware_tier == 'Insufficient' (AC7, AC8).</description>
+    </constraint>
+    <constraint id="arch-10">
+      <title>Automatic Update System Architecture</title>
+      <description>Update checker runs as background thread (configurable frequency via SettingsManager: update_check_enabled, update_check_frequency_hours). Version check: compare semantic version (major.minor.patch) against remote version endpoint. Download verification: SHA-256 checksum validation. Update process: (1) Download update package, (2) Backup current installation, (3) Install update, (4) Rollback on failure with error logging. User control: Settings toggle, notification with "Update Now" / "Later" buttons (AC11).</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface id="interface-1">
+      <name>ErrorHandler API</name>
+      <description>Centralized error handling interface</description>
+      <methods>
+        <method>handle_exception(exception: Exception, context: Dict) -> str (returns user_message)</method>
+        <method>log_error(exception: Exception, severity: str, context: Dict) -> None</method>
+        <method>get_recovery_strategy(exception_type: Type[Exception]) -> Callable (retry/fallback/none)</method>
+        <method>show_error_dialog(message: str, details: str, show_report_button: bool) -> None</method>
+      </methods>
+      <integrationPoints>
+        <point>All try-except blocks call ErrorHandler.handle_exception()</point>
+        <point>UI components subscribe to error events via observer pattern</point>
+        <point>Recovery strategies automatically triggered before showing error to user</point>
+      </integrationPoints>
+    </interface>
+    <interface id="interface-2">
+      <name>Logger Configuration API</name>
+      <description>Logging system setup and management</description>
+      <methods>
+        <method>setup_logging(log_level: str, log_dir: Path) -> None</method>
+        <method>get_logger(module_name: str) -> logging.Logger</method>
+        <method>export_logs_to_clipboard() -> bool (AC6 - Report Issue)</method>
+        <method>sanitize_logs(log_text: str) -> str (remove sensitive data)</method>
+      </methods>
+      <integrationPoints>
+        <point>setup_logging() called at application startup with log_level from SettingsManager</point>
+        <point>"Report Issue" button in error dialogs calls export_logs_to_clipboard()</point>
+        <point>SettingsManager.subscribe('log_level', lambda level: logging.setLevel(level))</point>
+      </integrationPoints>
+    </interface>
+    <interface id="interface-3">
+      <name>Retry Decorator API</name>
+      <description>Exponential backoff retry logic</description>
+      <signature>
+@retry(max_retries=5, initial_delay=1.0, backoff_multiplier=2.0, max_delay=16.0, exceptions=(ConnectionError,))
+def connect_to_service(): ...
+      </signature>
+      <integrationPoints>
+        <point>Apply to OutlookConnector.connect() for AC2</point>
+        <point>Apply to OllamaManager.connect() for AC12</point>
+        <point>Log each retry attempt with WARNING severity</point>
+        <point>Update ConnectionState.retry_count on each attempt</point>
+      </integrationPoints>
+    </interface>
+    <interface id="interface-4">
+      <name>Installer Script API</name>
+      <description>NSIS/Inno Setup installer interface</description>
+      <sections>
+        <section>Custom page: Hardware check with HardwareProfiler.detect_hardware()</section>
+        <section>Custom page: Ollama detection with download guidance if not found</section>
+        <section>Install section: Copy application files, Python runtime, dependencies</section>
+        <section>Registry section: HKCU uninstall entries, file associations</section>
+        <section>Shortcuts section: Desktop (optional), Start Menu, Startup folder (optional)</section>
+      </sections>
+      <integrationPoints>
+        <point>Run build-installer.py to generate installer exe</point>
+        <point>Sign installer with code signing certificate (signtool.exe)</point>
+        <point>Test on clean Windows 10/11 VMs before release</point>
+      </integrationPoints>
+    </interface>
+    <interface id="interface-5">
+      <name>Update Checker API</name>
+      <description>Automatic update system interface</description>
+      <methods>
+        <method>check_for_updates() -> Optional[UpdateInfo] (returns None if no update)</method>
+        <method>download_update(update_info: UpdateInfo, progress_callback: Callable) -> Path</method>
+        <method>verify_update(update_path: Path, expected_checksum: str) -> bool</method>
+        <method>apply_update(update_path: Path) -> bool (returns success)</method>
+        <method>rollback_update() -> bool (restore from backup)</method>
+      </methods>
+      <integrationPoints>
+        <point>Background thread runs check_for_updates() based on SettingsManager.get_setting('update_check_frequency_hours')</point>
+        <point>Show notification with "Update Now" / "Later" buttons if update available</point>
+        <point>Backup current installation to %APPDATA%/MailMind/backups/pre-update/ before apply_update()</point>
+        <point>Rollback on failure with error logging and user notification</point>
+      </integrationPoints>
+    </interface>
+    <interface id="interface-6">
+      <name>Error Dialog UI API</name>
+      <description>CustomTkinter error dialog component</description>
+      <methods>
+        <method>show_error(title: str, message: str, details: str, show_report: bool) -> None</method>
+        <method>show_warning(title: str, message: str) -> None</method>
+        <method>show_confirmation(title: str, message: str, on_confirm: Callable) -> None</method>
+      </methods>
+      <integrationPoints>
+        <point>ErrorHandler.show_error_dialog() creates and displays error dialog</point>
+        <point>"Report Issue" button calls Logger.export_logs_to_clipboard()</point>
+        <point>Error details expandable section shows technical exception details</point>
+      </integrationPoints>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Unit tests: >85% code coverage for ErrorHandler, Logger, Retry decorator, Update checker</standard>
+      <standard>Integration tests: End-to-end error scenarios (Ollama not installed, Outlook not running, etc.)</standard>
+      <standard>Manual tests: Installer on clean Windows 10/11 VMs, hardware check warnings, uninstaller database options</standard>
+      <standard>Performance tests: Error handling overhead &lt;10ms, log write &lt;5ms, installer execution &lt;2min</standard>
+      <standard>Security tests: Log sanitization removes email content, no credential leakage in logs</standard>
+    </standards>
+    <locations>
+      <location>tests/unit/test_error_handler.py - ErrorHandler exception mapping (20 tests)</location>
+      <location>tests/unit/test_logger.py - Logging output format and rotation (15 tests)</location>
+      <location>tests/unit/test_retry_decorator.py - Retry logic with exponential backoff (10 tests)</location>
+      <location>tests/integration/test_error_scenarios.py - End-to-end error handling (6 tests)</location>
+      <location>tests/integration/test_installer.py - Installer hardware check (5 tests)</location>
+      <location>tests/integration/test_update_system.py - Update download and verification (8 tests)</location>
+    </locations>
+    <ideas>
+      <test id="AC1-1">Test ErrorHandler catches all exception types without crashing</test>
+      <test id="AC1-2">Test user-friendly error messages shown for each exception type</test>
+      <test id="AC1-3">Test error dialog displays without blocking main thread</test>
+      <test id="AC1-4">Test multiple simultaneous errors handled gracefully (error queue)</test>
+      <test id="AC1-5">Test error recovery strategies executed before showing error to user</test>
+
+      <test id="AC2-1">Test Outlook reconnection with retry logic (5 retries, exponential backoff)</test>
+      <test id="AC2-2">Test retry delay doubles each attempt (1s → 2s → 4s → 8s → 16s)</test>
+      <test id="AC2-3">Test ConnectionState.retry_count incremented on each retry</test>
+      <test id="AC2-4">Test connection status changes: Disconnected → Reconnecting → Connected</test>
+      <test id="AC2-5">Test operations queued during reconnection attempts</test>
+      <test id="AC2-6">Test max retries exceeded shows final error to user</test>
+
+      <test id="AC3-1">Test OllamaManager tries primary model first (llama3.1:8b)</test>
+      <test id="AC3-2">Test automatic fallback to Mistral if Llama not available</test>
+      <test id="AC3-3">Test OllamaModelError raised if neither model available</test>
+      <test id="AC3-4">Test fallback attempt logged with WARNING severity</test>
+      <test id="AC3-5">Test UI shows active model after fallback (current_model attribute)</test>
+
+      <test id="AC4-1">Test RotatingFileHandler creates logs in %APPDATA%/MailMind/logs/</test>
+      <test id="AC4-2">Test log rotation at 10MB limit (max 10 files)</test>
+      <test id="AC4-3">Test log format includes [timestamp] level [module:function:line] message</test>
+      <test id="AC4-4">Test stack trace included for ERROR and CRITICAL levels</test>
+      <test id="AC4-5">Test log levels configurable via SettingsManager.get_setting('log_level')</test>
+      <test id="AC4-6">Test context dictionary logged with structured format (JSON or key=value)</test>
+      <test id="AC4-7">Test performance metrics logged (tokens/sec, memory usage)</test>
+      <test id="AC4-8">Test log write performance &lt;5ms per entry</test>
+
+      <test id="AC5-1">Test error messages avoid technical jargon (no stack traces in user message)</test>
+      <test id="AC5-2">Test each error message includes "What happened" description</test>
+      <test id="AC5-3">Test each error message includes "What to do next" actionable steps</test>
+      <test id="AC5-4">Test Ollama not installed message includes download link</test>
+      <test id="AC5-5">Test Outlook not running message suggests starting Outlook</test>
+      <test id="AC5-6">Test insufficient memory message suggests closing applications</test>
+      <test id="AC5-7">Test database corruption message explains restoration process</test>
+
+      <test id="AC6-1">Test "Report Issue" button available in all error dialogs</test>
+      <test id="AC6-2">Test export_logs_to_clipboard() copies logs to clipboard</test>
+      <test id="AC6-3">Test log sanitization removes email content (subject, body, sender)</test>
+      <test id="AC6-4">Test log sanitization removes personal information (email addresses)</test>
+      <test id="AC6-5">Test clipboard copy success notification shown to user</test>
+      <test id="AC6-6">Test clipboard copy failure handled gracefully (save to file fallback)</test>
+
+      <test id="AC7-1">Test NSIS/Inno Setup installer builds successfully</test>
+      <test id="AC7-2">Test installer bundles Python runtime (python39.dll, etc.)</test>
+      <test id="AC7-3">Test installer bundles all pip dependencies (pywin32, psutil, etc.)</test>
+      <test id="AC7-4">Test installer excludes Ollama (not bundled)</test>
+      <test id="AC7-5">Test installer creates uninstall registry entries</test>
+      <test id="AC7-6">Test desktop shortcut creation (optional checkbox)</test>
+      <test id="AC7-7">Test startup folder entry creation (optional checkbox)</test>
+      <test id="AC7-8">Test installer size &lt;150MB (without Ollama)</test>
+      <test id="AC7-9">Test installer execution time &lt;2 minutes</test>
+
+      <test id="AC8-1">Test hardware check runs HardwareProfiler.detect_hardware() during install</test>
+      <test id="AC8-2">Test warning shown if hardware_tier == 'Insufficient'</test>
+      <test id="AC8-3">Test warning shown if ram_total_gb &lt; 16</test>
+      <test id="AC8-4">Test warning includes minimum specs (16GB RAM, Windows 10/11)</test>
+      <test id="AC8-5">Test user can proceed despite warning (not a blocker)</test>
+      <test id="AC8-6">Test hardware profile logged to installation log</test>
+
+      <test id="AC9-1">Test installer signed with EV code signing certificate</test>
+      <test id="AC9-2">Test signed installer verified with signtool.exe</test>
+      <test id="AC9-3">Test Windows Defender SmartScreen trusts signed installer</test>
+      <test id="AC9-4">Test signature visible in installer properties (Digital Signatures tab)</test>
+      <test id="AC9-5">Test certificate expiration checked before build</test>
+
+      <test id="AC10-1">Test uninstaller offers "Delete Database" checkbox</test>
+      <test id="AC10-2">Test database preserved if checkbox unchecked</test>
+      <test id="AC10-3">Test database deleted if checkbox checked</test>
+      <test id="AC10-4">Test all backup files deleted on uninstall (if database deleted)</test>
+      <test id="AC10-5">Test registry entries removed on uninstall</test>
+      <test id="AC10-6">Test shortcuts removed on uninstall</test>
+      <test id="AC10-7">Test encryption key deleted from DPAPI (if database deleted)</test>
+      <test id="AC10-8">Test uninstall logs deletion event before removing files</test>
+
+      <test id="AC11-1">Test update check runs based on SettingsManager.get_setting('update_check_frequency_hours')</test>
+      <test id="AC11-2">Test version comparison (major.minor.patch) detects newer versions</test>
+      <test id="AC11-3">Test SHA-256 checksum validation before applying update</test>
+      <test id="AC11-4">Test backup created before applying update</test>
+      <test id="AC11-5">Test rollback on update failure restores from backup</test>
+      <test id="AC11-6">Test update notification shows "Update Now" / "Later" buttons</test>
+      <test id="AC11-7">Test update setting toggle in Settings dialog (AC11 integration)</test>
+      <test id="AC11-8">Test update download progress indicator shown to user</test>
+
+      <test id="AC12-1">Test error scenario: Ollama not installed (OllamaConnectionError raised)</test>
+      <test id="AC12-2">Test error scenario: Model not downloaded (OllamaModelError raised)</test>
+      <test id="AC12-3">Test error scenario: Outlook not running (OutlookNotRunningException raised)</test>
+      <test id="AC12-4">Test error scenario: Insufficient memory (ram_available_gb &lt; 2)</test>
+      <test id="AC12-5">Test error scenario: Database corruption (sqlite3.DatabaseError caught)</test>
+      <test id="AC12-6">Test recovery: Ollama not installed shows download guidance</test>
+      <test id="AC12-7">Test recovery: Model not downloaded prompts "ollama pull" command</test>
+      <test id="AC12-8">Test recovery: Outlook not running suggests starting Outlook</test>
+      <test id="AC12-9">Test recovery: Insufficient memory suggests closing applications</test>
+      <test id="AC12-10">Test recovery: Database corruption restores from backup</test>
+      <test id="AC12-11">Test all error scenarios logged with full context and stack trace</test>
+      <test id="AC12-12">Test error dialog shown for each scenario with appropriate message</test>
+    </ideas>
+  </tests>
+</story-context>

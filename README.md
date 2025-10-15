@@ -694,6 +694,138 @@ ollama:
 - **Story 2.5:** Hardware Profiling & Onboarding Wizard
 - **Story 2.6:** Error Handling, Logging & Installer
 
+## Error Handling & Logging (Story 2.6)
+
+MailMind features comprehensive error handling and logging for production reliability.
+
+### Automatic Error Recovery
+
+**Ollama Connection (AC2):**
+- Automatic retry with exponential backoff (1s → 2s → 4s → 8s → 16s)
+- Up to 5 retry attempts for transient failures
+- Automatic fallback from Llama 3.1 to Mistral if model unavailable
+
+**Outlook Connection (AC2):**
+- Automatic reconnection with retry logic
+- Connection state tracking (Connected/Reconnecting/Disconnected)
+- User-friendly error messages with actionable next steps
+
+**Database Corruption (AC12):**
+- Automatic detection and backup restoration
+- Database integrity checking on startup
+- Graceful degradation if restoration fails
+
+**Memory Pressure (AC12):**
+- Background memory monitoring (every 5 seconds)
+- Automatic garbage collection at 85% memory threshold
+- Batch size reduction under memory pressure
+
+### Structured Logging (AC4)
+
+**Log Format:**
+```
+[2025-10-15 14:32:15] INFO [module:function:line] message
+```
+
+**Log Rotation:**
+- Maximum 10 files of 10MB each
+- Automatic rotation when file size limit reached
+- Platform-specific log directory:
+  - Windows: `%APPDATA%\MailMind\logs\`
+  - Mac: `~/Library/Application Support/MailMind/logs/`
+  - Linux: `~/.local/share/MailMind/logs/`
+
+**Log Levels:**
+- `DEBUG` - Detailed diagnostic information
+- `INFO` - Normal operation events
+- `WARNING` - Unexpected but handled situations (fallbacks, retries)
+- `ERROR` - Operation failures with recovery
+- `CRITICAL` - Serious errors requiring attention
+
+**Performance Metrics Logging:**
+```python
+[2025-10-15 14:32:15] INFO [logger:log_performance_metrics:350] PERFORMANCE: operation=email_analysis | duration_s=2.345 | tokens_per_sec=125.3 | memory_mb=456.7 | cache_hits=12
+```
+
+### Issue Reporting (AC6)
+
+**Export Sanitized Logs:**
+```python
+from mailmind.core.logger import export_logs_to_clipboard
+
+# Copy logs to clipboard for support (automatically sanitized)
+success = export_logs_to_clipboard()
+```
+
+**Automatic Sanitization:**
+- Email addresses → `[EMAIL]`
+- Email subjects → `[SUBJECT]`
+- Email bodies → `[BODY_REMOVED]`
+- API keys → `[API_KEY]`
+
+**UI Integration:**
+- "Report Issue" button in Help menu
+- One-click log export to clipboard
+- Sanitized logs safe to share with support
+
+### Error Messages (AC5)
+
+All error messages follow the format: **"{What happened} {Why} {What to do next}"**
+
+Examples:
+- ✅ "MailMind requires Ollama to run AI features. Please download from https://ollama.ai/download and restart the application."
+- ✅ "Insufficient memory detected (1.5GB available, 2.0GB recommended). For better performance, please close some applications."
+- ✅ "Database corruption detected. Attempting to restore from backup... This may take a few moments."
+
+### Developer Usage
+
+**Error Handling:**
+```python
+from mailmind.core.error_handler import get_error_handler, retry
+
+handler = get_error_handler()
+
+try:
+    risky_operation()
+except Exception as e:
+    user_message = handler.handle_exception(e, context={'operation': 'email_fetch'})
+    show_error_dialog(user_message)
+
+# Retry decorator for automatic recovery
+@retry(max_retries=5, initial_delay=1.0, exceptions=(ConnectionError,))
+def connect_to_service():
+    return service.connect()
+```
+
+**Logging:**
+```python
+from mailmind.core.logger import setup_logging, get_logger, log_performance_metrics
+
+# Setup (application startup)
+setup_logging(log_level="INFO")
+
+# Get logger for module
+logger = get_logger(__name__)
+logger.info("Operation completed successfully")
+logger.error("Operation failed", exc_info=True)  # Include stack trace
+
+# Log performance metrics
+log_performance_metrics(
+    operation="email_analysis",
+    duration_seconds=2.5,
+    tokens_per_second=125.3,
+    memory_mb=512.3
+)
+```
+
+### Documentation
+
+**For Developers:**
+- [Error Handling Patterns](docs/developer-guide/error-handling-patterns.md) - Complete developer guide with examples
+
+**For Users:**
+- [Troubleshooting Guide](docs/user-guide/troubleshooting.md) - User-friendly troubleshooting steps
+
 ## Troubleshooting
 
 ### Ollama Not Found
@@ -705,6 +837,8 @@ ollama:
 2. Start Ollama service: `ollama serve`
 3. Verify it's running: `ollama list`
 
+**Recovery:** MailMind automatically retries connection up to 5 times with exponential backoff
+
 ### Model Not Available
 
 **Error:** `Neither primary model nor fallback model are available`
@@ -715,12 +849,23 @@ Download the model:
 ollama pull llama3.1:8b-instruct-q4_K_M
 ```
 
+**Recovery:** MailMind automatically falls back to Mistral if Llama unavailable
+
 ### Slow Performance
 
 If AI inference is slow:
 1. Check if GPU acceleration is working: Look for GPU detection in logs
 2. Consider using a smaller model: `mistral:7b-instruct-q4_K_M`
 3. Verify system meets minimum requirements (16GB RAM)
+
+**Recovery:** MailMind automatically reduces memory usage under pressure
+
+### More Help
+
+For comprehensive troubleshooting:
+- **User Guide:** [docs/user-guide/troubleshooting.md](docs/user-guide/troubleshooting.md)
+- **Developer Guide:** [docs/developer-guide/error-handling-patterns.md](docs/developer-guide/error-handling-patterns.md)
+- **Report Issue:** Help → Report Issue (exports sanitized logs to clipboard)
 
 ## License
 

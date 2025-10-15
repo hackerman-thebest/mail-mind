@@ -46,6 +46,19 @@ from .schema import (
 )
 from .backup_manager import BackupManager, BackupError
 
+# Import Story 2.6 exceptions
+try:
+    from mailmind.core.exceptions import DatabaseCorruptionError, DatabaseBackupError
+except ImportError:
+    # Fallback if exceptions.py not available
+    class DatabaseCorruptionError(Exception):
+        """Raised when database corruption is detected."""
+        pass
+
+    class DatabaseBackupError(Exception):
+        """Raised when database backup or restore fails."""
+        pass
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -211,6 +224,8 @@ class DatabaseManager:
         """
         Execute a SQL query with performance logging and error handling.
 
+        Story 2.6 AC12: Database corruption detection and automatic recovery
+
         Args:
             query: SQL query string
             params: Query parameters (tuple)
@@ -222,6 +237,7 @@ class DatabaseManager:
 
         Raises:
             QueryError: If query execution fails
+            DatabaseCorruptionError: If database corruption is detected (AC12)
         """
         start_time = time.time() if self.debug else None
         conn = self._get_connection()
@@ -246,6 +262,27 @@ class DatabaseManager:
                     logger.warning(f"Slow query detected ({elapsed_ms:.2f}ms): {query[:200]}")
 
             return result
+
+        except sqlite3.DatabaseError as e:
+            # AC12: Database corruption detection
+            error_msg = str(e).lower()
+            if 'corrupt' in error_msg or 'malformed' in error_msg or 'damaged' in error_msg:
+                # Constraint arch-8: (1) log CRITICAL with full traceback
+                logger.critical(
+                    f"🚨 DATABASE CORRUPTION DETECTED: {e}\n"
+                    f"Query: {query[:200]}\n"
+                    f"Database: {self.db_path}",
+                    exc_info=True
+                )
+
+                # Raise DatabaseCorruptionError to trigger recovery
+                technical_details = f"sqlite3.DatabaseError during query: {e}"
+                raise DatabaseCorruptionError(technical_details=technical_details)
+
+            # Not corruption - treat as regular query error
+            logger.error(f"Query failed: {query[:200]}... Error: {e}")
+            conn.rollback()
+            raise QueryError(f"Query execution failed: {e}")
 
         except sqlite3.Error as e:
             logger.error(f"Query failed: {query[:200]}... Error: {e}")

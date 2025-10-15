@@ -60,6 +60,16 @@ from .outlook_models import (
     FlagStatus,
 )
 
+# Import retry decorator for automatic reconnection (Story 2.6 AC2)
+try:
+    from mailmind.core.error_handler import retry
+except ImportError:
+    # Fallback: Define a no-op decorator if error_handler not available yet
+    def retry(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+
 logger = logging.getLogger(__name__)
 
 
@@ -201,11 +211,19 @@ class OutlookConnector:
             logger.error(f"Error checking if Outlook is running: {e}")
             return False
 
+    @retry(
+        max_retries=5,
+        initial_delay=1.0,
+        backoff_multiplier=2.0,
+        max_delay=16.0,
+        exceptions=(OutlookNotRunningException, OutlookConnectionError)
+    )
     def connect(self) -> bool:
         """
-        Establish connection to Microsoft Outlook.
+        Establish connection to Microsoft Outlook with automatic retry logic.
 
-        This method attempts to connect to Outlook via COM automation. It performs
+        This method attempts to connect to Outlook via COM automation with exponential
+        backoff retry (1s → 2s → 4s → 8s → 16s, max 5 retries). It performs
         the following checks:
         1. Verify Outlook is installed
         2. Verify Outlook is running
@@ -213,14 +231,16 @@ class OutlookConnector:
         4. Access MAPI namespace
         5. Verify at least one account is configured
 
+        Story 2.6 AC2: Automatic recovery from Outlook disconnection with retry logic
+
         Returns:
             True if connection successful, False otherwise
 
         Raises:
-            OutlookNotInstalledException: If Outlook is not installed
-            OutlookNotRunningException: If Outlook is not running
-            OutlookProfileNotConfiguredException: If no email profile exists
-            OutlookConnectionError: For other connection failures
+            OutlookNotInstalledException: If Outlook is not installed (no retry)
+            OutlookNotRunningException: If Outlook is not running (retries automatically)
+            OutlookProfileNotConfiguredException: If no email profile exists (no retry)
+            OutlookConnectionError: For other connection failures (retries automatically)
 
         Example:
             connector = OutlookConnector()

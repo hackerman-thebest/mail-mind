@@ -1,0 +1,423 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/2.5" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Hardware Profiling &amp; Onboarding Wizard</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>new user</asA>
+    <iWant>guided setup and clear performance expectations</iWant>
+    <soThat>I can successfully configure MailMind for my hardware</soThat>
+    <tasks>
+      <task id="1">Create OnboardingWizard class with 5-step flow</task>
+      <task id="2">Implement Step 1: Welcome screen with value proposition</task>
+      <task id="3">Implement Step 2: Hardware detection using HardwareProfiler</task>
+      <task id="4">Implement Step 3: Performance expectations display by hardware tier</task>
+      <task id="5">Implement Step 4: Outlook connection test with troubleshooting</task>
+      <task id="6">Implement Step 5: Initial email indexing with progress tracking</task>
+      <task id="7">Implement onboarding_complete flag management</task>
+      <task id="8">Add re-run onboarding functionality in settings</task>
+      <task id="9">Create optional feature tour (3-4 slides)</task>
+      <task id="10">Add hardware tier color coding and visual indicators</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="critical">
+      <title>First-Run Onboarding Wizard (5 Steps)</title>
+      <description>Detect first launch via onboarding_complete flag; show full-screen wizard with 5-step flow: Welcome → Hardware Detection → Performance Expectations → Outlook Connection → Email Indexing</description>
+      <validationSteps>
+        <step>Verify onboarding_complete flag check on application launch</step>
+        <step>Verify wizard displays on first run (flag=false)</step>
+        <step>Verify wizard skips on subsequent runs (flag=true)</step>
+        <step>Verify all 5 steps render correctly</step>
+        <step>Verify Back/Next/Skip navigation works</step>
+        <step>Verify flag is set to true after completion</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC2" priority="critical">
+      <title>Hardware Detection with Automatic Profiling (Step 2)</title>
+      <description>Integrate with HardwareProfiler from Story 1.6 to detect CPU, RAM, GPU, VRAM and classify into hardware tiers (Optimal/Recommended/Minimum/Insufficient)</description>
+      <validationSteps>
+        <step>Verify HardwareProfiler.detect_hardware() is called</step>
+        <step>Verify hardware profile displays: CPU cores, RAM GB, GPU model, VRAM</step>
+        <step>Verify hardware tier is classified correctly</step>
+        <step>Verify spinner/progress shows during detection (~2s)</step>
+        <step>Verify hardware profile is stored in database</step>
+        <step>Verify graceful fallback on detection failure</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC3" priority="high">
+      <title>Performance Expectations Based on Hardware (Step 3)</title>
+      <description>Display performance expectations (tokens/sec, email analysis time, batch processing speed) based on detected hardware tier with clear messaging about limitations</description>
+      <validationSteps>
+        <step>Verify performance messaging matches hardware tier</step>
+        <step>Verify tokens/sec estimate is displayed</step>
+        <step>Verify email analysis time estimate is shown</step>
+        <step>Verify recommended model configuration is displayed</step>
+        <step>Verify upgrade recommendations for Insufficient tier</step>
+        <step>Verify positive messaging for Optimal/Recommended tiers</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC4" priority="critical">
+      <title>Outlook Connection Test (Step 4)</title>
+      <description>Test Outlook connection using OutlookConnector; display success (version, accounts, folders) or failure (troubleshooting steps with retry)</description>
+      <validationSteps>
+        <step>Verify OutlookConnector connection test is performed</step>
+        <step>Verify success display shows Outlook version, account, folder count</step>
+        <step>Verify failure display shows troubleshooting steps</step>
+        <step>Verify retry button works correctly</step>
+        <step>Verify skip option is available with warning</step>
+        <step>Verify common failure scenarios are handled</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC5" priority="high">
+      <title>Initial Email Indexing (Step 5)</title>
+      <description>Fetch first 50 emails from inbox, run priority classification, display real-time progress bar with current/total count and elapsed/remaining time</description>
+      <validationSteps>
+        <step>Verify 50 emails are fetched from Outlook inbox</step>
+        <step>Verify progress bar updates in real-time</step>
+        <step>Verify current/total email count is displayed</step>
+        <step>Verify elapsed and estimated time is shown</step>
+        <step>Verify priority classification is run on emails</step>
+        <step>Verify completion summary shows email counts by priority</step>
+        <step>Verify cancellation option works correctly</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC6" priority="medium">
+      <title>Hardware Profiler Display Components</title>
+      <description>Display hardware profile in clean, visual format with color coding (🟢 Optimal, 🟡 Recommended, 🟠 Minimum, 🔴 Insufficient) using CustomTkinter</description>
+      <validationSteps>
+        <step>Verify hardware profile displays in user-friendly format</step>
+        <step>Verify color coding for hardware tiers is correct</step>
+        <step>Verify tooltips/help text for technical terms</step>
+        <step>Verify hardware profile is stored in user_preferences</step>
+        <step>Verify OnboardingWizard uses CustomTkinter components</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC7" priority="low">
+      <title>Skippable Feature Tour (Step 6)</title>
+      <description>After indexing, show optional 3-4 slide feature tour covering email list, analysis panel, response generator, and settings with skip option</description>
+      <validationSteps>
+        <step>Verify feature tour displays after indexing completion</step>
+        <step>Verify all 4 tour slides render correctly</step>
+        <step>Verify skip button works on all slides</step>
+        <step>Verify "Don't show again" checkbox persists preference</step>
+        <step>Verify tour completion status is stored</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC8" priority="medium">
+      <title>Re-Run Onboarding from Settings</title>
+      <description>Add "Re-run Onboarding" button in Settings → Advanced tab that clears onboarding_complete flag or launches wizard immediately with confirmation</description>
+      <validationSteps>
+        <step>Verify "Re-run Onboarding" button exists in Settings</step>
+        <step>Verify confirmation dialog is shown</step>
+        <step>Verify onboarding_complete flag is cleared</step>
+        <step>Verify wizard can be launched immediately</step>
+        <step>Verify existing preferences are preserved during re-run</step>
+      </validationSteps>
+    </criterion>
+    <criterion id="AC9" priority="medium">
+      <title>Clear Messaging About Limitations</title>
+      <description>For Minimum/Insufficient hardware, show clear messaging about slower performance, upgrade recommendations, and trade-offs with FAQ link</description>
+      <validationSteps>
+        <step>Verify "slower performance" messaging for Minimum tier</step>
+        <step>Verify upgrade recommendations for Insufficient tier</step>
+        <step>Verify trade-offs (CPU vs GPU, batch size impact) are explained</step>
+        <step>Verify link to hardware requirements documentation</step>
+        <step>Verify performance comparison table is available</step>
+      </validationSteps>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/stories/story-1.6.md" section="HardwareProfiler">
+        <title>Story 1.6: Performance Optimization &amp; Caching</title>
+        <relevance>Provides HardwareProfiler.detect_hardware() method and hardware tier classification logic required for Step 2</relevance>
+        <snippet>HardwareProfiler returns: {cpu_cores, ram_total_gb, gpu_detected, hardware_tier, expected_tokens_per_second, recommended_model}</snippet>
+      </doc>
+      <doc path="docs/stories/story-2.1.md" section="OutlookConnector">
+        <title>Story 2.1: Outlook Integration</title>
+        <relevance>Provides OutlookConnector for connection testing (Step 4) and email fetching (Step 5)</relevance>
+        <snippet>OutlookConnector methods: connect(), get_connection_status(), fetch_emails(limit=50)</snippet>
+      </doc>
+      <doc path="docs/stories/story-2.2.md" section="DatabaseManager">
+        <title>Story 2.2: SQLite Database &amp; Caching Layer</title>
+        <relevance>Provides database persistence for user_preferences table to store onboarding_complete flag and hardware profile</relevance>
+        <snippet>DatabaseManager methods: get_preference(), set_preference()</snippet>
+      </doc>
+      <doc path="docs/stories/story-2.3.md" section="CustomTkinter">
+        <title>Story 2.3: CustomTkinter UI Framework</title>
+        <relevance>Provides UI framework and components for building the onboarding wizard dialog</relevance>
+        <snippet>CustomTkinter components: CTkToplevel, CTkButton, CTkLabel, CTkProgressBar, CTkFrame</snippet>
+      </doc>
+      <doc path="docs/stories/story-2.4.md" section="SettingsManager">
+        <title>Story 2.4: Settings &amp; Configuration System</title>
+        <relevance>Provides settings persistence and re-run onboarding functionality integration point</relevance>
+        <snippet>SettingsManager methods: get_setting(), set_setting(); Used for onboarding_complete flag</snippet>
+      </doc>
+      <doc path="docs/epic-stories.md" section="Story 2.5">
+        <title>Epic 2: Story 2.5 Overview</title>
+        <relevance>Defines hardware tiers, onboarding flow, and performance expectations</relevance>
+        <snippet>Hardware Tiers: Minimum (CPU-only, 16GB RAM, 5-20 t/s), Recommended (mid-GPU, 16-24GB RAM, 50-100 t/s), Optimal (high-GPU, 32GB+ RAM, 100-200+ t/s)</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/mailmind/core/hardware_profiler.py" kind="class" symbol="HardwareProfiler" lines="36-357">
+        <reason>Core dependency for Step 2 hardware detection; provides detect_hardware() static method that returns comprehensive hardware profile</reason>
+        <interface>
+          <method>HardwareProfiler.detect_hardware() -> Dict[str, Any]</method>
+          <method>HardwareProfiler._classify_hardware_tier(profile) -> str</method>
+          <method>HardwareProfiler._estimate_performance(profile) -> int</method>
+          <method>HardwareProfiler._recommend_model(profile) -> str</method>
+          <method>HardwareProfiler.get_optimization_settings(profile) -> Dict[str, Any]</method>
+        </interface>
+        <notes>Returns dict with cpu_cores, ram_total_gb, ram_available_gb, gpu_detected, gpu_vram_gb, hardware_tier, expected_tokens_per_second, recommended_model</notes>
+      </artifact>
+      <artifact path="src/mailmind/integrations/outlook_connector.py" kind="class" symbol="OutlookConnector" lines="66-969">
+        <reason>Core dependency for Step 4 (connection test) and Step 5 (email fetching); provides COM interface to Outlook</reason>
+        <interface>
+          <method>OutlookConnector.connect() -> bool</method>
+          <method>OutlookConnector.get_connection_status() -> ConnectionStatus</method>
+          <method>OutlookConnector.fetch_emails(folder_name: str, limit: int) -> List[OutlookEmail]</method>
+          <method>OutlookConnector.is_connected -> bool</method>
+          <method>OutlookConnector.detect_outlook_installed() -> bool</method>
+          <method>OutlookConnector.is_outlook_running() -> bool</method>
+        </interface>
+        <notes>Requires Outlook to be running; raises OutlookNotInstalledException, OutlookNotRunningException, OutlookConnectionError</notes>
+      </artifact>
+      <artifact path="src/mailmind/database/database_manager.py" kind="class" symbol="DatabaseManager" lines="73-941">
+        <reason>Required for persisting onboarding_complete flag and hardware profile in user_preferences table</reason>
+        <interface>
+          <method>DatabaseManager.get_instance() -> DatabaseManager</method>
+          <method>DatabaseManager.get_preference(key: str, default: Any) -> Any</method>
+          <method>DatabaseManager.set_preference(key: str, value: Any) -> bool</method>
+          <method>DatabaseManager.insert_email_analysis(message_id: str, analysis: Dict, metadata: Dict) -> int</method>
+        </interface>
+        <notes>Singleton pattern; thread-safe; supports string, int, float, bool, json value types</notes>
+      </artifact>
+      <artifact path="src/mailmind/core/settings_manager.py" kind="class" symbol="SettingsManager" lines="190-652">
+        <reason>Provides settings management interface; re-run onboarding functionality will integrate here</reason>
+        <interface>
+          <method>SettingsManager.get_instance() -> SettingsManager</method>
+          <method>SettingsManager.get_setting(key: str, default: Any) -> Any</method>
+          <method>SettingsManager.set_setting(key: str, value: Any) -> None</method>
+          <method>SettingsManager.load_settings() -> Dict[str, Any]</method>
+          <method>SettingsManager.save_settings(settings: Dict[str, Any]) -> None</method>
+        </interface>
+        <notes>Singleton pattern; validates settings via SETTINGS_SCHEMA; supports observer pattern for change notifications</notes>
+      </artifact>
+      <artifact path="src/mailmind/ui/components/__init__.py" kind="module" symbol="ui.components">
+        <reason>CustomTkinter UI component package where OnboardingWizard should be created</reason>
+        <notes>Create new file: src/mailmind/ui/dialogs/onboarding_wizard.py</notes>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="customtkinter" version=">=5.2.0" purpose="UI framework for wizard dialog and components"/>
+        <package name="psutil" version=">=5.9.0" purpose="Hardware detection (via HardwareProfiler)"/>
+        <package name="pywin32" version=">=306" purpose="Outlook COM automation (via OutlookConnector)"/>
+        <package name="pysqlite3" version=">=0.5.0" purpose="Database persistence for preferences"/>
+        <package name="ollama" version=">=0.1.6" purpose="LLM inference for email analysis in Step 5"/>
+        <package name="pytest" version=">=7.4.0" purpose="Testing framework"/>
+        <package name="pytest-cov" version=">=4.1.0" purpose="Code coverage reporting"/>
+        <package name="pytest-mock" version=">=3.11.1" purpose="Mocking for unit tests"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="platform">
+      <description>Windows-only application due to pywin32 Outlook COM interface requirement</description>
+    </constraint>
+    <constraint type="performance">
+      <description>Hardware detection must complete in &lt;2s (target), &lt;5s (acceptable), &lt;10s (critical)</description>
+    </constraint>
+    <constraint type="performance">
+      <description>Outlook connection test must complete in &lt;3s (target), &lt;5s (acceptable), &lt;10s (critical)</description>
+    </constraint>
+    <constraint type="performance">
+      <description>Initial email indexing (50 emails) must complete in &lt;20s (target), &lt;30s (acceptable), &lt;60s (critical) on Recommended hardware</description>
+    </constraint>
+    <constraint type="performance">
+      <description>Wizard step transitions must be &lt;100ms (target), &lt;500ms (acceptable), &lt;1s (critical)</description>
+    </constraint>
+    <constraint type="architecture">
+      <description>Use background threading (threading.Thread) for long-running operations (hardware detection, Outlook connection, email indexing) to keep UI responsive</description>
+    </constraint>
+    <constraint type="architecture">
+      <description>Use wizard_window.after() to update UI from background threads (thread-safe UI updates in CustomTkinter)</description>
+    </constraint>
+    <constraint type="ui">
+      <description>Wizard window must be 800x600 pixels with full-screen modal behavior</description>
+    </constraint>
+    <constraint type="ui">
+      <description>Use CustomTkinter components: CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkProgressBar</description>
+    </constraint>
+    <constraint type="data">
+      <description>Hardware profile must be stored in user_preferences table as JSON string using DatabaseManager.set_preference()</description>
+    </constraint>
+    <constraint type="data">
+      <description>onboarding_complete flag must be stored as boolean preference; check on app launch to determine wizard display</description>
+    </constraint>
+    <constraint type="error-handling">
+      <description>Hardware detection failure must gracefully fallback to "Unknown" tier and allow wizard to continue</description>
+    </constraint>
+    <constraint type="error-handling">
+      <description>Outlook connection failure must display troubleshooting steps and allow retry or skip</description>
+    </constraint>
+    <constraint type="error-handling">
+      <description>Email indexing errors must be handled gracefully with partial completion support</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface type="method" name="HardwareProfiler.detect_hardware">
+      <signature>@staticmethod detect_hardware() -> Dict[str, Any]</signature>
+      <returns>
+        Hardware profile dictionary with keys: cpu_cores, cpu_logical_cores, cpu_architecture, cpu_frequency_mhz, ram_total_gb, ram_available_gb, os, os_version, gpu_detected (str or None), gpu_vram_gb (float or None), gpu_driver_version (str or None), recommended_model (str), expected_tokens_per_second (int), hardware_tier (str: "Optimal"|"Recommended"|"Minimum"|"Insufficient"|"Unknown")
+      </returns>
+      <path>src/mailmind/core/hardware_profiler.py:55</path>
+      <usage>Call in Step 2 background thread; store result in self.hardware_profile; display in UI</usage>
+    </interface>
+    <interface type="method" name="OutlookConnector.connect">
+      <signature>def connect(self) -> bool</signature>
+      <returns>True if connection successful, False otherwise</returns>
+      <raises>OutlookNotInstalledException, OutlookNotRunningException, OutlookProfileNotConfiguredException, OutlookConnectionError</raises>
+      <path>src/mailmind/integrations/outlook_connector.py:204</path>
+      <usage>Call in Step 4 background thread; catch exceptions to display appropriate troubleshooting messages</usage>
+    </interface>
+    <interface type="method" name="OutlookConnector.fetch_emails">
+      <signature>def fetch_emails(self, folder_name: str = "Inbox", limit: int = 50, offset: int = 0, sort_by: str = "[ReceivedTime]", sort_descending: bool = True) -> List[OutlookEmail]</signature>
+      <returns>List of OutlookEmail objects</returns>
+      <raises>OutlookConnectionError, OutlookFolderNotFoundException</raises>
+      <path>src/mailmind/integrations/outlook_connector.py:413</path>
+      <usage>Call in Step 5 background thread with limit=50; iterate over results to update progress bar</usage>
+    </interface>
+    <interface type="method" name="DatabaseManager.get_preference">
+      <signature>def get_preference(self, key: str, default: Any = None) -> Any</signature>
+      <returns>Preference value (type-converted) or default if not found</returns>
+      <path>src/mailmind/database/database_manager.py:548</path>
+      <usage>Check onboarding_complete flag on app launch: db.get_preference('onboarding_complete', False)</usage>
+    </interface>
+    <interface type="method" name="DatabaseManager.set_preference">
+      <signature>def set_preference(self, key: str, value: Any) -> bool</signature>
+      <returns>True if successful</returns>
+      <path>src/mailmind/database/database_manager.py:579</path>
+      <usage>Store onboarding_complete=True after wizard completion; store hardware_profile as JSON string</usage>
+    </interface>
+    <interface type="method" name="SettingsManager.get_setting">
+      <signature>def get_setting(self, key: str, default: Any = None) -> Any</signature>
+      <returns>Setting value or default</returns>
+      <path>src/mailmind/core/settings_manager.py:334</path>
+      <usage>Alternative to DatabaseManager for preference access via settings interface</usage>
+    </interface>
+    <interface type="method" name="SettingsManager.set_setting">
+      <signature>def set_setting(self, key: str, value: Any) -> None</signature>
+      <raises>SettingsValidationError if validation fails</raises>
+      <path>src/mailmind/core/settings_manager.py:355</path>
+      <usage>Alternative to DatabaseManager for preference storage via settings interface</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <framework>pytest 7.4.0+</framework>
+      <structure>
+        Unit tests in tests/unit/ directory with pattern test_*.py
+        Integration tests in tests/integration/ directory
+        Test classes use Test* prefix; test methods use test_* prefix
+        Use pytest fixtures for setup/teardown and dependency injection
+        Use pytest-mock for mocking external dependencies
+        Use pytest-cov for code coverage reporting (target: >80%)
+      </structure>
+      <patterns>
+        Mock external dependencies (OutlookConnector, HardwareProfiler) in unit tests
+        Use in-memory SQLite database (":memory:") for database tests
+        Mock CustomTkinter UI components to test logic without rendering
+        Use threading.Event or time.sleep() to test background thread completion
+        Test both success and failure paths for all operations
+      </patterns>
+      <coverage>
+        Target: >80% code coverage for OnboardingWizard class
+        Critical paths must have 100% coverage: wizard flow, hardware detection, Outlook connection, email indexing
+      </coverage>
+    </standards>
+    <locations>
+      <location>tests/unit/ui/test_onboarding_wizard.py</location>
+      <location>tests/integration/test_onboarding_integration.py</location>
+    </locations>
+    <ideas>
+      <testIdea criterion="AC1">
+        <description>Test onboarding_complete flag detection on launch</description>
+        <approach>Mock DatabaseManager.get_preference(); verify wizard displays when flag=False, skips when flag=True</approach>
+      </testIdea>
+      <testIdea criterion="AC1">
+        <description>Test wizard navigation flow (Back/Next/Skip buttons)</description>
+        <approach>Simulate button clicks; verify current_step changes correctly; verify Back disabled on Step 1</approach>
+      </testIdea>
+      <testIdea criterion="AC2">
+        <description>Test hardware detection integration with HardwareProfiler</description>
+        <approach>Mock HardwareProfiler.detect_hardware(); verify profile is displayed correctly; verify storage in database</approach>
+      </testIdea>
+      <testIdea criterion="AC2">
+        <description>Test hardware detection failure fallback</description>
+        <approach>Mock HardwareProfiler to raise exception; verify "Unknown" tier is used; verify wizard continues</approach>
+      </testIdea>
+      <testIdea criterion="AC3">
+        <description>Test performance messaging for each hardware tier</description>
+        <approach>Mock hardware profile with different tiers; verify correct messaging is displayed for each</approach>
+      </testIdea>
+      <testIdea criterion="AC4">
+        <description>Test Outlook connection success path</description>
+        <approach>Mock OutlookConnector.connect() to return True; verify success display shows version, account, folders</approach>
+      </testIdea>
+      <testIdea criterion="AC4">
+        <description>Test Outlook connection failure with retry</description>
+        <approach>Mock OutlookConnector.connect() to raise exception; verify troubleshooting steps display; test retry button</approach>
+      </testIdea>
+      <testIdea criterion="AC5">
+        <description>Test email indexing progress updates</description>
+        <approach>Mock OutlookConnector.fetch_emails() with test emails; verify progress bar updates; verify status messages</approach>
+      </testIdea>
+      <testIdea criterion="AC5">
+        <description>Test email indexing completion summary</description>
+        <approach>Mock email analysis results; verify completion summary shows correct counts by priority</approach>
+      </testIdea>
+      <testIdea criterion="AC6">
+        <description>Test hardware tier color coding</description>
+        <approach>Verify correct emoji (🟢🟡🟠🔴) is displayed for each hardware tier</approach>
+      </testIdea>
+      <testIdea criterion="AC7">
+        <description>Test feature tour display and skip functionality</description>
+        <approach>Verify tour displays after indexing; test skip button; verify "Don't show again" persists preference</approach>
+      </testIdea>
+      <testIdea criterion="AC8">
+        <description>Test re-run onboarding from settings</description>
+        <approach>Test that onboarding_complete flag is cleared; verify wizard can be launched again</approach>
+      </testIdea>
+      <testIdea criterion="AC9">
+        <description>Test performance limitation messaging</description>
+        <approach>Mock Insufficient/Minimum tiers; verify appropriate warning messages and upgrade recommendations</approach>
+      </testIdea>
+      <testIdea criterion="Integration">
+        <description>End-to-end onboarding flow test</description>
+        <approach>Run complete wizard flow from Step 1 to completion; verify all integrations work; verify flag is set</approach>
+      </testIdea>
+      <testIdea criterion="Performance">
+        <description>Test performance targets for each operation</description>
+        <approach>Measure actual execution time; verify hardware detection &lt;2s, Outlook test &lt;3s, indexing &lt;20s</approach>
+      </testIdea>
+      <testIdea criterion="Threading">
+        <description>Test background thread execution and UI updates</description>
+        <approach>Verify long-running operations run in background threads; verify UI updates via after() calls</approach>
+      </testIdea>
+    </ideas>
+  </tests>
+</story-context>
