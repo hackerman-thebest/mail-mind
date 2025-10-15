@@ -493,10 +493,166 @@ As a user, I need the application to handle errors gracefully and as a developer
 
 ---
 
+### Epic 3: Security & MVP Readiness
+
+**Epic Goal:** Address critical security vulnerabilities and align marketing with implementation reality to ensure a trustworthy MVP launch that delivers on privacy promises.
+
+**Value Proposition:** Transform the MVP from having critical vulnerabilities to being a secure, production-ready application that genuinely delivers "Local-First Privacy" without compromising user data.
+
+**Success Criteria:**
+- Zero critical security vulnerabilities in production code
+- Database encryption implemented and enabled by default
+- All prompt injection attempts blocked with proper logging
+- Performance meets promised 10-15 emails/minute target
+- Marketing materials accurately reflect security features
+- Security documentation complete and transparent
+
+**Dependencies:**
+- Stories 1.1-1.6 and 2.1-2.6 complete
+- Windows DPAPI available for key management
+- SQLCipher library compatible with Python environment
+
+---
+
+#### Story 3.1: Database Encryption Implementation
+
+**Story Description:**
+As a privacy-conscious user, I need my email analysis data encrypted at rest so that my sensitive information is protected even if someone gains access to the database file.
+
+**Acceptance Criteria:**
+- Implement SQLCipher for transparent database encryption
+- Use Windows DPAPI for secure key management (no hardcoded keys)
+- Provide migration tool for existing unencrypted databases
+- Performance overhead <10% (target <5%) for all operations
+- Encryption transparent to existing code (no API changes required)
+- Add encryption status indicator to settings UI
+- Document encryption implementation in privacy policy
+- Support user choice: encrypted (default) or unencrypted (with warning)
+
+**Technical Notes:**
+- Install pysqlcipher3 package
+- Modify DatabaseManager.__init__ to check encryption_key parameter
+- Key derivation: DPAPI → PBKDF2 → SQLCipher key
+- PRAGMA key command after connection
+- Test with large databases (>500MB)
+
+**Story Points:** 5
+**Priority:** P0 (Critical - Privacy Promise)
+
+---
+
+#### Story 3.2: Prompt Injection Defense
+
+**Story Description:**
+As a user, I need protection from malicious emails that try to manipulate AI responses so that the system remains secure and trustworthy.
+
+**Acceptance Criteria:**
+- Block emails containing prompt injection patterns (don't just warn)
+- Return safe error response: "Email blocked for security reasons"
+- Log all security events to dedicated security.log with rotation
+- Add "Report Suspicious Email" button in UI for false positives
+- Configurable security levels: Strict/Normal/Permissive (default: Normal)
+- User notification toast when email is blocked
+- Maintain updatable blocklist patterns in security_patterns.yaml
+- Provide override option with confirmation for advanced users
+
+**Implementation:**
+```python
+# Current (vulnerable):
+if pattern.search(sanitized):
+    self.warnings.append(f"Suspicious content")
+    logger.warning(f"Potential prompt injection")
+    # CONTINUES PROCESSING!
+
+# Fixed (secure):
+if pattern.search(sanitized):
+    raise SecurityException(f"Email blocked: suspicious content detected")
+    # STOPS PROCESSING
+```
+
+**Story Points:** 3
+**Priority:** P0 (Critical - Security)
+
+---
+
+#### Story 3.3: Performance & Security Optimization
+
+**Story Description:**
+As a developer, I need to fix SQL injection vulnerabilities and implement performance optimizations so that the application is both secure and meets performance promises.
+
+**Acceptance Criteria:**
+- Fix SQL injection in database_manager.py line 963 (use parameterized queries)
+- Audit all SQL queries for injection vulnerabilities
+- Implement OllamaConnectionPool with configurable pool size (2-5 connections)
+- Add model checksum verification against known-good hashes
+- Implement parallel email processing using ThreadPoolExecutor
+- Achieve 10-15 emails/minute batch processing target
+- Add performance metrics dashboard to UI
+- Document all security improvements in SECURITY.md
+
+**Technical Implementation:**
+```python
+# SQL Injection Fix:
+# BEFORE (vulnerable):
+cursor.execute(f"DELETE FROM {table}")
+
+# AFTER (secure):
+if table not in ALLOWED_TABLES:
+    raise ValueError(f"Invalid table: {table}")
+cursor.execute(f"DELETE FROM {table}")
+
+# Connection Pooling:
+class OllamaConnectionPool:
+    def __init__(self, size=3):
+        self.pool = [ollama.Client() for _ in range(size)]
+        self.available = queue.Queue()
+        for conn in self.pool:
+            self.available.put(conn)
+```
+
+**Model Checksums:**
+```json
+{
+  "llama3.1:8b-instruct-q4_K_M": "sha256:abc123...",
+  "mistral:7b-instruct-q4_K_M": "sha256:def456..."
+}
+```
+
+**Story Points:** 5
+**Priority:** P0 (Critical - Security & Performance)
+
+---
+
+#### Story 3.4: Marketing & Documentation Alignment
+
+**Story Description:**
+As a product owner, I need marketing claims aligned with actual security implementation so that we maintain user trust and avoid false advertising.
+
+**Acceptance Criteria:**
+- Update marketing from "Absolute Privacy" to "Local-First Privacy"
+- Create comprehensive SECURITY.md documentation
+- Write privacy policy explaining encryption and data handling
+- Update README.md with security features section
+- Create security FAQ for common user concerns
+- Document known limitations transparently
+- Create security roadmap for future improvements
+- Add security badges to README (e.g., "SQLCipher Encrypted")
+
+**Documentation Updates:**
+- Website: Change hero text to "Your Email AI That Never Leaves Your Computer"
+- README: Add "Security Features" section with checkmarks for implemented features
+- FAQ: "Is my data encrypted?" → "Yes, using industry-standard SQLCipher with Windows DPAPI"
+- Limitations: "Email content remains in Outlook's storage which may not be encrypted"
+
+**Story Points:** 2
+**Priority:** P1 (Important - Trust)
+
+---
+
 ## Story Summary
 
-**Total Stories:** 12
-**Total Story Points:** 72
+**Total Stories:** 16
+**Total Story Points:** 87
 
 ### Epic 1: AI-Powered Email Intelligence (6 stories, 36 points)
 - Story 1.1: Ollama Integration & Model Setup (5 pts) - P0
@@ -513,6 +669,12 @@ As a user, I need the application to handle errors gracefully and as a developer
 - Story 2.4: Settings & Configuration System (5 pts) - P1
 - Story 2.5: Hardware Profiling & Onboarding Wizard (5 pts) - P1
 - Story 2.6: Error Handling, Logging & Installer (8 pts) - P0
+
+### Epic 3: Security & MVP Readiness (4 stories, 15 points)
+- Story 3.1: Database Encryption Implementation (5 pts) - P0
+- Story 3.2: Prompt Injection Defense (3 pts) - P0
+- Story 3.3: Performance & Security Optimization (5 pts) - P0
+- Story 3.4: Marketing & Documentation Alignment (2 pts) - P1
 
 ---
 
