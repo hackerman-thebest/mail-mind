@@ -521,9 +521,12 @@ class OllamaManager:
         except Exception as e:
             logger.warning(f"Could not save verified model to cache: {e}")
 
-    def test_inference(self) -> bool:
+    def test_inference(self, timeout: int = 30) -> bool:
         """
         Run a test inference call to verify the model works correctly.
+
+        Args:
+            timeout: Maximum time in seconds to wait for inference (default: 30)
 
         Returns:
             bool: True if test successful, False otherwise
@@ -534,22 +537,54 @@ class OllamaManager:
 
         try:
             logger.info(f"Running test inference with {self.current_model}...")
+            logger.info(f"This may take 10-30 seconds on first run (loading model into memory)...")
             start_time = time.time()
 
-            response = self.client.generate(
-                model=self.current_model,
-                prompt="Test",
-                options={
-                    "temperature": self.temperature,
-                    "num_ctx": self.context_window
-                }
-            )
+            # Use threading to implement timeout
+            import threading
+            result = {'response': None, 'error': None}
+
+            def run_inference():
+                try:
+                    result['response'] = self.client.generate(
+                        model=self.current_model,
+                        prompt="Test",
+                        options={
+                            "temperature": self.temperature,
+                            "num_ctx": self.context_window
+                        }
+                    )
+                except Exception as e:
+                    result['error'] = e
+
+            inference_thread = threading.Thread(target=run_inference, daemon=True)
+            inference_thread.start()
+
+            # Wait with progress updates
+            elapsed = 0
+            while inference_thread.is_alive() and elapsed < timeout:
+                inference_thread.join(timeout=5)
+                elapsed = time.time() - start_time
+                if inference_thread.is_alive() and elapsed < timeout:
+                    logger.info(f"Still waiting... ({elapsed:.0f}s elapsed)")
+
+            if inference_thread.is_alive():
+                logger.error(
+                    f"Test inference timed out after {timeout}s. "
+                    f"This may indicate the model is too large for your system or Ollama is having issues. "
+                    f"Try: 1) Restart Ollama, 2) Use a smaller model, 3) Check system resources"
+                )
+                return False
+
+            if result['error']:
+                raise result['error']
 
             inference_time = time.time() - start_time
+            response = result['response']
 
             if response and 'response' in response:
                 logger.info(
-                    f"Test inference successful in {inference_time:.3f}s. "
+                    f"✅ Test inference successful in {inference_time:.3f}s. "
                     f"Generated {len(response['response'])} characters."
                 )
                 return True
@@ -558,7 +593,7 @@ class OllamaManager:
                 return False
 
         except Exception as e:
-            logger.error(f"Test inference failed: {e}")
+            logger.error(f"Test inference failed: {e}", exc_info=True)
             return False
 
     def get_model_info(self) -> Dict[str, Any]:
