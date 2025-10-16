@@ -20,6 +20,7 @@ Performance Target: <200ms preprocessing time
 import re
 import time
 import logging
+import os
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from email.parser import Parser
@@ -36,6 +37,16 @@ try:
     DATEUTIL_AVAILABLE = True
 except ImportError:
     DATEUTIL_AVAILABLE = False
+
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
+
+# Import centralized exceptions (Story 2.6, Story 3.2)
+from mailmind.core.exceptions import EmailPreprocessorError, HTMLParsingError, SecurityException
+from mailmind.core.security_logger import get_security_logger
 
 
 logger = logging.getLogger(__name__)
@@ -78,16 +89,6 @@ SUSPICIOUS_PATTERNS = [
 ]
 
 
-class EmailPreprocessorError(Exception):
-    """Base exception for email preprocessing errors."""
-    pass
-
-
-class HTMLParsingError(EmailPreprocessorError):
-    """Raised when HTML parsing fails."""
-    pass
-
-
 class EmailPreprocessor:
     """
     Preprocesses raw emails into optimized format for LLM analysis.
@@ -100,19 +101,47 @@ class EmailPreprocessor:
         quote_patterns: Compiled regex patterns for quote detection
         suspicious_patterns: Compiled regex patterns for security checks
         warnings: List of warnings generated during preprocessing
+        security_level: Security level for prompt injection blocking ("Strict", "Normal", "Permissive")
     """
 
-    def __init__(self):
-        """Initialize EmailPreprocessor with compiled regex patterns."""
+    def __init__(self, security_level: str = "Normal", security_patterns_path: str = None):
+        """
+        Initialize EmailPreprocessor with compiled regex patterns and security settings.
+
+        Story 3.2 AC5: Configurable Security Levels
+
+        Args:
+            security_level: Security level for blocking suspicious emails
+                - "Strict": Block ALL suspicious patterns (high/medium/low severity)
+                - "Normal": Block high/medium severity, warn on low severity (default)
+                - "Permissive": Warn on all patterns, allow processing
+            security_patterns_path: Path to security_patterns.yaml (optional, auto-discovered)
+        """
+        # Validate security level
+        valid_levels = ["Strict", "Normal", "Permissive"]
+        if security_level not in valid_levels:
+            logger.warning(f"Invalid security_level '{security_level}', defaulting to 'Normal'")
+            security_level = "Normal"
+
+        self.security_level = security_level
+        self.security_patterns_path = security_patterns_path
+
+        # Compile regex patterns
         self.signature_patterns = [re.compile(p, re.MULTILINE | re.IGNORECASE)
                                    for p in SIGNATURE_PATTERNS]
         self.quote_patterns = [re.compile(p, re.MULTILINE | re.IGNORECASE)
                               for p in QUOTE_PATTERNS]
-        self.suspicious_patterns = [re.compile(p, re.IGNORECASE)
-                                   for p in SUSPICIOUS_PATTERNS]
+
+        # Load security patterns (will be enhanced in Task 3 with YAML loading)
+        # For now, use default patterns with severity metadata
+        self.suspicious_patterns = self._load_security_patterns()
+
         self.warnings: List[str] = []
 
-        logger.info("EmailPreprocessor initialized")
+        # Initialize security logger for event logging (Story 3.2 AC3)
+        self.security_logger = get_security_logger()
+
+        logger.info(f"EmailPreprocessor initialized with security_level='{security_level}'")
 
     def preprocess_email(self, raw_email: Any, max_chars: int = 10000) -> Dict[str, Any]:
         """
@@ -157,8 +186,8 @@ class EmailPreprocessor:
             # Step 5: Truncate if needed
             body, was_truncated = self.smart_truncate(body, max_chars=max_chars)
 
-            # Step 6: Sanitize input for security
-            body = self.sanitize_content(body)
+            # Step 6: Sanitize input for security (pass metadata for logging)
+            body = self.sanitize_content(body, email_metadata=metadata)
 
             # Step 7: Build thread context
             thread_context = self.build_thread_context(metadata)
@@ -186,6 +215,10 @@ class EmailPreprocessor:
 
             return result
 
+        except SecurityException:
+            # Re-raise SecurityException without wrapping (AC1, AC2)
+            # This allows EmailAnalysisEngine to handle security blocks specifically
+            raise
         except Exception as e:
             logger.error(f"Email preprocessing failed: {e}", exc_info=True)
             raise EmailPreprocessorError(f"Failed to preprocess email: {str(e)}") from e
@@ -608,31 +641,133 @@ class EmailPreprocessor:
 
         return truncated_body, True
 
-    def sanitize_content(self, body: str) -> str:
+    def sanitize_content(self, body: str, email_metadata: Dict[str, Any] = None) -> str:
         """
         Sanitize email content to prevent prompt injection attacks.
 
-        Removes control characters, detects suspicious patterns, and flags
-        potential security issues.
+        Story 3.2 AC1: Block Injection Patterns
+        Story 3.2 AC2: Safe Error Response
+        Story 3.2 AC3: Security Event Logging
+
+        This method:
+        1. Removes control characters
+        2. Detects suspicious patterns based on security_level
+        3. Blocks or warns based on security_level and pattern severity
+        4. Logs all security events to security.log
+        5. Raises SecurityException when blocking criteria met
 
         Args:
             body: Email body text
+            email_metadata: Email metadata dict (for logging) - optional
 
         Returns:
-            Sanitized body text
+            Sanitized body text (if allowed to proceed)
+
+        Raises:
+            SecurityException: When email is blocked for security reasons
         """
         if not body:
             return body
+
+        # Default metadata if not provided
+        if email_metadata is None:
+            email_metadata = {
+                "subject": "(Unknown)",
+                "from": "unknown",
+                "message_id": "unknown"
+            }
 
         # Remove control characters (except newlines and tabs)
         sanitized = ''.join(char for char in body
                           if char.isprintable() or char in '\n\t')
 
-        # Detect suspicious patterns
-        for pattern in self.suspicious_patterns:
+        # Check for suspicious patterns based on security_level
+        for pattern_dict in self.suspicious_patterns:
+            pattern = pattern_dict["regex"]
+            pattern_name = pattern_dict["name"]
+            severity = pattern_dict["severity"]
+            description = pattern_dict["description"]
+
             if pattern.search(sanitized):
-                self.warnings.append(f"Suspicious content detected: {pattern.pattern}")
-                logger.warning(f"Potential prompt injection detected: {pattern.pattern}")
+                # Get preview of matched content (first 200 chars)
+                email_preview = sanitized[:200] if len(sanitized) > 200 else sanitized
+
+                # Blocking logic based on security_level (AC1, AC5)
+                if self.security_level == "Strict":
+                    # Strict mode: Block ALL suspicious patterns
+                    logger.warning(
+                        f"[BLOCKED] Security pattern matched in Strict mode: {pattern_name} "
+                        f"(severity: {severity}, description: {description})"
+                    )
+
+                    # Log security event (AC3)
+                    self.security_logger.log_event(
+                        event_type="blocked",
+                        pattern_name=pattern_name,
+                        email_metadata=email_metadata,
+                        action_taken="blocked_email",
+                        severity=severity
+                    )
+
+                    raise SecurityException(
+                        pattern_name=pattern_name,
+                        severity=severity,
+                        email_preview=email_preview,
+                        technical_details=f"Pattern: {pattern.pattern}, Match in: {email_preview[:50]}..."
+                    )
+
+                elif self.security_level == "Normal":
+                    # Normal mode (default): Block high/medium severity, warn on low
+                    if severity in ["high", "medium"]:
+                        logger.warning(
+                            f"[BLOCKED] Security pattern matched in Normal mode: {pattern_name} "
+                            f"(severity: {severity}, description: {description})"
+                        )
+
+                        # Log security event (AC3)
+                        self.security_logger.log_event(
+                            event_type="blocked",
+                            pattern_name=pattern_name,
+                            email_metadata=email_metadata,
+                            action_taken="blocked_email",
+                            severity=severity
+                        )
+
+                        raise SecurityException(
+                            pattern_name=pattern_name,
+                            severity=severity,
+                            email_preview=email_preview,
+                            technical_details=f"Pattern: {pattern.pattern}, Match in: {email_preview[:50]}..."
+                        )
+                    else:
+                        # Low severity: warn only
+                        warning_msg = f"Suspicious content detected: {pattern_name} (severity: {severity}, allowed in Normal mode)"
+                        self.warnings.append(warning_msg)
+                        logger.info(f"[WARNED] {warning_msg}")
+
+                        # Log warning event (AC3)
+                        self.security_logger.log_event(
+                            event_type="warned",
+                            pattern_name=pattern_name,
+                            email_metadata=email_metadata,
+                            action_taken="allowed_with_warning",
+                            severity=severity
+                        )
+
+                elif self.security_level == "Permissive":
+                    # Permissive mode: Warn on all patterns, allow processing
+                    warning_msg = f"Suspicious content detected: {pattern_name} (severity: {severity}, allowed in Permissive mode)"
+                    self.warnings.append(warning_msg)
+                    logger.info(f"[WARNED] {warning_msg}")
+
+                    # Log warning event (AC3)
+                    self.security_logger.log_event(
+                        event_type="warned",
+                        pattern_name=pattern_name,
+                        email_metadata=email_metadata,
+                        action_taken="allowed_with_warning",
+                        severity=severity
+                    )
 
         return sanitized
 
@@ -762,6 +897,140 @@ class EmailPreprocessor:
             "in_reply_to": None,
             "references": []
         }
+
+    def _load_security_patterns(self) -> List[Dict[str, Any]]:
+        """
+        Load security patterns from YAML file or fallback to defaults.
+
+        Story 3.2 AC7: Updatable Blocklist
+
+        Tries to load patterns from security_patterns.yaml. If file doesn't exist
+        or YAML parsing fails, falls back to hardcoded default patterns.
+
+        Returns:
+            List of pattern dictionaries with compiled regex and metadata
+        """
+        compiled_patterns = []
+
+        # Try to load from YAML file first
+        if YAML_AVAILABLE and self.security_patterns_path is None:
+            # Auto-discover security_patterns.yaml
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            config_dir = os.path.join(os.path.dirname(current_dir), "config")
+            yaml_path = os.path.join(config_dir, "security_patterns.yaml")
+
+            if os.path.exists(yaml_path):
+                self.security_patterns_path = yaml_path
+
+        # Load from YAML if available
+        if self.security_patterns_path and os.path.exists(self.security_patterns_path):
+            try:
+                with open(self.security_patterns_path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+
+                if data and 'patterns' in data:
+                    version = data.get('version', 'unknown')
+                    logger.info(f"Loading security patterns from {self.security_patterns_path} (version: {version})")
+
+                    for pattern_def in data['patterns']:
+                        try:
+                            compiled_patterns.append({
+                                "name": pattern_def["name"],
+                                "regex": re.compile(pattern_def["regex"], re.IGNORECASE),
+                                "severity": pattern_def.get("severity", "medium"),
+                                "description": pattern_def.get("description", ""),
+                                "category": pattern_def.get("category", "unknown")
+                            })
+                        except re.error as e:
+                            logger.error(f"Invalid regex pattern '{pattern_def.get('name')}': {e}")
+                            continue
+
+                    logger.info(f"Loaded {len(compiled_patterns)} security patterns from YAML (version: {version})")
+                    return compiled_patterns
+            except Exception as e:
+                logger.warning(f"Failed to load security_patterns.yaml: {e}. Falling back to defaults.")
+
+        # Fallback to default patterns if YAML loading failed
+        logger.info("Using default hardcoded security patterns")
+
+        default_patterns = [
+            {
+                "name": "ignore_instructions",
+                "pattern": r'ignore\s+(all\s+)?(previous|prior|above)\s+instructions',
+                "severity": "high",
+                "description": "Attempts to override system instructions",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "ignore_all_instructions",
+                "pattern": r'ignore\s+all\s+instructions',
+                "severity": "high",
+                "description": "Attempts to ignore all instructions",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "disregard_instructions",
+                "pattern": r'disregard\s+(all\s+)?(previous|prior|above)',
+                "severity": "high",
+                "description": "Attempts to disregard AI instructions",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "system_prompt_injection",
+                "pattern": r'system\s*:',
+                "severity": "medium",
+                "description": "Potential system prompt manipulation",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "role_confusion",
+                "pattern": r'you\s+are\s+now',
+                "severity": "high",
+                "description": "Attempts to redefine AI role",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "act_as_injection",
+                "pattern": r'act\s+as\s+(if|though)',
+                "severity": "medium",
+                "description": "Role-playing injection attempt",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "pretend_injection",
+                "pattern": r'pretend\s+(to\s+be|that)',
+                "severity": "medium",
+                "description": "Pretend-based role injection",
+                "category": "prompt_injection"
+            },
+            {
+                "name": "chatml_start",
+                "pattern": r'<\|im_start\|>',
+                "severity": "high",
+                "description": "ChatML format injection attempt",
+                "category": "format_injection"
+            },
+            {
+                "name": "chatml_end",
+                "pattern": r'<\|im_end\|>',
+                "severity": "high",
+                "description": "ChatML format injection attempt",
+                "category": "format_injection"
+            },
+        ]
+
+        # Compile default patterns
+        for pdef in default_patterns:
+            compiled_patterns.append({
+                "name": pdef["name"],
+                "regex": re.compile(pdef["pattern"], re.IGNORECASE),
+                "severity": pdef["severity"],
+                "description": pdef["description"],
+                "category": pdef["category"]
+            })
+
+        logger.info(f"Loaded {len(compiled_patterns)} default security patterns")
+        return compiled_patterns
 
 
 # Convenience function for quick preprocessing

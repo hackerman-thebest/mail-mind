@@ -31,6 +31,7 @@ from pathlib import Path
 from src.mailmind.core.ollama_manager import OllamaManager
 from src.mailmind.core.email_preprocessor import EmailPreprocessor
 from mailmind.database import DatabaseManager
+from mailmind.core.exceptions import SecurityException
 
 
 logger = logging.getLogger(__name__)
@@ -202,6 +203,31 @@ class EmailAnalysisEngine:
             self._log_performance(analysis, operation='email_analysis')
 
             return analysis
+
+        except SecurityException as e:
+            # Handle security blocked emails (Story 3.2 AC1, AC2)
+            logger.warning(f"Email blocked for security: {e.pattern_name} (severity: {e.severity})")
+
+            # Return special analysis indicating email was blocked
+            return {
+                'status': 'blocked',
+                'blocked': True,
+                'priority': 'Security',
+                'confidence': 1.0,
+                'summary': str(e),  # User-friendly message from SecurityException
+                'tags': ['security', 'blocked', e.pattern_name],
+                'sentiment': 'blocked',
+                'action_items': ['Review security settings if this email should be allowed'],
+                'processing_time_ms': int((time.time() - start_time) * 1000),
+                'tokens_per_second': 0.0,
+                'model_version': self.ollama.current_model,
+                'cache_hit': False,
+                'security_details': {
+                    'pattern_name': e.pattern_name,
+                    'severity': e.severity,
+                    'email_preview': e.email_preview
+                }
+            }
 
         except Exception as e:
             logger.error(f"Email analysis failed: {e}", exc_info=True)

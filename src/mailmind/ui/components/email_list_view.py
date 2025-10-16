@@ -179,20 +179,34 @@ class EmailListView(ctk.CTkScrollableFrame):
         """Create visual email item."""
         item_frame = ctk.CTkFrame(self, height=60)
 
-        # Priority indicator
-        priority = email_data.get("priority", "medium").lower()
-        priority_colors = {
-            "high": "🔴",
-            "medium": "🟡",
-            "low": "🔵"
-        }
-        priority_indicator = priority_colors.get(priority, "🟡")
+        # Check if email is blocked (Story 3.2 AC6: Visual Indicators)
+        is_blocked = email_data.get("blocked", False) or email_data.get("status") == "blocked"
 
-        ctk.CTkLabel(
+        # Security indicator for blocked emails
+        if is_blocked:
+            # Show blocked indicator (🚫) for security-blocked emails
+            indicator = "🚫"
+            indicator_tooltip = "Email blocked for security"
+        else:
+            # Priority indicator for normal emails
+            priority = email_data.get("priority", "medium").lower()
+            priority_colors = {
+                "high": "🔴",
+                "medium": "🟡",
+                "low": "🔵"
+            }
+            indicator = priority_colors.get(priority, "🟡")
+            indicator_tooltip = f"Priority: {priority}"
+
+        indicator_label = ctk.CTkLabel(
             item_frame,
-            text=priority_indicator,
+            text=indicator,
             font=("Segoe UI", 16)
-        ).pack(side="left", padx=5)
+        )
+        indicator_label.pack(side="left", padx=5)
+
+        # Store tooltip for future enhancement (hover text)
+        indicator_label._tooltip = indicator_tooltip
 
         # Email details
         details_frame = ctk.CTkFrame(item_frame, fg_color="transparent")
@@ -275,6 +289,17 @@ class EmailListView(ctk.CTkScrollableFrame):
         """Show context menu for email."""
         menu = tk.Menu(self, tearoff=0)
 
+        # Check if email is blocked (Story 3.2 AC6: Context menu for blocked emails)
+        is_blocked = email_data.get("blocked", False) or email_data.get("status") == "blocked"
+
+        if is_blocked:
+            # Security-specific actions for blocked emails
+            menu.add_command(
+                label="🚫 View Block Reason",
+                command=lambda: self._view_block_reason(email_data)
+            )
+            menu.add_separator()
+
         menu.add_command(
             label="Mark as Read",
             command=lambda: self._mark_as_read(email_data)
@@ -292,11 +317,14 @@ class EmailListView(ctk.CTkScrollableFrame):
             label="Delete",
             command=lambda: self._delete_email(email_data)
         )
-        menu.add_separator()
-        menu.add_command(
-            label="Analyze Now",
-            command=lambda: self._analyze_email(email_data)
-        )
+
+        if not is_blocked:
+            # Only show "Analyze Now" for non-blocked emails
+            menu.add_separator()
+            menu.add_command(
+                label="Analyze Now",
+                command=lambda: self._analyze_email(email_data)
+            )
 
         menu.post(event.x_root, event.y_root)
 
@@ -328,6 +356,44 @@ class EmailListView(ctk.CTkScrollableFrame):
         """Trigger email analysis."""
         # TODO: Integrate with EmailAnalysisEngine
         logger.debug(f"Analyze email: {email_data.get('subject')}")
+
+    def _view_block_reason(self, email_data: dict):
+        """
+        Show detailed block reason for blocked email.
+
+        Story 3.2 AC6: View Block Reason action in context menu.
+
+        Args:
+            email_data: Email data dict with security_details
+        """
+        # Extract security details from email_data
+        security_details = email_data.get("security_details", {})
+        pattern_name = security_details.get("pattern_name", "Unknown")
+        severity = security_details.get("severity", "high")
+        email_preview = security_details.get("email_preview", "")
+
+        # Format pattern name for display
+        pattern_display = pattern_name.replace("_", " ").title()
+
+        # Build message
+        message = f"Email Blocked for Security\n\n"
+        message += f"Pattern: {pattern_display}\n"
+        message += f"Severity: {severity.upper()}\n\n"
+
+        if email_preview:
+            message += f"Email preview:\n{email_preview[:100]}...\n\n"
+
+        message += "This email contains content that may be harmful.\n"
+        message += "Check Security settings to adjust protection levels."
+
+        # Show dialog (using simple messagebox for now, can be enhanced with custom dialog)
+        import tkinter.messagebox as messagebox
+        messagebox.showwarning(
+            title="Security Block Details",
+            message=message
+        )
+
+        logger.debug(f"Block reason shown for: {email_data.get('subject')}")
 
     # Keyboard navigation
     def _on_arrow_up(self, event):

@@ -29,7 +29,6 @@ Integration:
 - Story 2.4 (Settings System): User preferences storage
 """
 
-import sqlite3
 import threading
 import logging
 import time
@@ -39,12 +38,32 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 
+# Story 3.1 AC1: Conditional SQLCipher import (try pysqlcipher3, fallback to sqlite3)
+try:
+    import pysqlcipher3.dbapi2 as sqlite3
+    SQLCIPHER_AVAILABLE = True
+    logger_temp = logging.getLogger(__name__)
+    logger_temp.info("SQLCipher (pysqlcipher3) loaded successfully - database encryption available")
+except ImportError:
+    import sqlite3
+    SQLCIPHER_AVAILABLE = False
+    logger_temp = logging.getLogger(__name__)
+    logger_temp.warning("pysqlcipher3 not available - falling back to standard sqlite3 (no encryption)")
+
 from .schema import (
     get_schema_statements,
     get_initial_data_statements,
     get_current_schema_version,
 )
 from .backup_manager import BackupManager, BackupError
+
+# Story 3.1 AC2: Import KeyManager for encryption key management
+try:
+    from mailmind.core.key_manager import KeyManager, KeyManagementError
+    KEY_MANAGER_AVAILABLE = True
+except ImportError:
+    KEY_MANAGER_AVAILABLE = False
+    logger_temp.warning("KeyManager not available - encryption will be disabled")
 
 # Import Story 2.6 exceptions
 try:
@@ -108,9 +127,12 @@ class DatabaseManager:
         """
         Initialize DatabaseManager.
 
+        Story 3.1 AC1, AC2, AC5, AC8: Database encryption with SQLCipher + DPAPI
+
         Args:
             db_path: Path to SQLite database file (default: mailmind.db in project root)
-            encryption_key: Optional encryption key for SQLCipher (future: AC2)
+            encryption_key: Optional encryption key for SQLCipher (hex-encoded 64-byte key)
+                          If None, will check user_preferences for encryption_enabled setting
             debug: Enable query performance logging
 
         Raises:
@@ -121,11 +143,32 @@ class DatabaseManager:
             db_path = str(project_root / "mailmind.db")
 
         self.db_path = db_path
-        self.encryption_key = encryption_key
         self.debug = debug
         self._thread_local = threading.local()
         self._initialized = False
         self._backup_manager = None  # Lazy initialization
+        self._key_manager = None  # Lazy initialization
+
+        # Story 3.1 AC8: Check environment variable override for testing
+        env_disable = os.environ.get('MAILMIND_DISABLE_ENCRYPTION', '0') == '1'
+
+        # Story 3.1 AC1, AC2, AC5: Initialize encryption
+        self._encryption_enabled = False
+        self.encryption_key = None
+
+        if encryption_key:
+            # Explicit key provided - use it directly
+            self.encryption_key = encryption_key
+            self._encryption_enabled = True
+            logger.debug("Using explicitly provided encryption key")
+        elif not env_disable:
+            # No explicit key - check if encryption should be enabled
+            # Note: We can't check user_preferences yet because DB isn't initialized
+            # Will check encryption_enabled preference on first connection
+            self._check_encryption_on_first_connection = True
+        else:
+            logger.info("Encryption disabled via MAILMIND_DISABLE_ENCRYPTION environment variable")
+            self._check_encryption_on_first_connection = False
 
         # Ensure database directory exists
         db_dir = Path(self.db_path).parent
@@ -156,6 +199,8 @@ class DatabaseManager:
         """
         Get connection for current thread (connection pooling).
 
+        Story 3.1 AC1: Executes PRAGMA key command for SQLCipher encryption
+
         Returns:
             sqlite3.Connection: Thread-local connection
 
@@ -164,13 +209,44 @@ class DatabaseManager:
         """
         if not hasattr(self._thread_local, 'conn') or self._thread_local.conn is None:
             try:
+                # Story 3.1 AC2, AC8: Check encryption on first connection
+                if hasattr(self, '_check_encryption_on_first_connection') and self._check_encryption_on_first_connection:
+                    self._setup_encryption()
+                    self._check_encryption_on_first_connection = False  # Only check once
+
+                # Create connection
                 self._thread_local.conn = sqlite3.connect(
                     self.db_path,
                     timeout=10.0,  # 10 second timeout
                     check_same_thread=False  # Allow connection sharing (safe with thread-local)
                 )
+
+                # Story 3.1 AC1: Execute PRAGMA key command immediately after connection
+                if self._encryption_enabled and self.encryption_key:
+                    if SQLCIPHER_AVAILABLE:
+                        try:
+                            # CRITICAL: PRAGMA key MUST be first command after connection
+                            self._thread_local.conn.execute(f"PRAGMA key = '{self.encryption_key}'")
+                            logger.debug("PRAGMA key executed - database encryption active")
+                        except sqlite3.Error as e:
+                            # Wrong key or corrupted database
+                            self._thread_local.conn.close()
+                            self._thread_local.conn = None
+                            raise ConnectionError(
+                                f"Failed to unlock encrypted database (wrong key or corrupted): {e}"
+                            )
+                    else:
+                        # SQLCipher not available but encryption requested
+                        logger.warning(
+                            "Encryption requested but SQLCipher not available - "
+                            "database will be unencrypted"
+                        )
+                        self._encryption_enabled = False
+
+                # Configure connection
                 self._thread_local.conn.row_factory = sqlite3.Row  # Access columns by name
                 logger.debug(f"Created new database connection for thread {threading.current_thread().name}")
+
             except sqlite3.Error as e:
                 raise ConnectionError(f"Failed to connect to database: {e}")
 
@@ -332,6 +408,115 @@ class DatabaseManager:
         """Context manager exit."""
         self.disconnect()
         return False  # Don't suppress exceptions
+
+    # ========== Encryption Management (Story 3.1) ==========
+
+    def _setup_encryption(self) -> None:
+        """
+        Setup encryption by checking preferences and getting/creating key.
+
+        Story 3.1 AC2, AC8: Check encryption_enabled preference and get key from KeyManager
+
+        Called on first connection to determine if encryption should be enabled.
+        """
+        # Check if encryption is available
+        if not SQLCIPHER_AVAILABLE or not KEY_MANAGER_AVAILABLE:
+            logger.info("Encryption not available (SQLCipher or KeyManager missing)")
+            self._encryption_enabled = False
+            return
+
+        try:
+            # Create temporary unencrypted connection to check preferences
+            # (Can't use _get_connection because it would cause infinite recursion)
+            temp_conn = sqlite3.connect(self.db_path, timeout=10.0)
+            temp_conn.row_factory = sqlite3.Row
+            cursor = temp_conn.cursor()
+
+            # Check if user_preferences table exists (database might be new)
+            cursor.execute("""
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name='user_preferences'
+            """)
+
+            if cursor.fetchone() is None:
+                # New database - enable encryption by default (AC8)
+                logger.info("New database - enabling encryption by default (AC8)")
+                self._encryption_enabled = True
+                encryption_pref = True
+            else:
+                # Check encryption_enabled preference
+                cursor.execute(
+                    "SELECT value, value_type FROM user_preferences WHERE key = ?",
+                    ("encryption_enabled",)
+                )
+                result = cursor.fetchone()
+
+                if result:
+                    value, value_type = result["value"], result["value_type"]
+                    encryption_pref = value.lower() in ("true", "1", "yes")
+                else:
+                    # Preference not set - enable by default (AC8)
+                    encryption_pref = True
+                    logger.info("encryption_enabled preference not set - enabling by default (AC8)")
+
+                self._encryption_enabled = encryption_pref
+
+            temp_conn.close()
+
+            # If encryption enabled, get/create key via KeyManager
+            if self._encryption_enabled:
+                if not self._key_manager:
+                    # Create KeyManager (will set db_manager after first connection)
+                    self._key_manager = KeyManager(db_manager=None)
+
+                # Get or create encryption key
+                self.encryption_key = self._key_manager.get_or_create_key()
+
+                if self.encryption_key is None:
+                    # Key manager failed (non-Windows platform)
+                    logger.warning("KeyManager failed to provide key - disabling encryption")
+                    self._encryption_enabled = False
+                else:
+                    logger.info("Encryption enabled with DPAPI-derived key")
+
+                    # Set db_manager reference for KeyManager (for salt storage)
+                    # Note: This creates a circular reference but it's intentional
+                    self._key_manager.db_manager = self
+            else:
+                logger.info("Encryption disabled by user preference")
+
+        except Exception as e:
+            logger.error(f"Failed to setup encryption: {e}", exc_info=True)
+            # Fallback to unencrypted on error
+            self._encryption_enabled = False
+            self.encryption_key = None
+
+    @property
+    def encryption_enabled(self) -> bool:
+        """
+        Check if database encryption is enabled.
+
+        Story 3.1 AC3.3: encryption_enabled property
+
+        Returns:
+            bool: True if encryption is active, False otherwise
+        """
+        return self._encryption_enabled
+
+    def _get_key_manager(self) -> Optional[KeyManager]:
+        """
+        Get or create KeyManager instance.
+
+        Returns:
+            KeyManager: KeyManager instance, or None if not available
+        """
+        if not KEY_MANAGER_AVAILABLE:
+            return None
+
+        if self._key_manager is None:
+            self._key_manager = KeyManager(db_manager=self)
+
+        return self._key_manager
 
     # ========== Email Analysis CRUD (Story 1.3 integration) ==========
 

@@ -1,0 +1,750 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>1</storyId>
+    <title>Database Encryption Implementation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>privacy-conscious user</asA>
+    <iWant>my email analysis data encrypted at rest</iWant>
+    <soThat>my sensitive information is protected even if someone gains access to the database file</soThat>
+    <tasks>
+      <task id="1" ac="1">Install and Configure SQLCipher (3 subtasks)</task>
+      <task id="2" ac="2">Implement DPAPI Key Management (5 subtasks)</task>
+      <task id="3" ac="1,5">Modify DatabaseManager for Encryption (5 subtasks)</task>
+      <task id="4" ac="3">Database Migration Tool (5 subtasks)</task>
+      <task id="5" ac="5">Update Backup/Restore for Encryption (4 subtasks)</task>
+      <task id="6" ac="4">Performance Testing (5 subtasks)</task>
+      <task id="7" ac="6,8">Settings UI Integration (6 subtasks)</task>
+      <task id="8" ac="7">Documentation Updates (5 subtasks)</task>
+      <task id="9" ac="1-8">Unit and Integration Testing (6 subtasks)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="P0">
+      <title>SQLCipher Implementation</title>
+      <description>Implement SQLCipher for transparent database encryption with PRAGMA key command</description>
+      <validation>
+        - pysqlcipher3 package installed and working on Windows 10/11
+        - DatabaseManager uses SQLCipher instead of sqlite3
+        - PRAGMA key executed after connection established
+        - 256-bit AES encryption active
+        - Test database file is unreadable with standard sqlite3 tools
+      </validation>
+    </criterion>
+
+    <criterion id="AC2" priority="P0">
+      <title>Windows DPAPI Key Management</title>
+      <description>Use Windows DPAPI for secure key storage (no hardcoded keys, derived via PBKDF2)</description>
+      <validation>
+        - KeyManager class created using win32crypt DPAPI
+        - Key derivation: DPAPI → PBKDF2 (100K iterations) → 64-byte SQLCipher key
+        - Keys stored securely in Windows credential store
+        - No keys hardcoded in source code
+        - First-run key generation working
+        - Unit tests pass for key derivation and storage
+      </validation>
+    </criterion>
+
+    <criterion id="AC3" priority="P0">
+      <title>Database Migration Tool</title>
+      <description>Provide migration tool for existing unencrypted databases with progress indication</description>
+      <validation>
+        - migrate_database() function implemented
+        - Progress tracking displays row counts and percentage
+        - Automatic backup created before migration
+        - Large database testing (>500MB, >10K emails) successful
+        - Rollback capability if migration fails
+        - Migration succeeds without data loss
+      </validation>
+    </criterion>
+
+    <criterion id="AC4" priority="P0">
+      <title>Performance Overhead</title>
+      <description>Performance overhead &lt;10% (target &lt;5%) for all database operations</description>
+      <validation>
+        - Baseline performance benchmarked (unencrypted)
+        - Encrypted performance benchmarked (same operations)
+        - INSERT overhead &lt;10% (target &lt;5%)
+        - SELECT overhead &lt;10% (target &lt;5%)
+        - UPDATE overhead &lt;10% (target &lt;5%)
+        - DELETE overhead &lt;10% (target &lt;5%)
+        - Performance metrics documented in completion notes
+      </validation>
+    </criterion>
+
+    <criterion id="AC5" priority="P0">
+      <title>API Transparency</title>
+      <description>Encryption transparent to existing code (no API changes required to DatabaseManager)</description>
+      <validation>
+        - Existing code using DatabaseManager works unchanged
+        - No breaking changes to public API
+        - Backward compatibility maintained
+        - All existing tests pass without modification
+        - Encryption happens internally without consumer awareness
+      </validation>
+    </criterion>
+
+    <criterion id="AC6" priority="P0">
+      <title>Settings UI Indicator</title>
+      <description>Add encryption status indicator to settings UI showing enabled/disabled state</description>
+      <validation>
+        - "Encryption Status" section added to Privacy settings tab
+        - Current state displayed (Enabled/Disabled)
+        - Toggle to enable/disable encryption (with confirmation)
+        - Warning dialog if user disables encryption
+        - "Migrate to Encrypted" button if currently unencrypted
+        - Migration progress bar during conversion
+      </validation>
+    </criterion>
+
+    <criterion id="AC7" priority="P1">
+      <title>Privacy Policy Documentation</title>
+      <description>Document encryption implementation in privacy policy with technical details</description>
+      <validation>
+        - Privacy policy updated with encryption details
+        - SECURITY.md section created for database encryption
+        - README.md updated with encryption feature
+        - Key management approach documented (DPAPI + PBKDF2)
+        - FAQ entry added: "Is my data encrypted?"
+        - Security limitations transparently documented
+      </validation>
+    </criterion>
+
+    <criterion id="AC8" priority="P1">
+      <title>User Choice</title>
+      <description>Support user choice: encrypted (default) or unencrypted (with prominent warning)</description>
+      <validation>
+        - encryption_enabled preference in user_preferences table
+        - Default value: True (encrypted by default)
+        - Warning dialog when disabling encryption
+        - User must explicitly confirm to disable
+        - Environment variable override for testing: MAILMIND_DISABLE_ENCRYPTION=1
+      </validation>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc id="doc1">
+        <path>docs/epic-stories.md</path>
+        <title>Epic 3 Story Definitions</title>
+        <section>Story 3.1: Database Encryption Implementation (lines 517-542)</section>
+        <snippet>Story description, 8 acceptance criteria, technical notes for SQLCipher implementation. Defines priority as P0 (Critical - Privacy Promise)</snippet>
+        <relevance>Primary source for story requirements and acceptance criteria. Establishes this as a critical security gap blocking MVP launch</relevance>
+      </doc>
+
+      <doc id="doc2">
+        <path>docs/epic-3-security-proposal.md</path>
+        <title>Epic 3 Security Assessment and Detailed Requirements</title>
+        <section>Story 3.1 Implementation (lines 12-36)</section>
+        <snippet>Problem statement: "Database stores all emails in plain text despite 'Absolute Privacy' marketing claim." Detailed AC1-AC7 with implementation steps for SQLCipher, DPAPI, migration tool, and performance optimization.</snippet>
+        <relevance>Provides detailed problem analysis and step-by-step implementation guidance. Clarifies the critical security vulnerability that this story addresses</relevance>
+      </doc>
+
+      <doc id="doc3">
+        <path>docs/stories/story-2.2.md</path>
+        <title>Story 2.2: SQLite Database & Caching Layer</title>
+        <section>DatabaseManager Implementation (Complete)</section>
+        <snippet>DatabaseManager class with Repository Pattern, connection pooling, CRUD operations for all tables (email_analysis, performance_metrics, user_preferences, user_corrections). Already has encryption_key parameter (line 107-114) but not implemented.</snippet>
+        <relevance>Critical dependency - DatabaseManager is the base implementation that will be enhanced with encryption. Shows existing API surface that must remain unchanged (AC5)</relevance>
+      </doc>
+
+      <doc id="doc4">
+        <path>docs/stories/story-2.6.md</path>
+        <title>Story 2.6: Error Handling, Logging & Installer</title>
+        <section>Database Corruption Detection (AC12)</section>
+        <snippet>DatabaseCorruptionError exception and detection logic in _execute_query() method. Critical for migration tool error handling.</snippet>
+        <relevance>Provides error handling patterns for database operations. Migration tool should use same exception hierarchy and recovery patterns</relevance>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact id="code1">
+        <path>src/mailmind/database/database_manager.py</path>
+        <kind>class</kind>
+        <symbol>DatabaseManager</symbol>
+        <lines>86-977</lines>
+        <reason>Core database management class that will be modified for encryption. Already has encryption_key parameter (line 107, 113, 124) but it's not used. Connection creation in _get_connection() (lines 155-177) is where SQLCipher PRAGMA key must be added.</reason>
+        <key_methods>
+          - __init__(db_path, encryption_key, debug): Line 107 - Constructor with unused encryption_key parameter
+          - _get_connection(): Line 155 - Creates SQLite connection - MODIFY HERE for SQLCipher
+          - _initialize_database(): Line 179 - Schema initialization - Must work with encrypted DB
+          - backup(): Line 830 - Backup creation - Must handle encrypted DBs (AC3)
+          - restore(): Line 862 - Backup restoration - Must handle encrypted DBs (AC3)
+        </key_methods>
+        <integration_notes>
+          - Change: Replace "import sqlite3" with "import pysqlcipher3.dbapi2 as sqlite3"
+          - Change: In _get_connection(), after connection created, execute: conn.execute(f"PRAGMA key = '{self.encryption_key}'")
+          - Constraint: Maintain all existing method signatures (AC5 - API transparency)
+          - Constraint: Existing tests must pass without modification
+        </integration_notes>
+      </artifact>
+
+      <artifact id="code2">
+        <path>src/mailmind/ui/dialogs/settings_dialog.py</path>
+        <kind>class</kind>
+        <symbol>SettingsDialog</symbol>
+        <lines>1-590</lines>
+        <reason>Settings UI with 5-tab interface including Privacy tab. Need to add "Encryption Status" section to Privacy tab for AC6.</reason>
+        <key_sections>
+          - Privacy Tab: Where encryption status UI will be added (AC6)
+          - Tab structure: General, AI Model, Performance, Privacy, Advanced
+          - CustomTkinter widgets: CTkButton, CTkLabel, CTkSwitch, CTkProgressBar
+        </key_sections>
+        <integration_notes>
+          - Add: "Encryption Status" section to Privacy tab
+          - Add: CTkLabel showing current state (Enabled/Disabled)
+          - Add: CTkSwitch toggle for enable/disable (with confirmation dialog)
+          - Add: CTkButton "Migrate to Encrypted" (if currently unencrypted)
+          - Add: CTkProgressBar for migration progress
+          - Connect to: KeyManager and DatabaseManager APIs
+        </integration_notes>
+      </artifact>
+
+      <artifact id="code3">
+        <path>src/mailmind/core/settings_manager.py</path>
+        <kind>class</kind>
+        <symbol>SettingsManager</symbol>
+        <lines>1-651</lines>
+        <reason>Manages user preferences with 19 settings across 5 categories. Will store encryption_enabled preference (AC8).</reason>
+        <key_methods>
+          - get_preference(key, default): Retrieve setting value
+          - set_preference(key, value): Store setting value
+          - SETTINGS_SCHEMA: Add encryption_enabled to Privacy category
+        </key_methods>
+        <integration_notes>
+          - Add to SETTINGS_SCHEMA:
+            {
+              "encryption_enabled": {
+                "category": "Privacy",
+                "type": "bool",
+                "default": True,
+                "description": "Enable database encryption (default: enabled)"
+              }
+            }
+          - Default value: True (encrypted by default, AC8)
+          - Environment override: MAILMIND_DISABLE_ENCRYPTION=1 for testing
+        </integration_notes>
+      </artifact>
+
+      <artifact id="code4">
+        <path>src/mailmind/database/schema.py</path>
+        <kind>module</kind>
+        <symbol>get_schema_statements</symbol>
+        <lines>1-239</lines>
+        <reason>Database schema definition with 5 tables. Schema must work with SQLCipher (transparent - no changes needed, AC5).</reason>
+        <validation_note>Test that all schema statements execute successfully with SQLCipher connection. No schema changes required - SQLCipher uses same SQL dialect as SQLite.</validation_note>
+      </artifact>
+
+      <artifact id="code5">
+        <path>src/mailmind/database/backup_manager.py</path>
+        <kind>class</kind>
+        <symbol>BackupManager</symbol>
+        <lines>1-374</lines>
+        <reason>Handles database backup and restore with SHA-256 integrity checking. Must handle encrypted databases (AC3).</reason>
+        <key_methods>
+          - create_backup(description): Create backup file
+          - restore_backup(backup_path): Restore from backup
+          - verify_backup(backup_path): SHA-256 integrity check
+        </key_methods>
+        <integration_notes>
+          - Encrypted backups: File copy works transparently (encrypted DB = encrypted backup)
+          - Restore: Must re-establish encryption key after restore
+          - Metadata: Add encryption_enabled flag to backup metadata
+          - Testing: Verify backup/restore cycle with encrypted databases
+        </integration_notes>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="pysqlcipher3" version=">=1.0.0" purpose="SQLCipher encryption library for transparent database encryption with 256-bit AES" status="TO_BE_ADDED" />
+        <package name="pywin32" version=">=306" purpose="Windows DPAPI for secure key storage and derivation (already installed)" status="EXISTING" />
+        <package name="pysqlite3" version=">=0.5.0" purpose="Current SQLite package (will be replaced by pysqlcipher3)" status="TO_BE_REMOVED" />
+        <package name="pytest" version=">=7.4.0" purpose="Testing framework for unit and integration tests" status="EXISTING" />
+        <package name="pytest-cov" version=">=4.1.0" purpose="Test coverage measurement (target: 100% for key management, >95% for encryption)" status="EXISTING" />
+        <package name="pytest-mock" version=">=3.11.1" purpose="Mocking for DPAPI and key derivation tests" status="EXISTING" />
+        <package name="customtkinter" version=">=5.2.0" purpose="UI framework for encryption settings and migration progress (AC6)" status="EXISTING" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="const1" type="platform">
+      <description>Windows-only implementation</description>
+      <detail>DPAPI (Data Protection API) is Windows-specific. macOS/Linux would require different key management approach (e.g., Keychain, keyring library). Story 3.1 targets Windows 10/11 only.</detail>
+      <impact>Key management code (KeyManager) must check platform and gracefully degrade or show error on non-Windows systems</impact>
+    </constraint>
+
+    <constraint id="const2" type="performance">
+      <description>Performance overhead &lt;10% (target &lt;5%)</description>
+      <detail>SQLCipher encryption adds CPU overhead for every database operation. Must benchmark all CRUD operations (INSERT, SELECT, UPDATE, DELETE) and optimize if overhead exceeds 10%.</detail>
+      <validation>Run performance benchmarks in Task 6. Compare encrypted vs unencrypted times. Document actual overhead percentage in completion notes.</validation>
+    </constraint>
+
+    <constraint id="const3" type="api">
+      <description>No breaking changes to DatabaseManager API</description>
+      <detail>AC5 requires encryption to be transparent to existing code. All public methods of DatabaseManager must maintain same signatures and behavior. Existing tests must pass without modification.</detail>
+      <validation>Run full test suite after encryption implementation. All existing tests (Story 1.3, 1.6, 2.2, 2.4 integration tests) must pass unchanged.</validation>
+    </constraint>
+
+    <constraint id="const4" type="security">
+      <description>No hardcoded encryption keys</description>
+      <detail>AC2 explicitly forbids hardcoded keys. All keys must be generated at runtime, protected by DPAPI, and stored in Windows credential store. Source code must never contain encryption keys.</detail>
+      <validation>Code review: grep for potential hardcoded keys. Security test: attempt to extract keys from source code and compiled bytecode.</validation>
+    </constraint>
+
+    <constraint id="const5" type="architecture">
+      <description>Repository Pattern compliance</description>
+      <detail>DatabaseManager uses Repository Pattern (Story 2.2). Encryption implementation must maintain pattern: KeyManager as separate class, encryption logic isolated in DatabaseManager, no encryption concerns leaking to consumers.</detail>
+      <impact>Create separate KeyManager class. DatabaseManager calls KeyManager for key operations. Consumers remain unaware of encryption.</impact>
+    </constraint>
+
+    <constraint id="const6" type="data">
+      <description>Database migration must be lossless</description>
+      <detail>AC3 requires migration tool that converts existing unencrypted databases to encrypted format without data loss. Must handle large databases (&gt;500MB, &gt;10K emails) and provide rollback on failure.</detail>
+      <validation>Test migration with: (1) small DB (10 emails), (2) medium DB (1000 emails), (3) large DB (&gt;500MB). Verify row counts before/after. Verify data integrity with SHA-256 checksums. Test rollback on simulated failure.</validation>
+    </constraint>
+
+    <constraint id="const7" type="testing">
+      <description>Test coverage requirements</description>
+      <detail>AC9 requires comprehensive testing: 100% coverage for KeyManager (key generation, derivation, storage), &gt;95% coverage for DatabaseManager encryption operations, integration tests for full workflow, performance benchmarks.</detail>
+      <test_files>
+        - tests/unit/test_key_manager.py: 100% coverage target
+        - tests/unit/test_encryption.py: &gt;95% coverage target
+        - tests/integration/test_encrypted_workflow.py: End-to-end scenarios
+        - tests/performance/test_encryption_overhead.py: Benchmark suite
+      </test_files>
+    </constraint>
+
+    <constraint id="const8" type="dependency">
+      <description>SQLCipher compatibility</description>
+      <detail>pysqlcipher3 is a drop-in replacement for sqlite3, but has subtle differences. Must verify: (1) all schema statements work, (2) WAL mode compatible, (3) backup/restore compatible, (4) PRAGMA commands work, (5) row_factory and other sqlite3 features preserved.</detail>
+      <validation>Run existing test suite with SQLCipher connection. Verify all 78 tests from Story 2.2 pass with encryption enabled.</validation>
+    </constraint>
+
+    <constraint id="const9" type="ui">
+      <description>CustomTkinter widget constraints</description>
+      <detail>Story 2.3 documents CustomTkinter constraints: width/height must be in constructor, not after creation. Apply to encryption settings UI: CTkLabel, CTkSwitch, CTkButton, CTkProgressBar.</detail>
+      <pattern>widget = CTkLabel(parent, text="...", width=200, height=30)  # Correct</pattern>
+    </constraint>
+
+    <constraint id="const10" type="error-handling">
+      <description>Use Story 2.6 exception hierarchy</description>
+      <detail>Story 2.6 defines exception hierarchy: MailMindException → DatabaseError → DatabaseCorruptionError. Migration tool and key management must use same patterns: log errors, provide user-friendly messages, enable recovery.</detail>
+      <exceptions>
+        - KeyManagementError: Key generation/derivation failures
+        - EncryptionError: SQLCipher PRAGMA key failures
+        - MigrationError: Database migration failures (with rollback)
+      </exceptions>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface id="int1">
+      <name>SQLCipher PRAGMA key command</name>
+      <kind>database</kind>
+      <signature>conn.execute("PRAGMA key = 'encryption_key_hex'")</signature>
+      <description>SQLCipher command to set encryption key for database. Must be executed immediately after opening connection, before any other operations.</description>
+      <usage_example>
+import pysqlcipher3.dbapi2 as sqlite3
+
+# Connect to database
+conn = sqlite3.connect("mailmind.db")
+
+# Set encryption key (MUST BE FIRST COMMAND)
+conn.execute(f"PRAGMA key = '{encryption_key_hex}'")
+
+# Now database is unlocked and ready for use
+cursor = conn.cursor()
+cursor.execute("SELECT * FROM email_analysis")
+      </usage_example>
+      <constraints>
+        - Must be first command after connection opened
+        - Key must be hex-encoded 64-byte string (128 hex characters)
+        - Wrong key = database appears empty or corrupted
+        - Changing key on existing DB requires PRAGMA rekey
+      </constraints>
+    </interface>
+
+    <interface id="int2">
+      <name>Windows DPAPI CryptProtectData/CryptUnprotectData</name>
+      <kind>api</kind>
+      <signature>win32crypt.CryptProtectData(data, description, entropy, reserved, prompt_struct, flags)</signature>
+      <description>Windows Data Protection API for encrypting/decrypting data using user's Windows credentials. Protected data can only be decrypted by same user on same machine.</description>
+      <usage_example>
+import win32crypt
+
+# Generate random key
+raw_key = os.urandom(32)  # 32 bytes = 256 bits
+
+# Protect key with DPAPI
+protected_key = win32crypt.CryptProtectData(
+    raw_key,
+    "MailMind Database Encryption Key",
+    None,  # entropy (optional additional secret)
+    None,  # reserved
+    None,  # prompt_struct (no UI prompt)
+    0      # flags
+)
+
+# Store protected_key in Windows credential store
+
+# Later, retrieve and unprotect
+raw_key_recovered = win32crypt.CryptUnprotectData(
+    protected_key,
+    None,  # entropy
+    None,  # reserved
+    None,  # prompt_struct
+    0      # flags
+)[1]  # Returns (description, data) tuple
+
+assert raw_key == raw_key_recovered  # Keys match!
+      </usage_example>
+      <constraints>
+        - Windows-only (raises exception on macOS/Linux)
+        - Requires pywin32>=306 package
+        - Protected data tied to user account + machine
+        - Cannot decrypt on different machine or different user account
+      </constraints>
+    </interface>
+
+    <interface id="int3">
+      <name>PBKDF2 Key Derivation</name>
+      <kind>cryptography</kind>
+      <signature>hashlib.pbkdf2_hmac(hash_name, password, salt, iterations, dklen)</signature>
+      <description>Password-Based Key Derivation Function 2. Derives a cryptographically strong key from DPAPI-protected key. Adds salt and iterations for additional security.</description>
+      <usage_example>
+import hashlib
+import os
+
+# DPAPI-protected key (32 bytes)
+dpapi_key = win32crypt.CryptUnprotectData(protected_key)[1]
+
+# Generate or retrieve salt (should be stored with DB or in settings)
+salt = os.urandom(16)  # 16 bytes salt
+
+# Derive 64-byte key for SQLCipher (100,000 iterations)
+sqlcipher_key = hashlib.pbkdf2_hmac(
+    'sha256',                # Hash algorithm
+    dpapi_key,               # Password (DPAPI key)
+    salt,                    # Salt (random, stored)
+    100000,                  # Iterations (100K recommended)
+    dklen=64                 # Desired key length (64 bytes = 512 bits)
+)
+
+# Convert to hex for SQLCipher PRAGMA key
+key_hex = sqlcipher_key.hex()  # 128 hex characters
+
+# Use with SQLCipher
+conn.execute(f"PRAGMA key = '{key_hex}'")
+      </usage_example>
+      <constraints>
+        - Salt must be stored (not secret, but must be consistent)
+        - Iterations: 100,000 recommended (balance security vs performance)
+        - Derived key length: 64 bytes (SQLCipher default)
+        - Hash algorithm: SHA-256 (secure and fast)
+      </constraints>
+    </interface>
+
+    <interface id="int4">
+      <name>DatabaseManager.__init__ encryption_key parameter</name>
+      <kind>method</kind>
+      <signature>def __init__(self, db_path: str = None, encryption_key: Optional[str] = None, debug: bool = False)</signature>
+      <description>DatabaseManager constructor. encryption_key parameter already exists (line 107) but is currently unused. This story will activate it.</description>
+      <current_behavior>Parameter exists but is only stored (self.encryption_key = encryption_key at line 124). Not used anywhere else. Database operates unencrypted.</current_behavior>
+      <new_behavior>
+        - If encryption_key provided: Use it directly for SQLCipher PRAGMA key
+        - If encryption_key is None: Check user_preferences for encryption_enabled setting
+          - If encryption_enabled=True: Generate/retrieve key via KeyManager
+          - If encryption_enabled=False: Use standard sqlite3 (no encryption)
+        - Store encryption_enabled status in instance variable
+      </new_behavior>
+      <integration_notes>
+        - Backward compatibility: If encryption_key=None and no preference set, default to encrypted (AC8)
+        - Key retrieval: Call KeyManager.get_or_create_key() on first run
+        - Fallback: If KeyManager fails (non-Windows), log warning and use unencrypted
+      </integration_notes>
+    </interface>
+
+    <interface id="int5">
+      <name>KeyManager class (NEW)</name>
+      <kind>class</kind>
+      <signature>
+class KeyManager:
+    def get_or_create_key(self) -> str
+    def rotate_key(self, old_key: str) -> str
+    def delete_key(self) -> bool
+      </signature>
+      <description>New class to manage encryption keys using Windows DPAPI and PBKDF2 derivation. Handles key generation, storage, retrieval, and rotation.</description>
+      <methods>
+        - get_or_create_key(): Returns hex-encoded 64-byte key. Creates new key if none exists. Retrieves from credential store if exists.
+        - rotate_key(old_key): Generates new key, re-encrypts database (PRAGMA rekey), stores new key
+        - delete_key(): Removes key from credential store (use when user disables encryption)
+      </methods>
+      <storage>
+        - Windows Credential Manager: Stores DPAPI-protected key
+        - Credential target name: "MailMind_DatabaseEncryptionKey"
+        - Salt stored in user_preferences table: encryption_salt (base64-encoded 16 bytes)
+      </storage>
+    </interface>
+
+    <interface id="int6">
+      <name>Database Migration Functions (NEW)</name>
+      <kind>module</kind>
+      <path>src/mailmind/core/db_migration.py</path>
+      <functions>
+        - migrate_to_encrypted(db_path: str, encryption_key: str, progress_callback: Callable) -> bool
+        - migrate_to_unencrypted(db_path: str, encryption_key: str, progress_callback: Callable) -> bool
+        - verify_migration(original_db: str, migrated_db: str) -> bool
+      </functions>
+      <description>Database migration utilities for converting between encrypted and unencrypted formats. Handles large databases, progress tracking, backup creation, and rollback on failure.</description>
+      <migration_strategy>
+        1. Create backup of original database
+        2. Create new database with target encryption state
+        3. Copy all tables row by row (with progress callback)
+        4. Verify integrity (row counts, SHA-256 checksums)
+        5. If successful: Replace original with migrated
+        6. If failure: Restore from backup (rollback)
+      </migration_strategy>
+      <progress_callback>
+        Callable[[int, int, str], None]  # (current_row, total_rows, table_name)
+        Called periodically during migration to update UI progress bar
+      </progress_callback>
+    </interface>
+
+    <interface id="int7">
+      <name>Settings UI Encryption Section (NEW)</name>
+      <kind>ui-component</kind>
+      <location>SettingsDialog.Privacy tab</location>
+      <widgets>
+        - CTkLabel: "Encryption Status: [Enabled/Disabled]" (updates in real-time)
+        - CTkSwitch: Enable/Disable toggle (with confirmation dialog)
+        - CTkButton: "Migrate to Encrypted" (only visible if currently unencrypted)
+        - CTkProgressBar: Migration progress (0-100%, visible during migration)
+        - CTkLabel: "Migration in progress... X% complete" (dynamic text)
+      </widgets>
+      <callbacks>
+        - on_encryption_toggle(enabled: bool): Handles enable/disable with confirmation
+        - on_migrate_click(): Starts migration process with progress updates
+        - on_migration_complete(success: bool): Handles migration result (success/failure)
+      </callbacks>
+      <threading>
+        Migration must run in background thread (blocks UI for large databases).
+        Use threading.Thread with queue for progress updates.
+      </threading>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards from Story 2.2 and 2.6:
+      - Framework: pytest with pytest-cov for coverage
+      - Coverage targets: 100% for KeyManager, &gt;95% for DatabaseManager encryption operations
+      - Test organization: tests/unit/ for unit tests, tests/integration/ for integration tests
+      - Mocking: Use pytest-mock for DPAPI calls (allow testing on non-Windows)
+      - Performance: Separate tests/performance/ for benchmark suite
+      - Fixtures: Shared fixtures in tests/conftest.py (test databases, mock keys)
+      - Assertions: Use pytest assert statements with clear failure messages
+      - Test data: Use realistic email counts (10, 100, 1000, 10K rows) for migration tests
+    </standards>
+
+    <locations>
+      - tests/unit/test_key_manager.py: KeyManager unit tests
+      - tests/unit/test_encryption.py: DatabaseManager encryption unit tests
+      - tests/integration/test_encrypted_workflow.py: End-to-end encryption tests
+      - tests/integration/test_migration.py: Database migration tests
+      - tests/performance/test_encryption_overhead.py: Performance benchmarks
+      - tests/ui/test_encryption_settings.py: Settings UI component tests
+    </locations>
+
+    <ideas>
+      <test id="test1" ac="AC1">
+        <name>test_sqlcipher_installation</name>
+        <description>Verify pysqlcipher3 package installed and importable</description>
+        <validation>Import pysqlcipher3.dbapi2, create connection, verify it's SQLCipher (not standard sqlite3)</validation>
+      </test>
+
+      <test id="test2" ac="AC1">
+        <name>test_pragma_key_command</name>
+        <description>Verify PRAGMA key command executed after connection</description>
+        <validation>Mock connection, capture PRAGMA key execution, verify key value passed correctly</validation>
+      </test>
+
+      <test id="test3" ac="AC1">
+        <name>test_encrypted_database_unreadable</name>
+        <description>Verify encrypted database cannot be read with standard sqlite3</description>
+        <validation>Create encrypted DB, try to open with sqlite3 (not pysqlcipher3), expect error or empty database</validation>
+      </test>
+
+      <test id="test4" ac="AC2">
+        <name>test_dpapi_key_generation</name>
+        <description>Verify KeyManager generates random 32-byte key</description>
+        <validation>Call KeyManager.get_or_create_key(), verify key length, verify randomness (different on each call)</validation>
+      </test>
+
+      <test id="test5" ac="AC2">
+        <name>test_dpapi_protect_unprotect</name>
+        <description>Verify DPAPI protect/unprotect cycle works</description>
+        <validation>Generate key, protect with DPAPI, unprotect, verify recovered key matches original</validation>
+      </test>
+
+      <test id="test6" ac="AC2">
+        <name>test_pbkdf2_derivation</name>
+        <description>Verify PBKDF2 derives 64-byte key from DPAPI key</description>
+        <validation>Call PBKDF2 with test key and salt, verify output length (64 bytes), verify deterministic (same input = same output)</validation>
+      </test>
+
+      <test id="test7" ac="AC2">
+        <name>test_key_storage_credential_store</name>
+        <description>Verify keys stored in Windows credential store</description>
+        <validation>Mock credential store, verify KeyManager stores/retrieves keys, verify credential target name correct</validation>
+      </test>
+
+      <test id="test8" ac="AC2">
+        <name>test_no_hardcoded_keys</name>
+        <description>Security test: Verify no hardcoded keys in source code</description>
+        <validation>Grep source code for potential key patterns (long hex strings, base64 blobs), expect no matches</validation>
+      </test>
+
+      <test id="test9" ac="AC3">
+        <name>test_migration_small_database</name>
+        <description>Verify migration works for small database (10 emails)</description>
+        <validation>Create unencrypted DB with 10 emails, migrate to encrypted, verify row count matches, verify data integrity</validation>
+      </test>
+
+      <test id="test10" ac="AC3">
+        <name>test_migration_large_database</name>
+        <description>Verify migration works for large database (&gt;500MB, &gt;10K emails)</description>
+        <validation>Create large test DB, migrate, verify row count, verify SHA-256 checksum, verify migration time reasonable (&gt;1000 emails/sec)</validation>
+      </test>
+
+      <test id="test11" ac="AC3">
+        <name>test_migration_progress_callback</name>
+        <description>Verify migration progress callback called during migration</description>
+        <validation>Mock progress callback, run migration, verify callback called with increasing percentages (0% → 100%)</validation>
+      </test>
+
+      <test id="test12" ac="AC3">
+        <name>test_migration_backup_created</name>
+        <description>Verify automatic backup created before migration</description>
+        <validation>Run migration, verify backup file exists, verify backup is identical to original</validation>
+      </test>
+
+      <test id="test13" ac="AC3">
+        <name>test_migration_rollback_on_failure</name>
+        <description>Verify rollback works if migration fails</description>
+        <validation>Simulate migration failure (corrupt key, disk full), verify original database restored from backup, verify no partial migration</validation>
+      </test>
+
+      <test id="test14" ac="AC4">
+        <name>test_insert_performance_overhead</name>
+        <description>Benchmark INSERT performance: encrypted vs unencrypted</description>
+        <validation>Measure 1000 INSERTs unencrypted, measure 1000 INSERTs encrypted, calculate overhead percentage, assert &lt;10%</validation>
+      </test>
+
+      <test id="test15" ac="AC4">
+        <name>test_select_performance_overhead</name>
+        <description>Benchmark SELECT performance: encrypted vs unencrypted</description>
+        <validation>Measure 1000 SELECTs unencrypted, measure 1000 SELECTs encrypted, calculate overhead percentage, assert &lt;10%</validation>
+      </test>
+
+      <test id="test16" ac="AC4">
+        <name>test_update_performance_overhead</name>
+        <description>Benchmark UPDATE performance: encrypted vs unencrypted</description>
+        <validation>Measure 1000 UPDATEs unencrypted, measure 1000 UPDATEs encrypted, calculate overhead percentage, assert &lt;10%</validation>
+      </test>
+
+      <test id="test17" ac="AC4">
+        <name>test_delete_performance_overhead</name>
+        <description>Benchmark DELETE performance: encrypted vs unencrypted</description>
+        <validation>Measure 1000 DELETEs unencrypted, measure 1000 DELETEs encrypted, calculate overhead percentage, assert &lt;10%</validation>
+      </test>
+
+      <test id="test18" ac="AC5">
+        <name>test_existing_tests_pass_with_encryption</name>
+        <description>Verify all existing DatabaseManager tests pass with encryption enabled</description>
+        <validation>Run full test suite from Story 2.2 (78 tests) with encryption_enabled=True, expect all tests pass</validation>
+      </test>
+
+      <test id="test19" ac="AC5">
+        <name>test_api_signatures_unchanged</name>
+        <description>Verify all DatabaseManager public method signatures unchanged</description>
+        <validation>Use inspect module to compare method signatures before/after encryption implementation, expect exact match</validation>
+      </test>
+
+      <test id="test20" ac="AC5">
+        <name>test_backward_compatibility</name>
+        <description>Verify code using DatabaseManager works without modification</description>
+        <validation>Run Story 1.3 and 1.6 integration tests (email analysis, caching) with encryption enabled, expect no changes required</validation>
+      </test>
+
+      <test id="test21" ac="AC6">
+        <name>test_encryption_status_display</name>
+        <description>Verify encryption status displayed correctly in settings UI</description>
+        <validation>Mock SettingsDialog, set encryption_enabled=True, verify label shows "Enabled", set =False, verify shows "Disabled"</validation>
+      </test>
+
+      <test id="test22" ac="AC6">
+        <name>test_encryption_toggle_confirmation</name>
+        <description>Verify confirmation dialog shown when toggling encryption</description>
+        <validation>Click encryption toggle, verify confirmation dialog appears, verify message warns about disabling encryption</validation>
+      </test>
+
+      <test id="test23" ac="AC6">
+        <name>test_migrate_button_visibility</name>
+        <description>Verify "Migrate to Encrypted" button only visible when unencrypted</description>
+        <validation>Set encryption_enabled=False, verify button visible, set =True, verify button hidden</validation>
+      </test>
+
+      <test id="test24" ac="AC6">
+        <name>test_migration_progress_bar</name>
+        <description>Verify migration progress bar updates during migration</description>
+        <validation>Start migration, verify progress bar visible, verify updates from 0% to 100%, verify completion message</validation>
+      </test>
+
+      <test id="test25" ac="AC7">
+        <name>test_security_md_exists</name>
+        <description>Verify SECURITY.md file created with database encryption section</description>
+        <validation>Check SECURITY.md exists, verify contains "Database Encryption" section, verify mentions SQLCipher and DPAPI</validation>
+      </test>
+
+      <test id="test26" ac="AC7">
+        <name>test_readme_updated</name>
+        <description>Verify README.md updated with encryption feature</description>
+        <validation>Check README.md contains "Database Encryption" in features list, verify mentions "256-bit AES encryption"</validation>
+      </test>
+
+      <test id="test27" ac="AC7">
+        <name>test_privacy_policy_updated</name>
+        <description>Verify privacy policy documents encryption implementation</description>
+        <validation>Check privacy policy contains encryption technical details, DPAPI key management, and security limitations</validation>
+      </test>
+
+      <test id="test28" ac="AC8">
+        <name>test_encryption_enabled_default</name>
+        <description>Verify encryption enabled by default for new installations</description>
+        <validation>Create new DatabaseManager (no existing preferences), verify encryption_enabled=True in preferences</validation>
+      </test>
+
+      <test id="test29" ac="AC8">
+        <name>test_user_can_disable_encryption</name>
+        <description>Verify user can explicitly disable encryption with warning</description>
+        <validation>Set encryption_enabled=False in preferences, verify warning shown, verify database uses standard sqlite3</validation>
+      </test>
+
+      <test id="test30" ac="AC8">
+        <name>test_environment_variable_override</name>
+        <description>Verify MAILMIND_DISABLE_ENCRYPTION environment variable disables encryption</description>
+        <validation>Set env var MAILMIND_DISABLE_ENCRYPTION=1, create DatabaseManager, verify encryption disabled (for testing)</validation>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

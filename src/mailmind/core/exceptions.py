@@ -350,3 +350,88 @@ class UpdateInstallationError(UpdateError):
             "Rolling back to previous version..."
         )
         super().__init__(user_message, technical_details)
+
+
+# ============================================================================
+# Email Preprocessing exceptions (Story 1.2, Story 3.2)
+# ============================================================================
+
+class EmailPreprocessorError(MailMindException):
+    """Base exception for email preprocessing errors."""
+    pass
+
+
+class HTMLParsingError(EmailPreprocessorError):
+    """Raised when HTML parsing fails."""
+
+    def __init__(self, technical_details: Optional[str] = None):
+        user_message = (
+            "Failed to parse email HTML content. "
+            "The email may be displayed in simplified format."
+        )
+        super().__init__(user_message, technical_details)
+
+
+class SecurityException(EmailPreprocessorError):
+    """
+    Raised when email is blocked for security reasons.
+
+    This exception is thrown when the EmailPreprocessor detects suspicious
+    content that could be a prompt injection attack or other security threat.
+
+    Story 3.2 AC1: Block Injection Patterns
+    Story 3.2 AC2: Safe Error Response
+
+    Attributes:
+        pattern_name: Name of the security pattern that triggered the block
+        severity: Severity level of the matched pattern ("high", "medium", "low")
+        email_preview: Optional preview of the blocked email content (first 200 chars)
+
+    Usage:
+        try:
+            preprocessed = preprocessor.preprocess_email(raw_email)
+        except SecurityException as e:
+            logger.error(f"Email blocked: {e.pattern_name} (severity: {e.severity})")
+            return {"status": "blocked", "reason": str(e)}
+    """
+
+    def __init__(self,
+                 pattern_name: str,
+                 severity: str = "high",
+                 email_preview: str = None,
+                 technical_details: Optional[str] = None):
+        """
+        Initialize SecurityException.
+
+        Args:
+            pattern_name: Name of the pattern that triggered the block
+            severity: Severity level ("high", "medium", "low")
+            email_preview: Optional preview of blocked content
+            technical_details: Technical details for logging
+        """
+        # User-friendly message (AC2: Safe Error Response)
+        user_message = (
+            f"Email blocked for security reasons. "
+            f"This email contains content that may be harmful. "
+            f"Check Security settings to adjust protection levels."
+        )
+
+        super().__init__(
+            user_message,
+            technical_details or f"Pattern matched: {pattern_name} (severity: {severity})"
+        )
+
+        self.pattern_name = pattern_name
+        self.severity = severity
+        self.email_preview = email_preview
+
+    def get_user_message(self) -> str:
+        """
+        Get a safe, user-friendly error message for display.
+
+        Returns:
+            User-friendly message without technical details
+        """
+        if self.pattern_name:
+            return f"Email blocked: {self.pattern_name.replace('_', ' ').title()}"
+        return "Email blocked for security reasons"

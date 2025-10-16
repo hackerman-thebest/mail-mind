@@ -23,6 +23,8 @@ import customtkinter as ctk
 from typing import Optional
 from pathlib import Path
 
+from mailmind.ui.components.toast import ToastManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,6 +88,9 @@ class MainWindow(ctk.CTk):
         self._sidebar_collapsed = False
         self._analysis_collapsed = False
 
+        # Initialize toast manager for notifications
+        self.toast_manager = None  # Initialized after window is created
+
         # Configure window
         self._setup_window()
 
@@ -93,6 +98,9 @@ class MainWindow(ctk.CTk):
         self._create_menu_bar()
         self._create_main_layout()
         self._create_status_bar()
+
+        # Initialize toast manager (after window is fully created)
+        self.toast_manager = ToastManager(self)
 
         # Restore saved layout
         self._restore_layout()
@@ -368,6 +376,61 @@ class MainWindow(ctk.CTk):
             self.analysis_frame.pack_forget()
             self._analysis_collapsed = True
             logger.debug("Analysis panel collapsed")
+
+    def show_security_blocked_notification(self, pattern_name: str, severity: str = "high", email_subject: str = None):
+        """
+        Show toast notification when email is blocked for security.
+
+        Story 3.2 AC4, AC6: User notification toast when email is blocked.
+
+        Args:
+            pattern_name: Name of security pattern that triggered block
+            severity: Severity level (high/medium/low)
+            email_subject: Subject of blocked email (optional)
+        """
+        if not self.toast_manager:
+            logger.warning("ToastManager not initialized")
+            return
+
+        # Construct user-friendly message
+        subject_text = f": {email_subject[:30]}" if email_subject else ""
+        message = f"Email blocked for security{subject_text}\nReason: {pattern_name.replace('_', ' ').title()}"
+
+        # Show error toast (red)
+        self.toast_manager.show(
+            message=message,
+            toast_type="error",
+            duration=5000  # 5 seconds for security notifications
+        )
+
+        logger.info(f"Security notification shown: {pattern_name} (severity: {severity})")
+
+    def show_security_warning_notification(self, pattern_name: str, email_subject: str = None):
+        """
+        Show toast notification when email has security warning but is allowed.
+
+        Story 3.2 AC6: User notification for warned emails (Permissive mode).
+
+        Args:
+            pattern_name: Name of security pattern that triggered warning
+            email_subject: Subject of email (optional)
+        """
+        if not self.toast_manager:
+            logger.warning("ToastManager not initialized")
+            return
+
+        # Construct user-friendly message
+        subject_text = f": {email_subject[:30]}" if email_subject else ""
+        message = f"Security warning{subject_text}\nPattern: {pattern_name.replace('_', ' ').title()}"
+
+        # Show info toast (blue)
+        self.toast_manager.show(
+            message=message,
+            toast_type="info",
+            duration=4000  # 4 seconds for warnings
+        )
+
+        logger.info(f"Security warning shown: {pattern_name}")
 
     def _on_theme_changed(self, old_theme, new_theme):
         """Handle theme change event."""

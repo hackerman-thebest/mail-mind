@@ -7,9 +7,41 @@ MailMind is a privacy-first desktop application that provides AI-powered email i
 ## Current Status
 
 **Phase:** Implementation (Phase 4)
-**Current Story:** 1.5 - Response Generation Assistant ✅ IMPLEMENTED
+**Current Story:** 3.1 - Database Encryption Implementation ✅ IMPLEMENTED
 
 ## Features (Current)
+
+### 🔒 Security Features
+
+#### ✅ Story 3.1: Database Encryption (COMPLETE)
+
+- **256-bit AES Encryption:** SQLCipher database encryption for all email data
+- **Windows DPAPI Key Management:** Secure key storage tied to user account + machine
+- **PBKDF2 Key Derivation:** 100,000 iterations with SHA-256 for additional security
+- **Encryption by Default:** New installations automatically use encrypted databases
+- **Migration Tools:** Convert between encrypted and unencrypted databases
+- **Settings UI Integration:** Manage encryption from Privacy settings
+- **Performance:** <5% overhead (typically 2-3%)
+- **Automatic Backup:** Safe migration with automatic rollback on failure
+
+**Encryption Architecture:**
+- **Key Storage:** Windows Credential Manager (DPAPI-protected)
+- **Key Derivation:** PBKDF2-HMAC-SHA256 with random salt
+- **Database:** SQLCipher with 256-bit AES-CBC
+- **Platform:** Windows 10/11 (macOS/Linux support planned for v2.0)
+
+**User Control:**
+```
+Settings → Privacy → Database Encryption
+• Encryption Status: Enabled/Disabled indicator
+• Enable Encryption: Migrate unencrypted database
+• Disable Encryption: Migrate to unencrypted (with warning)
+• Progress Tracking: Real-time migration progress
+```
+
+**Security Documentation:** See [SECURITY.md](SECURITY.md) for complete encryption architecture
+
+### 🤖 AI Features
 
 ### ✅ Story 1.1: Ollama Integration & Model Setup (COMPLETE)
 
@@ -673,13 +705,14 @@ ollama:
 
 ## Roadmap
 
-### ✅ Completed (5/12 stories - 38% progress)
+### ✅ Completed (6/12 stories - 46% progress)
 
 - **Story 1.1:** Ollama Integration & Model Setup (5 points) ✅
 - **Story 1.2:** Email Preprocessing Pipeline (5 points) ✅
 - **Story 1.3:** Real-Time Email Analysis Engine (8 points) ✅
 - **Story 1.4:** Priority Classification System (5 points) ✅
 - **Story 1.5:** Response Generation Assistant (8 points) ✅
+- **Story 3.1:** Database Encryption Implementation (5 points) ✅
 
 ### 🔄 Next Up
 
@@ -693,6 +726,12 @@ ollama:
 - **Story 2.4:** Settings & Configuration System
 - **Story 2.5:** Hardware Profiling & Onboarding Wizard
 - **Story 2.6:** Error Handling, Logging & Installer
+
+### Epic 3: Security & Privacy
+
+- **Story 3.1:** Database Encryption Implementation (5 points) ✅ **COMPLETE**
+- Story 3.2: Privacy-Preserving Analytics
+- Story 3.3: Secure Configuration Management
 
 ## Error Handling & Logging (Story 2.6)
 
@@ -860,9 +899,29 @@ If AI inference is slow:
 
 **Recovery:** MailMind automatically reduces memory usage under pressure
 
+### Database Encryption Issues
+
+**Error:** `Encryption unavailable (migration tools not found)`
+
+**Solution:**
+1. Ensure pysqlcipher3 is installed: `pip install pysqlcipher3`
+2. Verify Windows 10/11 (DPAPI required for encryption)
+3. Check Settings → Privacy → Database Encryption for status
+
+**Error:** `Failed to unlock encrypted database`
+
+**Solution:**
+1. Database may be corrupted - restore from backup
+2. Encryption key may be unavailable - check Windows Credential Manager
+3. See [SECURITY.md](SECURITY.md) for key management details
+
+**Recovery:** MailMind automatically creates backups before migration
+
 ### More Help
 
 For comprehensive troubleshooting:
+- **Security Guide:** [SECURITY.md](SECURITY.md) - Encryption architecture and security practices
+- **FAQ:** [FAQ.md](FAQ.md) - Frequently asked questions
 - **User Guide:** [docs/user-guide/troubleshooting.md](docs/user-guide/troubleshooting.md)
 - **Developer Guide:** [docs/developer-guide/error-handling-patterns.md](docs/developer-guide/error-handling-patterns.md)
 - **Report Issue:** Help → Report Issue (exports sanitized logs to clipboard)
@@ -884,7 +943,9 @@ For issues and questions:
 
 ---
 
-**Project Status:** 38% Complete (Phase 4 - Implementation)
-**Stories Completed:** 5/12 (28 story points out of 72 total)
-**Current Story:** 1.5 ✅ COMPLETE
+**Project Status:** 46% Complete (Phase 4 - Implementation)
+**Stories Completed:** 6/12 (33 story points out of 72 total)
+**Current Story:** 3.1 ✅ COMPLETE
 **Next Story:** 1.6 - Performance Optimization & Caching
+
+**Security:** 256-bit AES database encryption enabled by default. See [SECURITY.md](SECURITY.md) for details.

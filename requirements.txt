@@ -10,7 +10,7 @@ beautifulsoup4>=4.12.0  # HTML email parsing
 lxml>=4.9.0  # Fast HTML parser backend for BeautifulSoup
 
 # Database
-pysqlite3>=0.5.0  # SQLite with encryption support
+pysqlcipher3>=1.0.0  # SQLCipher for database encryption with 256-bit AES
 
 # UI Framework
 customtkinter>=5.2.0

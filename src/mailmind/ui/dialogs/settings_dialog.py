@@ -5,15 +5,31 @@ Implements Story 2.3 AC2, AC7: Settings dialog with tabbed interface
 - General tab (theme, startup, notifications)
 - AI Model tab (model selection, temperature, defaults)
 - Performance tab (batch size, cache, hardware)
-- Privacy tab (telemetry, logging)
+- Privacy tab (telemetry, logging, encryption - Story 3.1 AC6,8)
 - Advanced tab (database, debug mode)
+
+Story 3.1 AC6, AC8: Database Encryption UI
+- Encryption status indicator (Enabled/Disabled)
+- Toggle to enable/disable encryption with warning
+- Migration button for unencrypted databases
+- Progress bar for migration process
 """
 
 import logging
+import threading
 import customtkinter as ctk
 from typing import Optional, Dict, Callable
+from tkinter import messagebox
 
 logger = logging.getLogger(__name__)
+
+# Story 3.1 AC6,8: Import encryption modules
+try:
+    from mailmind.core.db_migration import migrate_to_encrypted, migrate_to_unencrypted, is_database_encrypted
+    MIGRATION_AVAILABLE = True
+except ImportError:
+    MIGRATION_AVAILABLE = False
+    logger.warning("Migration tools not available - encryption UI will be disabled")
 
 
 class SettingsDialog(ctk.CTkToplevel):
@@ -34,6 +50,9 @@ class SettingsDialog(ctk.CTkToplevel):
         current_settings: Optional[Dict] = None,
         on_save: Optional[Callable[[Dict], None]] = None,
         on_rerun_wizard: Optional[Callable[[], None]] = None,
+        db_manager=None,  # Story 3.1 AC6,8: Database manager for encryption operations
+        db_path: Optional[str] = None,  # Story 3.1 AC6,8: Database path for migration
+        encryption_key: Optional[str] = None,  # Story 3.1 AC6,8: Current encryption key
         **kwargs
     ):
         """
@@ -44,6 +63,9 @@ class SettingsDialog(ctk.CTkToplevel):
             current_settings: Current settings dict
             on_save: Callback when settings are saved (receives settings dict)
             on_rerun_wizard: Callback to re-run onboarding wizard
+            db_manager: DatabaseManager instance for encryption operations (Story 3.1)
+            db_path: Path to database file (Story 3.1)
+            encryption_key: Current encryption key if encrypted (Story 3.1)
         """
         super().__init__(master, **kwargs)
 
@@ -52,9 +74,15 @@ class SettingsDialog(ctk.CTkToplevel):
         self.settings = current_settings or self._get_default_settings()
         self.original_settings = self.settings.copy()
 
+        # Story 3.1 AC6,8: Store encryption-related parameters
+        self.db_manager = db_manager
+        self.db_path = db_path
+        self.encryption_key = encryption_key
+        self._migration_in_progress = False
+
         # Configure window
         self.title("MailMind Settings")
-        self.geometry("700x550")
+        self.geometry("700x600")  # Story 3.1: Increased height for encryption section
         self.resizable(False, False)
 
         # Make modal
@@ -91,6 +119,10 @@ class SettingsDialog(ctk.CTkToplevel):
             "enable_telemetry": False,
             "enable_crash_reports": True,
             "log_level": "INFO",
+
+            # Security (Story 3.2 AC5, AC8)
+            "security_level": "Normal",
+            "allow_security_override": False,
 
             # Advanced
             "database_path": "data/mailmind.db",
@@ -445,8 +477,175 @@ class SettingsDialog(ctk.CTkToplevel):
             width=150
         ).pack(anchor="w", padx=20, pady=5)
 
+        # Story 3.1 AC6,8: Database Encryption
+        encryption_frame = ctk.CTkFrame(self.tab_privacy)
+        encryption_frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkLabel(
+            encryption_frame,
+            text="Database Encryption:",
+            font=("Segoe UI", 11, "bold")
+        ).pack(anchor="w", padx=10, pady=5)
+
+        # Story 3.1 AC6 Subtask 7.2: Display current encryption state
+        self._encryption_status_label = ctk.CTkLabel(
+            encryption_frame,
+            text="Checking encryption status...",
+            font=("Segoe UI", 10)
+        )
+        self._encryption_status_label.pack(anchor="w", padx=20, pady=2)
+
+        # Story 3.1 AC8 Subtask 7.5: Migrate to Encrypted button (shown if unencrypted)
+        self._migrate_button = ctk.CTkButton(
+            encryption_frame,
+            text="Enable Encryption (Migrate Database)",
+            command=self._on_enable_encryption_clicked,
+            width=250,
+            fg_color="green",
+            hover_color="darkgreen"
+        )
+
+        # Story 3.1 AC8 Subtask 7.3: Disable encryption button (shown if encrypted)
+        self._disable_encryption_button = ctk.CTkButton(
+            encryption_frame,
+            text="Disable Encryption",
+            command=self._on_disable_encryption_clicked,
+            width=200,
+            fg_color="orange",
+            hover_color="darkorange"
+        )
+
+        # Story 3.1 AC3 Subtask 7.6: Migration progress bar
+        self._migration_progress_frame = ctk.CTkFrame(encryption_frame, fg_color="transparent")
+
+        self._migration_progress_label = ctk.CTkLabel(
+            self._migration_progress_frame,
+            text="Migration in progress...",
+            font=("Segoe UI", 9)
+        )
+        self._migration_progress_label.pack(anchor="w", pady=2)
+
+        self._migration_progress_bar = ctk.CTkProgressBar(
+            self._migration_progress_frame,
+            width=400
+        )
+        self._migration_progress_bar.pack(anchor="w", pady=2)
+        self._migration_progress_bar.set(0)
+
+        self._migration_stage_label = ctk.CTkLabel(
+            self._migration_progress_frame,
+            text="",
+            font=("Segoe UI", 8),
+            text_color="gray"
+        )
+        self._migration_stage_label.pack(anchor="w", pady=2)
+
+        # Encryption info
+        encryption_info = ctk.CTkLabel(
+            encryption_frame,
+            text="Encryption protects your database using 256-bit AES encryption via SQLCipher. "
+                 "Encryption keys are stored securely using Windows DPAPI and never hardcoded.",
+            font=("Segoe UI", 9),
+            wraplength=600,
+            text_color="gray"
+        )
+        encryption_info.pack(anchor="w", padx=20, pady=5)
+
+        # Update encryption status display
+        self._update_encryption_status_ui()
+
+        # Story 3.2 AC5, AC8: Security Settings
+        security_frame = ctk.CTkFrame(self.tab_privacy)
+        security_frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkLabel(
+            security_frame,
+            text="Email Security:",
+            font=("Segoe UI", 11, "bold")
+        ).pack(anchor="w", padx=10, pady=5)
+
+        # Story 3.2 AC5: Security level dropdown
+        ctk.CTkLabel(
+            security_frame,
+            text="Security Level:",
+            font=("Segoe UI", 10)
+        ).pack(anchor="w", padx=20, pady=2)
+
+        # Get security_level from settings (default: Normal)
+        security_level = self.settings.get("security_level", "Normal")
+        self.security_level_var = ctk.StringVar(value=security_level)
+
+        security_dropdown = ctk.CTkOptionMenu(
+            security_frame,
+            variable=self.security_level_var,
+            values=["Strict", "Normal", "Permissive"],
+            width=150
+        )
+        security_dropdown.pack(anchor="w", padx=20, pady=2)
+
+        # Security level descriptions
+        security_desc_frame = ctk.CTkFrame(security_frame, fg_color="transparent")
+        security_desc_frame.pack(fill="x", padx=20, pady=5)
+
+        security_descriptions = {
+            "Strict": "🔒 Blocks ALL suspicious patterns (high/medium/low severity). Maximum security.",
+            "Normal": "🛡 Blocks high/medium severity patterns, warns on low severity. Recommended.",
+            "Permissive": "⚠ Warns on all patterns but allows processing. Minimal security."
+        }
+
+        # Show description based on selected level
+        self.security_desc_label = ctk.CTkLabel(
+            security_desc_frame,
+            text=security_descriptions[security_level],
+            font=("Segoe UI", 9),
+            wraplength=550,
+            text_color="gray"
+        )
+        self.security_desc_label.pack(anchor="w")
+
+        # Update description when security level changes
+        def update_security_description(*args):
+            level = self.security_level_var.get()
+            self.security_desc_label.configure(text=security_descriptions[level])
+
+        self.security_level_var.trace_add("write", update_security_description)
+
+        # Story 3.2 AC8: Override option checkbox
+        allow_override = self.settings.get("allow_security_override", False)
+        self.allow_override_var = ctk.BooleanVar(value=allow_override)
+
+        override_checkbox = ctk.CTkCheckBox(
+            security_frame,
+            text="Allow security override (advanced users only)",
+            variable=self.allow_override_var
+        )
+        override_checkbox.pack(anchor="w", padx=20, pady=5)
+
+        # Override warning
+        override_warning = ctk.CTkLabel(
+            security_frame,
+            text="⚠ Warning: Overriding security blocks may expose you to malicious emails. "
+                 "Only enable if you understand the risks.",
+            font=("Segoe UI", 8),
+            wraplength=550,
+            text_color="orange"
+        )
+        override_warning.pack(anchor="w", padx=20, pady=2)
+
+        # Security info
+        security_info = ctk.CTkLabel(
+            security_frame,
+            text="Email security protects against prompt injection attacks where malicious "
+                 "emails attempt to manipulate AI responses. Blocked emails are logged to "
+                 "security.log for audit purposes.",
+            font=("Segoe UI", 9),
+            wraplength=550,
+            text_color="gray"
+        )
+        security_info.pack(anchor="w", padx=20, pady=5)
+
         # Privacy notice
-        notice = ctk.CTkTextbox(self.tab_privacy, height=100, wrap="word")
+        notice = ctk.CTkTextbox(self.tab_privacy, height=80, wrap="word")
         notice.pack(fill="x", padx=10, pady=10)
         notice.insert("1.0", "Privacy Notice:\n\nMailMind processes all emails locally on your machine. No email content is ever sent to external servers. Telemetry data (if enabled) includes only anonymous usage metrics and does not include email content or personal information.")
         notice.configure(state="disabled")
@@ -579,12 +778,261 @@ class SettingsDialog(ctk.CTkToplevel):
             "enable_crash_reports": self.enable_crash_reports_var.get(),
             "log_level": self.log_level_var.get(),
 
+            # Security (Story 3.2 AC5, AC8)
+            "security_level": self.security_level_var.get(),
+            "allow_security_override": self.allow_override_var.get(),
+
             # Advanced
             "database_path": self.database_path_var.get(),
             "debug_mode": self.debug_mode_var.get(),
             "auto_backup": self.auto_backup_var.get(),
             "backup_frequency_hours": self.backup_frequency_var.get()
         }
+
+    # Story 3.1 AC6,8: Encryption UI Methods
+
+    def _update_encryption_status_ui(self):
+        """
+        Update encryption status UI based on current database state.
+
+        Story 3.1 AC6 Subtask 7.2: Display current encryption state
+        """
+        if not MIGRATION_AVAILABLE or not self.db_path:
+            self._encryption_status_label.configure(
+                text="⚠ Encryption unavailable (migration tools not found)",
+                text_color="orange"
+            )
+            return
+
+        try:
+            # Check if database is encrypted
+            is_encrypted, msg = is_database_encrypted(self.db_path)
+
+            if is_encrypted:
+                self._encryption_status_label.configure(
+                    text="✓ Database is ENCRYPTED (256-bit AES)",
+                    text_color="green"
+                )
+                # Show disable button, hide enable button
+                self._migrate_button.pack_forget()
+                self._disable_encryption_button.pack(anchor="w", padx=20, pady=5)
+            else:
+                self._encryption_status_label.configure(
+                    text="⚠ Database is NOT encrypted",
+                    text_color="orange"
+                )
+                # Show enable button, hide disable button
+                self._disable_encryption_button.pack_forget()
+                self._migrate_button.pack(anchor="w", padx=20, pady=5)
+
+            # Hide progress frame initially
+            self._migration_progress_frame.pack_forget()
+
+        except Exception as e:
+            logger.error(f"Failed to check encryption status: {e}")
+            self._encryption_status_label.configure(
+                text=f"⚠ Error checking encryption status: {e}",
+                text_color="red"
+            )
+
+    def _on_enable_encryption_clicked(self):
+        """
+        Handle Enable Encryption button click.
+
+        Story 3.1 AC8 Subtask 7.5: Enable encryption with migration
+        """
+        if self._migration_in_progress:
+            messagebox.showwarning(
+                "Migration In Progress",
+                "A migration operation is already in progress. Please wait for it to complete."
+            )
+            return
+
+        # Confirm migration
+        confirm = messagebox.askyesno(
+            "Enable Database Encryption",
+            "This will encrypt your database using 256-bit AES encryption.\n\n"
+            "The process will:\n"
+            "• Create a backup of your current database\n"
+            "• Convert the database to encrypted format\n"
+            "• This may take several minutes for large databases\n\n"
+            "Do you want to continue?"
+        )
+
+        if not confirm:
+            return
+
+        logger.info("User requested database encryption")
+
+        # Show progress UI
+        self._migrate_button.pack_forget()
+        self._disable_encryption_button.pack_forget()
+        self._migration_progress_frame.pack(anchor="w", padx=20, pady=10)
+
+        # Start migration in background thread
+        self._migration_in_progress = True
+        migration_thread = threading.Thread(
+            target=self._perform_migration_to_encrypted,
+            daemon=True
+        )
+        migration_thread.start()
+
+    def _on_disable_encryption_clicked(self):
+        """
+        Handle Disable Encryption button click.
+
+        Story 3.1 AC8 Subtask 7.4: Display warning dialog if user disables encryption
+        """
+        if self._migration_in_progress:
+            messagebox.showwarning(
+                "Migration In Progress",
+                "A migration operation is already in progress. Please wait for it to complete."
+            )
+            return
+
+        # Story 3.1 AC8 Subtask 7.4: Prominent warning
+        confirm = messagebox.askyesno(
+            "⚠ WARNING: Disable Database Encryption",
+            "⚠ WARNING ⚠\n\n"
+            "You are about to DISABLE database encryption!\n\n"
+            "This will:\n"
+            "• Remove 256-bit AES encryption from your database\n"
+            "• Store all email data in UNENCRYPTED format\n"
+            "• Make your data vulnerable if someone gains file access\n"
+            "• Create a backup before conversion\n\n"
+            "This is NOT RECOMMENDED for privacy-conscious users.\n\n"
+            "Are you ABSOLUTELY SURE you want to disable encryption?",
+            icon="warning"
+        )
+
+        if not confirm:
+            return
+
+        # Second confirmation
+        confirm2 = messagebox.askyesno(
+            "Final Confirmation",
+            "This is your final warning.\n\n"
+            "Disabling encryption will leave your email data unprotected.\n\n"
+            "Proceed with disabling encryption?",
+            icon="warning"
+        )
+
+        if not confirm2:
+            return
+
+        logger.warning("User confirmed disabling database encryption")
+
+        # Show progress UI
+        self._migrate_button.pack_forget()
+        self._disable_encryption_button.pack_forget()
+        self._migration_progress_frame.pack(anchor="w", padx=20, pady=10)
+
+        # Start migration in background thread
+        self._migration_in_progress = True
+        migration_thread = threading.Thread(
+            target=self._perform_migration_to_unencrypted,
+            daemon=True
+        )
+        migration_thread.start()
+
+    def _perform_migration_to_encrypted(self):
+        """
+        Perform migration to encrypted database in background thread.
+
+        Story 3.1 AC3 Subtask 7.6: Show progress during migration
+        """
+        try:
+            # Migrate to encrypted
+            success, message = migrate_to_encrypted(
+                db_path=self.db_path,
+                encryption_key=None,  # Will use KeyManager
+                progress_callback=self._update_migration_progress
+            )
+
+            if success:
+                self.after(0, self._on_migration_success, "Encryption enabled successfully!")
+            else:
+                self.after(0, self._on_migration_failure, message)
+
+        except Exception as e:
+            logger.error(f"Migration to encrypted failed: {e}", exc_info=True)
+            self.after(0, self._on_migration_failure, str(e))
+
+    def _perform_migration_to_unencrypted(self):
+        """
+        Perform migration to unencrypted database in background thread.
+
+        Story 3.1 AC3 Subtask 7.6: Show progress during migration
+        """
+        try:
+            if not self.encryption_key:
+                raise Exception("Encryption key not available - cannot decrypt database")
+
+            # Migrate to unencrypted
+            success, message = migrate_to_unencrypted(
+                db_path=self.db_path,
+                encryption_key=self.encryption_key,
+                progress_callback=self._update_migration_progress
+            )
+
+            if success:
+                self.after(0, self._on_migration_success, "Encryption disabled successfully.")
+            else:
+                self.after(0, self._on_migration_failure, message)
+
+        except Exception as e:
+            logger.error(f"Migration to unencrypted failed: {e}", exc_info=True)
+            self.after(0, self._on_migration_failure, str(e))
+
+    def _update_migration_progress(self, stage: str, percentage: int):
+        """
+        Update migration progress bar and labels.
+
+        Story 3.1 AC3 Subtask 7.6: Progress tracking
+
+        Args:
+            stage: Current migration stage (backup, create_schema, copy_data, verify, finalize)
+            percentage: Completion percentage (0-100)
+        """
+        def update_ui():
+            self._migration_progress_bar.set(percentage / 100.0)
+            self._migration_stage_label.configure(text=f"{stage} - {percentage}%")
+
+        self.after(0, update_ui)
+
+    def _on_migration_success(self, message: str):
+        """Handle successful migration."""
+        self._migration_in_progress = False
+
+        # Hide progress
+        self._migration_progress_frame.pack_forget()
+
+        # Show success message
+        messagebox.showinfo("Migration Successful", message)
+
+        # Update encryption status UI
+        self._update_encryption_status_ui()
+
+        logger.info(f"Migration completed successfully: {message}")
+
+    def _on_migration_failure(self, error_message: str):
+        """Handle failed migration."""
+        self._migration_in_progress = False
+
+        # Hide progress
+        self._migration_progress_frame.pack_forget()
+
+        # Show error message
+        messagebox.showerror(
+            "Migration Failed",
+            f"Failed to migrate database:\n\n{error_message}\n\n"
+            f"The original database has been restored from backup."
+        )
+
+        # Update encryption status UI
+        self._update_encryption_status_ui()
+
+        logger.error(f"Migration failed: {error_message}")
 
     def _on_save_clicked(self):
         """Handle Save button click."""

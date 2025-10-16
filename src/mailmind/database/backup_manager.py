@@ -4,20 +4,27 @@ Backup Manager for MailMind Database
 Provides backup and restore functionality with integrity checking, automatic
 cleanup, and support for scheduled backups.
 
+Story 3.1 AC5: Encryption-aware backup/restore
+- Detects encrypted vs unencrypted databases
+- Records encryption status in backup metadata
+- Handles both encrypted and unencrypted backups transparently
+- Provides encryption status information for restores
+
 Features:
 - Manual backup to timestamped files
 - Automatic daily backups (keep last 7 days)
 - Checksum validation for integrity verification
 - Backup status tracking
+- Encryption status tracking (Story 3.1 AC5)
 - Graceful error handling
 
 Usage:
     backup_mgr = BackupManager(db_path="mailmind.db")
 
-    # Manual backup
+    # Manual backup (works with encrypted or unencrypted)
     backup_path = backup_mgr.create_backup()
 
-    # Restore from backup
+    # Restore from backup (auto-detects encryption)
     backup_mgr.restore_backup(backup_path)
 
     # Check backup integrity
@@ -33,6 +40,14 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 
 logger = logging.getLogger(__name__)
+
+# Story 3.1 AC5: Import encryption detection
+try:
+    from mailmind.core.db_migration import is_database_encrypted
+    ENCRYPTION_DETECTION_AVAILABLE = True
+except ImportError:
+    ENCRYPTION_DETECTION_AVAILABLE = False
+    logger.warning("Encryption detection not available - backup metadata will not include encryption status")
 
 
 class BackupError(Exception):
@@ -105,12 +120,25 @@ class BackupManager:
             checksum_path = backup_path.with_suffix(".db.sha256")
             checksum_path.write_text(checksum)
 
+            # Story 3.1 AC5 Subtask 5.3: Detect encryption status and add to metadata
+            encrypted = False
+            encryption_note = "unknown"
+            if ENCRYPTION_DETECTION_AVAILABLE:
+                try:
+                    encrypted, encryption_note = is_database_encrypted(str(self.db_path))
+                    logger.debug(f"Backup encryption status: {encryption_note}")
+                except Exception as e:
+                    logger.warning(f"Failed to detect encryption status: {e}")
+                    encryption_note = f"detection failed: {e}"
+
             # Create metadata file
             metadata = {
                 "original_path": str(self.db_path),
                 "backup_date": datetime.now().isoformat(),
                 "description": description or "Manual backup",
-                "checksum": checksum
+                "checksum": checksum,
+                "encrypted": encrypted,  # Story 3.1 AC5: Encryption status
+                "encryption_note": encryption_note  # Story 3.1 AC5: Encryption details
             }
 
             metadata_path = backup_path.with_suffix(".db.meta")
@@ -132,6 +160,8 @@ class BackupManager:
         """
         Restore database from backup file.
 
+        Story 3.1 AC5 Subtask 5.2: Detect encrypted backups during restore
+
         Args:
             backup_path: Path to backup file
 
@@ -147,6 +177,28 @@ class BackupManager:
             # Verify backup file exists
             if not backup_path.exists():
                 raise BackupError(f"Backup file not found: {backup_path}")
+
+            # Story 3.1 AC5 Subtask 5.2: Read backup metadata to check encryption status
+            metadata_path = backup_path.with_suffix(".db.meta")
+            if metadata_path.exists():
+                try:
+                    import json
+                    metadata = json.loads(metadata_path.read_text())
+
+                    # Log encryption status
+                    is_encrypted = metadata.get("encrypted", False)
+                    encryption_note = metadata.get("encryption_note", "unknown")
+
+                    if is_encrypted:
+                        logger.info(f"Restoring ENCRYPTED backup: {encryption_note}")
+                        logger.info("Database encryption key must be available to open restored database")
+                    else:
+                        logger.info(f"Restoring unencrypted backup: {encryption_note}")
+
+                except Exception as e:
+                    logger.warning(f"Failed to read backup metadata: {e}")
+            else:
+                logger.warning("Backup metadata not found - encryption status unknown")
 
             # Verify backup integrity
             if not self.verify_backup(str(backup_path)):
@@ -255,8 +307,10 @@ class BackupManager:
         """
         Get backup status information.
 
+        Story 3.1 AC5: Include encryption status in backup status
+
         Returns:
-            dict: Backup status with last_backup_date, total_backups, total_size_mb
+            dict: Backup status with last_backup_date, total_backups, total_size_mb, encrypted
         """
         backups = self.list_backups()
 
@@ -264,19 +318,58 @@ class BackupManager:
             return {
                 "last_backup_date": None,
                 "total_backups": 0,
-                "total_size_mb": 0.0
+                "total_size_mb": 0.0,
+                "encrypted": None
             }
 
         last_backup_path, last_backup_date, _ = backups[0]
         total_size_bytes = sum(size for _, _, size in backups)
         total_size_mb = total_size_bytes / (1024 * 1024)
 
+        # Story 3.1 AC5: Get encryption status from latest backup metadata
+        encrypted = None
+        try:
+            metadata = self.get_backup_metadata(last_backup_path)
+            if metadata:
+                encrypted = metadata.get("encrypted", None)
+        except Exception as e:
+            logger.debug(f"Failed to get encryption status from backup metadata: {e}")
+
         return {
             "last_backup_date": last_backup_date.isoformat(),
             "last_backup_path": last_backup_path,
             "total_backups": len(backups),
-            "total_size_mb": round(total_size_mb, 2)
+            "total_size_mb": round(total_size_mb, 2),
+            "encrypted": encrypted  # Story 3.1 AC5: Encryption status
         }
+
+    def get_backup_metadata(self, backup_path: str) -> Optional[dict]:
+        """
+        Get metadata for a specific backup.
+
+        Story 3.1 AC5: Read backup metadata including encryption status
+
+        Args:
+            backup_path: Path to backup file
+
+        Returns:
+            dict: Backup metadata, or None if metadata file not found
+        """
+        try:
+            backup_path = Path(backup_path)
+            metadata_path = backup_path.with_suffix(".db.meta")
+
+            if not metadata_path.exists():
+                logger.debug(f"Metadata file not found: {metadata_path}")
+                return None
+
+            import json
+            metadata = json.loads(metadata_path.read_text())
+            return metadata
+
+        except Exception as e:
+            logger.error(f"Failed to read backup metadata: {e}")
+            return None
 
     def delete_backup(self, backup_path: str) -> bool:
         """

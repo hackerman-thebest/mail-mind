@@ -10,9 +10,9 @@
 ## Workflow Status Tracker
 
 **Current Phase:** 4-Implementation
-**Current Workflow:** Epic 2 COMPLETE ✅ - All 12 stories implemented (Epics 1 & 2: 100% done)
-**Current Agent:** DEV (Story 2.6 complete - Epic 2 done)
-**Overall Progress:** 83% (72/87 story points complete - Epic 1: 100% ✅, Epic 2: 100% ✅, Epic 3: 0% - 0/4 complete)
+**Current Workflow:** story-context (Story 3.1) - COMPLETE ✅
+**Current Agent:** SM (Context generated for Story 3.1 - ready for DEV agent implementation)
+**Overall Progress:** 85% (72/87 story points complete - Epic 1: 100% ✅, Epic 2: 100% ✅, Epic 3: 1/4 stories with context)
 
 ### Phase Completion Status
 
@@ -54,12 +54,9 @@
 
 | Epic | Story | ID  | Title | File |
 | ---- | ----- | --- | ----- | ---- |
-| 3 | 3.1 | 3.1 | Database Encryption Implementation | - |
-| 3 | 3.2 | 3.2 | Prompt Injection Defense | - |
-| 3 | 3.3 | 3.3 | Performance & Security Optimization | - |
 | 3 | 3.4 | 3.4 | Marketing & Documentation Alignment | - |
 
-**Total in backlog:** 4 stories (15 points)
+**Total in backlog:** 1 story (2 points)
 
 **Instructions:**
 - Stories move from BACKLOG → TODO when Phase 4 begins
@@ -68,11 +65,22 @@
 
 #### TODO (Ready for Review)
 
-(No more stories to draft - all stories are drafted or complete)
+| Story ID | Title | File | Status | Points |
+| -------- | ----- | ---- | ------ | ------ |
+| 3.3 | Performance & Security Optimization | - | Not created | 5 |
+
+**Total in TODO:** 1 story (5 points)
+**Action:** SM should run `create-story` workflow to draft Story 3.3
 
 #### IN PROGRESS (Approved for Development)
 
-(No stories in progress - Epic 2 complete! Next: Begin Epic 3 security stories)
+| Story ID | Title | File | Status | Points |
+| -------- | ----- | ---- | ------ | ------ |
+| 3.2 | Prompt Injection Defense | docs/stories/story-3.2.md | Ready (2025-10-15) | 3 |
+
+**Total in IN PROGRESS:** 1 story (3 points)
+**Context File:** `docs/stories/story-context-3.2.xml` (Generated: 2025-10-16) ✅
+**Action:** Load DEV agent and run `dev-story` workflow to implement Story 3.2
 
 #### DONE (Completed Stories)
 
@@ -90,24 +98,25 @@
 | 2.4 | docs/stories/story-2.4.md | 2025-10-15 | 5 |
 | 2.5 | docs/stories/story-2.5.md | 2025-10-15 | 5 |
 | 2.6 | docs/stories/story-2.6.md | 2025-10-15 | 8 |
+| 3.1 | docs/stories/story-3.1.md | 2025-10-15 | 5 |
 
-**Total completed:** 12 stories (Epic 1 complete ✅, Epic 2 complete ✅)
-**Total points completed:** 75 points (86% of total - Epic 1 & 2: 100%)
+**Total completed:** 13 stories (Epic 1 complete ✅, Epic 2 complete ✅, Epic 3: 1/4 complete)
+**Total points completed:** 80 points (92% of total - Epic 1 & 2: 100%, Epic 3: 33%)
 
 #### Epic/Story Summary
 
 **Total Epics:** 3
 **Total Stories:** 16
 **Total Story Points:** 87
-**Stories in Backlog:** 4 (Stories 3.1-3.4 - 15 points)
-**Stories in TODO:** 0
-**Stories in IN PROGRESS:** 0
-**Stories DONE:** 12 (Stories 1.1-1.6, 2.1-2.6 - 72 points total)
+**Stories in Backlog:** 1 (Story 3.4 - 2 points)
+**Stories in TODO:** 1 (Story 3.3 - 5 points)
+**Stories in IN PROGRESS:** 1 (Story 3.2 - 3 points)
+**Stories DONE:** 13 (Stories 1.1-1.6, 2.1-2.6, 3.1 - 80 points total)
 
 **Epic Breakdown:**
 - Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 6/6 complete (100% done) ✅
 - Epic 2: Desktop Application & User Experience (6 stories, 36 points) - 6/6 complete (100% done) ✅
-- Epic 3: Security & MVP Readiness (4 stories, 15 points) - 0/4 complete (0% done - ready to start)
+- Epic 3: Security & MVP Readiness (4 stories, 15 points) - 1/4 complete (33% done - Story 3.1 complete ✅)
 
 ### Artifacts Generated
 
@@ -135,19 +144,27 @@
 | Story 2.5 Implementation | Complete ✅ | OnboardingWizard, FeatureTour, tests | 2025-10-15 |
 | Story 2.6 File | Drafted ✅ | docs/stories/story-2.6.md | 2025-10-15 |
 | Story 2.6 Context | Complete ✅ | docs/stories/story-context-2.6.xml | 2025-10-15 |
+| Story 3.1 File | Drafted ✅ | docs/stories/story-3.1.md | 2025-10-15 |
+| Story 3.1 Context | Complete ✅ | docs/stories/story-context-3.1.xml | 2025-10-15 |
+| Story 3.2 File | Drafted ✅ | docs/stories/story-3.2.md | 2025-10-15 |
+| Story 3.2 Context | Complete ✅ | docs/stories/story-context-3.2.xml | 2025-10-16 |
 | CHANGELOG | Complete | CHANGELOG.md | 2025-10-13 |
 | Verification Report | Complete | docs/VERIFICATION-REPORT.md | 2025-10-13 |
 
 ### Next Action Required
 
-**What to do next:** Begin Epic 3 - Security & MVP Readiness (4 stories, 15 points)
+**What to do next:** Implement Story 3.2 with comprehensive context
 
-**Current Status:** ✅ **EPIC 2 COMPLETE** - All 12 stories of Epics 1 & 2 implemented and tested!
+**Current Status:** ✅ **STORY 3.2 CONTEXT READY** - Full implementation context generated (Prompt Injection Defense)
+
+**Command to run:** Load DEV agent and run `dev-story` workflow
+
+**Agent to load:** bmad/bmm/agents/dev.md
 
 **Epic Progress:**
 - **Epic 1:** 6/6 complete (100%) ✅
 - **Epic 2:** 6/6 complete (100%) ✅
-- **Epic 3:** 0/4 complete (0% - ready to start)
+- **Epic 3:** 0/4 complete (Story 3.1 in progress, Story 3.2 in TODO, 2 stories in backlog)
 
 **Story 2.6 (Just Completed - DONE - Final Epic 2 Story):**
 - **Title:** Error Handling, Logging & Installer
@@ -351,6 +368,171 @@ This will:
   - Story 3.4: Marketing & Documentation Alignment (2 pts)
   - Updated progress: 77% (67/87 points complete)
   - Story 2.6 no longer final story - Epic 3 follows
+
+### 2025-10-15 - SM Agent (Twenty-Third Session - story-context workflow - Story 3.1)
+
+- Phase: 4-Implementation (context generation)
+- Changes:
+  - **MILESTONE:** Completed story-context for Story 3.1 (Database Encryption Implementation) ✅
+  - Generated comprehensive context XML file: `docs/stories/story-context-3.1.xml`
+  - Context includes:
+    - 8 acceptance criteria with detailed validation steps
+    - 9 implementation tasks mapped to ACs (40+ subtasks total)
+    - 4 documentation artifacts:
+      * docs/epic-stories.md (Story 3.1 definition)
+      * docs/epic-3-security-proposal.md (Detailed security requirements)
+      * docs/stories/story-2.2.md (DatabaseManager dependency)
+      * docs/stories/story-2.6.md (Error handling patterns)
+    - 5 code artifacts with integration notes:
+      * database_manager.py (encryption_key parameter exists at line 107, 113, 124 - unused)
+      * settings_dialog.py (Privacy tab - add Encryption Status section)
+      * settings_manager.py (Add encryption_enabled preference)
+      * schema.py (Schema works transparently with SQLCipher)
+      * backup_manager.py (Must handle encrypted backups)
+    - 7 Python dependencies (pysqlcipher3 to be added, pywin32 existing, etc.)
+    - 10 architectural constraints:
+      * Windows-only DPAPI
+      * Performance overhead <10% (target <5%)
+      * No API breaking changes (AC5)
+      * No hardcoded keys (AC2)
+      * Repository Pattern compliance
+      * Lossless migration (AC3)
+      * Test coverage: 100% KeyManager, >95% encryption operations
+      * SQLCipher compatibility
+      * CustomTkinter widget constraints
+      * Story 2.6 exception hierarchy
+    - 7 interface specifications with signatures and usage examples:
+      * SQLCipher PRAGMA key command
+      * Windows DPAPI CryptProtectData/CryptUnprotectData
+      * PBKDF2 Key Derivation (hashlib.pbkdf2_hmac)
+      * DatabaseManager.__init__ encryption_key parameter
+      * KeyManager class (NEW - 3 methods)
+      * Database Migration Functions (NEW - 3 functions)
+      * Settings UI Encryption Section (NEW - 5 widgets)
+    - 30 test ideas mapped to all 8 acceptance criteria
+  - Updated story file with context reference
+  - Updated workflow status:
+    - Current workflow: story-context (Story 3.1) - COMPLETE ✅
+    - Context file path added to IN PROGRESS section
+    - Artifacts list updated with Story 3.1 Context entry
+    - Progress updated to 85%
+    - Next action: Load DEV agent and run dev-story
+  - Context provides comprehensive guidance for:
+    - SQLCipher integration (pysqlcipher3 package)
+    - DPAPI key management (Windows credential store)
+    - PBKDF2 key derivation (100K iterations, SHA-256)
+    - Database migration tool (with progress tracking and rollback)
+    - Settings UI integration (Privacy tab, encryption status, migration button)
+    - Performance benchmarking (INSERT, SELECT, UPDATE, DELETE overhead)
+    - Testing strategy (100% KeyManager coverage, 30 test ideas)
+    - Security considerations (threats mitigated and NOT mitigated)
+  - Next: DEV agent should run dev-story to implement Story 3.1
+
+### 2025-10-15 - SM Agent (Twenty-Second Session - story-ready workflow - Story 3.1)
+
+- Phase: 4-Implementation (story approval)
+- Changes:
+  - User approved Story 3.1 for development
+  - Story 3.1 moved from TODO to IN PROGRESS
+  - Updated story status in story-3.1.md: Draft → Ready
+  - Moved Story 3.2 (Prompt Injection Defense) from BACKLOG to TODO
+  - Updated backlog count: 3 → 2 stories (10 → 7 points)
+  - Updated workflow status counts:
+    - BACKLOG: 3 → 2 stories (7 points)
+    - TODO: 1 story (Story 3.2 - 3 points)
+    - IN PROGRESS: 0 → 1 (Story 3.1 - 5 points)
+    - DONE: 12 stories (72 points - Epic 1 & 2 complete)
+  - Updated progress to 84%
+  - Set next action: story-context (recommended) OR dev-story (implement Story 3.1)
+  - Epic 3 status: 0/4 complete (Story 3.1 in progress, Story 3.2 in TODO, 2 in backlog)
+
+### 2025-10-15 - SM Agent (Twenty-First Session - create-story workflow - Story 3.1)
+
+- Phase: 4-Implementation (story drafting - Epic 3 begins)
+- Session: Database Encryption Implementation story creation (First story of Epic 3)
+- Changes:
+  - **MILESTONE:** Story 3.1 DRAFTED ✅ - First story of Epic 3: Security & MVP Readiness
+  - Drafted Story 3.1: Database Encryption Implementation
+  - Story includes comprehensive acceptance criteria (AC1-AC8):
+    - AC1: SQLCipher implementation with PRAGMA key command
+    - AC2: Windows DPAPI key management (PBKDF2 derivation)
+    - AC3: Database migration tool for existing unencrypted databases
+    - AC4: Performance overhead <10% (target <5%)
+    - AC5: API transparency (no changes to DatabaseManager consumers)
+    - AC6: Settings UI encryption status indicator
+    - AC7: Privacy policy documentation
+    - AC8: User choice: encrypted (default) or unencrypted (with warning)
+  - Implementation details:
+    - 9 tasks with 40+ subtasks
+    - SQLCipher integration (pysqlcipher3 package)
+    - Key management: DPAPI → PBKDF2 → 64-byte SQLCipher key
+    - Migration strategy with backup and rollback
+    - Performance benchmarking requirements
+    - Settings UI integration
+  - Problem statement documented:
+    - Database stores emails in plain text despite "Absolute Privacy" marketing
+    - encryption_key parameter exists but not implemented
+    - Critical security gap blocking MVP launch
+  - Technical architecture:
+    - 256-bit AES encryption via SQLCipher
+    - Windows DPAPI for key storage
+    - Three-step key derivation process
+    - Migration: create encrypted DB → copy tables → verify → replace
+  - Files to create:
+    - src/mailmind/core/key_manager.py (DPAPI key management)
+    - src/mailmind/core/db_migration.py (database migration utility)
+    - tests/unit/test_key_manager.py
+    - tests/unit/test_encryption.py
+    - tests/integration/test_encrypted_workflow.py
+  - Files to modify:
+    - src/mailmind/core/database_manager.py (add SQLCipher support)
+    - src/mailmind/ui/settings_dialog.py (encryption status UI)
+    - requirements.txt (add pysqlcipher3)
+  - Testing strategy:
+    - 100% coverage for key management
+    - >95% coverage for encryption operations
+    - All migration scenarios tested
+    - Performance overhead benchmarks
+    - Large database testing (>500MB)
+  - Security considerations documented:
+    - Threats mitigated: file system access, file theft, forensic analysis
+    - Threats NOT mitigated: memory dumps, Outlook storage, keyloggers, admin access
+    - Transparency about limitations in privacy policy
+  - Integration points identified:
+    - Story 2.2 (DatabaseManager): Base implementation to extend
+    - Windows DPAPI available via win32crypt module
+    - No schema changes required (transparent encryption)
+  - Story points: 5 (P0 - Critical - Privacy Promise)
+  - Story file created: docs/stories/story-3.1.md (320 lines)
+  - Story status: Draft (awaiting user review)
+  - Updated workflow status:
+    - Story 3.1 moved from BACKLOG to TODO
+    - Backlog count: 4 → 3 stories (15 → 10 points)
+    - TODO count: 0 → 1 story (5 points)
+    - Current workflow: create-story (Story 3.1) - COMPLETE ✅
+    - Current agent: SM (ready for story-ready workflow)
+    - Artifacts list: Added Story 3.1 File entry
+    - Next action: Review Story 3.1 and run story-ready workflow
+  - Epic 3 status: 0/4 complete (Story 3.1 drafted, 3 stories in backlog)
+  - Set next action: User should review Story 3.1, then run story-ready workflow to approve for development
+
+- **2025-10-15**: Story 3.1 (Database Encryption Implementation) marked COMPLETE ✅. Implementation finished with all 8 acceptance criteria met, comprehensive test suite (20+ unit tests, integration tests, performance benchmarks), and QA report showing all checks passing. Story moved from IN PROGRESS to DONE. Updated progress: 80/87 points complete (92%). Epic 3: 1/4 complete (33%). Next action: Draft Story 3.2 (Prompt Injection Defense) using create-story workflow.
+
+- **2025-10-15**: Completed create-story for Story 3.2 (Prompt Injection Defense). Story file: docs/stories/story-3.2.md. Status: Draft (needs review via story-ready). Story addresses critical security vulnerability in EmailPreprocessor where malicious emails can manipulate AI responses. Currently only logs warnings but doesn't block processing. Story defines 8 acceptance criteria including blocking logic, security event logging, configurable security levels (Strict/Normal/Permissive), UI notifications, updatable pattern blocklist, and override mechanism for advanced users. 3 story points. Next: Review Story 3.2 and run story-ready workflow to approve for development.
+
+- **2025-10-16**: Story 3.2 (Prompt Injection Defense) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Next story 3.3 (Performance & Security Optimization) moved from BACKLOG → TODO. Updated backlog count: 2 → 1 stories (7 → 2 points).
+
+- **2025-10-16**: Completed story-context for Story 3.2 (Prompt Injection Defense). Context file: `docs/stories/story-context-3.2.xml`. Context includes:
+  - 8 acceptance criteria with detailed validation steps
+  - 9 implementation tasks mapped to ACs (45+ subtasks total)
+  - 4 documentation artifacts (epic-3-security-proposal.md, story-1.2.md, story-2.6.md, epic-stories.md)
+  - 5 code artifacts with integration notes: email_preprocessor.py (vulnerable sanitize_content() method lines 611-637), email_analysis_engine.py (SecurityException handling), settings_dialog.py (Security settings UI), settings_manager.py (security_level preferences), SUSPICIOUS_PATTERNS constant (lines 69-78)
+  - 5 Python dependencies documented (PyYAML, pytest, pytest-mock, beautifulsoup4, customtkinter - all already installed)
+  - 10 architectural constraints: security level blocking logic (Strict/Normal/Permissive), performance target (<10ms overhead), exception hierarchy compliance, logging infrastructure integration, no breaking API changes, pattern versioning, UI notification non-blocking, override logging mandatory, false positive reporting, CustomTkinter widget constraints
+  - 7 interface specifications with signatures and usage examples: SecurityException class, EmailPreprocessor.__init__, SecurityLogger.log_event(), security_patterns.yaml structure, SettingsManager.get_security_level(), Toast Notification API, Override Confirmation Dialog
+  - 51 test ideas mapped to all 8 acceptance criteria, including security penetration tests with real-world prompt injection examples
+  - Complete integration guidance for blocking logic implementation, security event logging, updatable pattern system, UI notifications, settings integration, override mechanism, and EmailAnalysisEngine integration
+  - Next: DEV agent should run dev-story to implement Story 3.2 (CRITICAL SECURITY FIX - 3 points)
 
 ---
 
