@@ -842,9 +842,12 @@ class OllamaManager:
             "This is a one-time download and will be stored locally."
         )
 
-    def initialize(self) -> Tuple[bool, str]:
+    def initialize(self, skip_test_inference: bool = False) -> Tuple[bool, str]:
         """
         Complete initialization: connect, verify model, test inference.
+
+        Args:
+            skip_test_inference: If True, skip the test inference step (useful for debugging)
 
         Returns:
             Tuple[bool, str]: (success: bool, message: str)
@@ -854,9 +857,24 @@ class OllamaManager:
             logger.info("Starting Ollama initialization...")
             self.connect()
 
-            # Step 2: Test inference
-            if not self.test_inference():
-                return False, "Model loaded but test inference failed"
+            # Step 2: Test inference (optional)
+            if skip_test_inference:
+                logger.warning("⚠️  Skipping test inference (skip_test_inference=True)")
+                logger.warning("⚠️  Model functionality not verified - inference may fail at runtime")
+                logger.info("Ollama initialization complete (test skipped)!")
+                return True, f"Successfully initialized with model: {self.current_model} (test skipped)"
+            else:
+                if not self.test_inference():
+                    logger.warning(
+                        "⚠️  Test inference failed, but connection and model verification succeeded.\n"
+                        "⚠️  This usually means:\n"
+                        "   1. Ollama service has issues (try restarting Ollama)\n"
+                        "   2. Model is corrupted (try: ollama pull llama3.1:8b-instruct-q4_K_M)\n"
+                        "   3. System resources are insufficient (close other apps, check RAM)\n"
+                        "   4. Windows Defender or antivirus is blocking (check exclusions)\n"
+                        "⚠️  You can skip this test by setting skip_test_inference=True"
+                    )
+                    return False, "Model loaded but test inference failed"
 
             logger.info("Ollama initialization complete!")
             return True, f"Successfully initialized with model: {self.current_model}"

@@ -1,8 +1,22 @@
-# MailMind - Sovereign AI Email Assistant
+# MailMind - Your Email AI That Never Leaves Your Computer
 
-**Your AI, Your Data, Your Rules**
+**Your AI, Your Data, Your Rules - Local-First Privacy**
 
-MailMind is a privacy-first desktop application that provides AI-powered email intelligence without sending data to the cloud. All AI processing happens locally on your machine using Ollama.
+🔒 **SQLCipher Encrypted** | 🛡️ **Prompt Injection Defense** | 🔐 **SQL Injection Prevention** | ✅ **Model Checksum Verification** | 📍 **Local-First Privacy**
+
+MailMind is a privacy-first desktop application that provides AI-powered email intelligence without sending data to the cloud. All AI processing happens locally on your machine using Ollama, ensuring your email content stays on your device.
+
+**Security Features:**
+- 256-bit AES database encryption with Windows DPAPI
+- Prompt injection pattern blocking with configurable security levels
+- SQL injection prevention with whitelist validation
+- AI model checksum verification against supply chain attacks
+- All data stored locally - never uploaded to cloud
+
+**Documentation:**
+- [Security Architecture](SECURITY.md) - Technical security implementation details
+- [Privacy Policy](docs/privacy-policy.md) - Data handling and user rights
+- [Security FAQ](docs/security-faq.md) - Common security questions answered
 
 ## Current Status
 

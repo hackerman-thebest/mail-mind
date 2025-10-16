@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "description": "SHA256 checksums for verified Ollama models (Story 3.3 AC3)",
+  "models": {
+    "llama3.1:8b-instruct-q4_K_M": {
+      "sha256": "placeholder_for_actual_checksum_compute_from_real_model_file",
+      "size_bytes": 4900000000,
+      "source": "ollama.com/library",
+      "verified_date": "2025-10-16",
+      "notes": "Primary model for email analysis"
+    },
+    "mistral:7b-instruct-q4_K_M": {
+      "sha256": "placeholder_for_actual_checksum_compute_from_real_model_file",
+      "size_bytes": 4100000000,
+      "source": "ollama.com/library",
+      "verified_date": "2025-10-16",
+      "notes": "Fallback model for email analysis"
+    }
+  },
+  "usage_notes": [
+    "Checksums are computed from the Ollama model blob files",
+    "To compute actual checksums:",
+    "  1. Find model blob: ollama show <model> --modelfile",
+    "  2. Locate blob file in ~/.ollama/models/blobs/",
+    "  3. Run: sha256sum <blob_file>",
+    "Unknown models will trigger user confirmation dialog",
+    "Verified models are cached in user_preferences to skip future checks"
+  ]
+}

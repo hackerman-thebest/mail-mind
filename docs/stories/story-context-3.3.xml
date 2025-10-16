@@ -1,0 +1,413 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Performance & Security Optimization</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-16</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/stories/story-3.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to fix SQL injection vulnerabilities and implement performance optimizations</iWant>
+    <soThat>the application is both secure and meets performance promises</soThat>
+    <tasks>
+      <task id="1" ac="1">SQL Injection Fix - Audit and fix all SQL queries in database_manager.py using parameterized queries</task>
+      <task id="2" ac="2">Ollama Connection Pooling - Create OllamaConnectionPool class with configurable size (2-5 connections)</task>
+      <task id="3" ac="3">Model Checksum Verification - Implement verify_model_checksum() with SHA256 hashing against known-good values</task>
+      <task id="4" ac="4">Parallel Email Processing - Create EmailBatchProcessor with ThreadPoolExecutor for concurrent processing</task>
+      <task id="5" ac="5">Performance Benchmarking - Measure and verify 10-15 emails/minute target on recommended hardware</task>
+      <task id="6" ac="6">Performance Metrics Dashboard - Add PerformanceMetricsWidget showing tokens/sec, queue depth, processing times</task>
+      <task id="7" ac="7">Security Documentation - Create SECURITY.md documenting all security improvements with code examples</task>
+      <task id="8" ac="1-7">Integration & Testing - Comprehensive testing across security, performance, and concurrency scenarios</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" priority="P0">
+      <title>Fix SQL Injection</title>
+      <description>Fix SQL injection vulnerability in database_manager.py line 963 (and others) using parameterized queries and validate all SQL operations</description>
+      <validation>
+        - All SQL queries use parameterized queries (? placeholders) or validated whitelists
+        - ALLOWED_TABLES whitelist created for table name validation
+        - No f-string interpolation in SQL commands
+        - Static analysis (bandit) shows no SQL injection vectors
+        - Unit tests confirm malicious inputs are rejected safely
+      </validation>
+    </criterion>
+    <criterion id="AC2" priority="P0">
+      <title>Ollama Connection Pooling</title>
+      <description>Implement OllamaConnectionPool with configurable pool size (2-5 connections) for improved throughput</description>
+      <validation>
+        - OllamaConnectionPool class created with queue.Queue for thread-safe pooling
+        - Context manager support (with pool.acquire()) implemented
+        - Pool size configurable via user_preferences (default: 3)
+        - Pool statistics available (active, idle, total connections)
+        - Connection health checking and automatic recovery implemented
+        - OllamaManager uses connection pool for all inference calls
+      </validation>
+    </criterion>
+    <criterion id="AC3" priority="P0">
+      <title>Model Checksum Verification</title>
+      <description>Add model checksum verification against known-good hashes to prevent supply chain attacks</description>
+      <validation>
+        - model_checksums.json created with SHA256 hashes for llama3.1:8b and mistral:7b
+        - verify_model_checksum() method calculates and compares checksums
+        - Warning logged for checksum mismatches with user override option
+        - "Trust Unverified Model" confirmation dialog for unknown models
+        - Verified models stored in user_preferences to skip future checks
+      </validation>
+    </criterion>
+    <criterion id="AC4" priority="P0">
+      <title>Parallel Processing</title>
+      <description>Implement parallel email processing using ThreadPoolExecutor for batch operations</description>
+      <validation>
+        - EmailBatchProcessor class created with ThreadPoolExecutor
+        - max_workers configured based on connection pool size
+        - Individual email failures don't stop batch processing
+        - Result aggregation with success/failure counts
+        - Timeout handling (30s per email max)
+        - Progress callback support for UI updates
+      </validation>
+    </criterion>
+    <criterion id="AC5" priority="P0">
+      <title>Performance Target</title>
+      <description>Achieve 10-15 emails/minute batch processing target under recommended hardware conditions</description>
+      <validation>
+        - Performance test suite with 50-100 test emails created
+        - Benchmark shows 10-15 emails/minute on recommended hardware (mid-GPU)
+        - Different pool sizes tested (1, 2, 3, 5 connections)
+        - Performance by hardware tier documented in performance-testing-results.md
+        - Performance regression tests added to CI/CD
+      </validation>
+    </criterion>
+    <criterion id="AC6" priority="P1">
+      <title>Performance Dashboard</title>
+      <description>Add performance metrics dashboard to UI showing tokens/sec, queue depth, and processing times</description>
+      <validation>
+        - PerformanceMetricsWidget created for main UI window
+        - Real-time display: tokens/sec, queue depth, avg processing time
+        - Connection pool status shown (active/idle/total)
+        - Metrics update every 1 second (non-blocking)
+        - "View Performance History" button opens detailed charts
+        - Metrics snapshots stored in performance_metrics table
+      </validation>
+    </criterion>
+    <criterion id="AC7" priority="P0">
+      <title>Security Documentation</title>
+      <description>Document all security improvements in SECURITY.md with rationale and implementation details</description>
+      <validation>
+        - SECURITY.md created in project root
+        - SQL injection fix documented with before/after code examples
+        - Connection pooling security benefits explained (resource limits)
+        - Model checksum verification process documented
+        - Security roadmap section added for future improvements
+        - Reporting security vulnerabilities process included
+        - Security best practices for contributors added
+        - SECURITY.md linked from README.md
+      </validation>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epic-stories.md" section="Story 3.3">
+        <title>Epic 3.3 Definition</title>
+        <snippet>7 acceptance criteria covering SQL injection fix, Ollama connection pooling (2-5 connections), model checksum verification (SHA256 hashes), parallel processing with ThreadPoolExecutor, 10-15 emails/minute performance target, performance metrics dashboard, and SECURITY.md documentation. Technical implementation includes parameterized queries with ALLOWED_TABLES whitelist, OllamaConnectionPool with context manager pattern, EmailBatchProcessor for concurrent processing, model_checksums.json structure, and comprehensive security/performance testing scenarios.</snippet>
+        <relevance>Primary requirements source for all 7 acceptance criteria and technical architecture patterns</relevance>
+      </doc>
+      <doc path="docs/epic-3-security-proposal.md" section="Story 3.3">
+        <title>Security Assessment & Problem Statement</title>
+        <snippet>Story 3.3 addresses three critical MVP-blocking issues: (1) SQL injection vulnerability at database_manager.py:963 using f-string interpolation, (2) Performance bottleneck from lack of connection pooling resulting in &lt;5 emails/minute actual vs 10-15/min target, (3) Supply chain risk from models downloaded without checksum verification. Problem: Attacker could inject table="users; DROP TABLE email_analysis--". Impact: Database compromise, data loss, arbitrary SQL execution. OWASP reference: LLM03 Supply Chain Vulnerabilities.</snippet>
+        <relevance>Identifies specific security vulnerabilities and MVP-blocking issues that must be resolved</relevance>
+      </doc>
+      <doc path="docs/performance-testing-results.md">
+        <title>Current Performance Baseline</title>
+        <snippet>Performance testing results document showing current baseline metrics for email processing throughput, model inference speeds, and hardware profiling data. Used to establish performance targets and measure improvements after connection pooling implementation.</snippet>
+        <relevance>Provides current performance baseline to measure improvements against 10-15 emails/minute target</relevance>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/mailmind/database/database_manager.py" lines="194-195" kind="vulnerability">
+        <symbol>delete_all_data()</symbol>
+        <snippet>
+for table in tables:
+    cursor.execute(f"DELETE FROM {table}")
+        </snippet>
+        <reason>SQL injection pattern using f-string interpolation. While currently using hardcoded list, represents vulnerability pattern that must be fixed. Should use ALLOWED_TABLES whitelist validation or parameterized queries.</reason>
+      </artifact>
+      <artifact path="src/mailmind/core/ollama_manager.py" lines="36-328" kind="class">
+        <symbol>OllamaManager</symbol>
+        <snippet>Current OllamaManager implementation with single client connection (self.client = ollama.Client() at line 91). Needs enhancement to create and manage OllamaConnectionPool for concurrent access. Key methods: connect(), verify_model(), test_inference(), initialize(). Must integrate connection pool while maintaining existing API contract for Story 1.1 compatibility.</snippet>
+        <reason>Needs connection pooling implementation for AC2. Current single-connection design creates performance bottleneck.</reason>
+      </artifact>
+      <artifact path="src/mailmind/core/email_analysis_engine.py" lines="1-50" kind="class">
+        <symbol>EmailAnalysisEngine</symbol>
+        <snippet>Email analysis engine that uses OllamaManager for LLM inference. Needs integration with connection pool via pool.acquire() context manager and support for batch processing through new EmailBatchProcessor class.</snippet>
+        <reason>Must be updated to use connection pool for parallel processing (AC4). Integration point for batch processor.</reason>
+      </artifact>
+      <artifact path="src/mailmind/core/settings_manager.py" lines="1-50" kind="class">
+        <symbol>SettingsManager</symbol>
+        <snippet>Settings management class interfacing with user_preferences table. Needs new preference: pool_size (default: 3, range: 2-5) for connection pool configuration.</snippet>
+        <reason>Must add pool_size configuration option for AC2</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="ollama" version=">=0.1.6" usage="LLM inference - base for connection pooling"/>
+        <package name="pysqlcipher3" version=">=1.0.0" usage="Database encryption (Story 3.1) - already installed"/>
+        <package name="pytest" version=">=7.4.0" usage="Unit testing framework"/>
+        <package name="pytest-cov" version=">=4.1.0" usage="Test coverage measurement"/>
+        <package name="pytest-mock" version=">=3.11.1" usage="Mocking for unit tests"/>
+        <package name="bandit" version="(dev)" usage="Static security analysis for SQL injection detection - needs adding to requirements.txt"/>
+        <stdlib>threading.Lock, queue.Queue, contextlib.contextmanager, concurrent.futures.ThreadPoolExecutor, hashlib.sha256</stdlib>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="arch-1">
+      <title>No Breaking API Changes</title>
+      <description>OllamaManager public API must remain compatible with Stories 1.1, 1.3, 1.4, 1.5, 1.6. Connection pooling must be internal implementation detail.</description>
+    </constraint>
+    <constraint id="arch-2">
+      <title>Thread Safety</title>
+      <description>OllamaConnectionPool must be thread-safe using queue.Queue and threading.Lock. No race conditions allowed in connection acquisition/release.</description>
+    </constraint>
+    <constraint id="arch-3">
+      <title>Connection Pool Size Limits</title>
+      <description>Pool size must be configurable between 2-5 connections (default: 3). Enforce limits to prevent resource exhaustion.</description>
+    </constraint>
+    <constraint id="arch-4">
+      <title>SQL Injection Prevention</title>
+      <description>All SQL queries must use parameterized queries (? placeholders) or validated whitelists. NEVER use f-string or % interpolation with SQL. ALLOWED_TABLES = {'email_analysis', 'performance_metrics', 'user_preferences', 'user_corrections'}</description>
+    </constraint>
+    <constraint id="arch-5">
+      <title>Performance Target</title>
+      <description>Must achieve 10-15 emails/minute on recommended hardware (mid-GPU, 16-24GB RAM). Connection pooling overhead must be &lt;10ms per request.</description>
+    </constraint>
+    <constraint id="arch-6">
+      <title>Model Verification Optional</title>
+      <description>Checksum verification must be optional with graceful degradation. Unknown models should prompt user but allow override. Don't block usage if model_checksums.json missing.</description>
+    </constraint>
+    <constraint id="arch-7">
+      <title>Batch Processing Error Isolation</title>
+      <description>Individual email failures in batch must not stop entire batch. Result aggregation must track success/failure counts. Timeout per email: 30s max.</description>
+    </constraint>
+    <constraint id="arch-8">
+      <title>Connection Pool Cleanup</title>
+      <description>ThreadPoolExecutor must shutdown gracefully. Connections must be released on exception. Use context managers for automatic cleanup.</description>
+    </constraint>
+    <constraint id="arch-9">
+      <title>Security Documentation Standards</title>
+      <description>SECURITY.md must follow industry standards: Vulnerability reporting process, before/after code examples, security roadmap, best practices for contributors, links from README.md.</description>
+    </constraint>
+    <constraint id="arch-10">
+      <title>Performance Metrics Non-Blocking</title>
+      <description>PerformanceMetricsWidget must update every 1s without blocking UI. Use background thread or async updates. Poll EmailAnalysisEngine for metrics.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="OllamaConnectionPool.__init__" kind="constructor">
+      <signature>def __init__(self, size: int = 3) -> None</signature>
+      <parameters>
+        <param name="size" type="int" default="3">Connection pool size (2-5 connections)</param>
+      </parameters>
+      <description>Initialize thread-safe connection pool with queue.Queue. Create 'size' ollama.Client instances and add to pool. Initialize active_count counter and threading.Lock for statistics.</description>
+    </interface>
+    <interface name="OllamaConnectionPool.acquire" kind="context-manager">
+      <signature>@contextmanager def acquire(self, timeout: float = 5.0) -> ollama.Client</signature>
+      <parameters>
+        <param name="timeout" type="float" default="5.0">Timeout in seconds for connection acquisition</param>
+      </parameters>
+      <returns>ollama.Client connection from pool</returns>
+      <description>Context manager for acquiring connection from pool. Blocks if pool exhausted (up to timeout). Automatically releases connection on exit. Usage: with pool.acquire() as conn: conn.generate(...)</description>
+    </interface>
+    <interface name="OllamaConnectionPool.stats" kind="method">
+      <signature>def stats(self) -> Dict[str, int]</signature>
+      <returns>{'total': int, 'active': int, 'idle': int}</returns>
+      <description>Get current pool statistics for monitoring. Total = pool size, active = connections in use, idle = available connections.</description>
+    </interface>
+    <interface name="EmailBatchProcessor.__init__" kind="constructor">
+      <signature>def __init__(self, analysis_engine: EmailAnalysisEngine, pool: OllamaConnectionPool) -> None</signature>
+      <parameters>
+        <param name="analysis_engine" type="EmailAnalysisEngine">Email analysis engine instance</param>
+        <param name="pool" type="OllamaConnectionPool">Connection pool for parallel processing</param>
+      </parameters>
+      <description>Initialize batch processor with ThreadPoolExecutor. Set max_workers = pool.size for optimal parallelism.</description>
+    </interface>
+    <interface name="EmailBatchProcessor.process_batch" kind="method">
+      <signature>def process_batch(self, emails: List[Email], progress_callback: Optional[Callable] = None) -> List[Dict]</signature>
+      <parameters>
+        <param name="emails" type="List[Email]">List of emails to process</param>
+        <param name="progress_callback" type="Optional[Callable]">Callback function(current, total) for progress updates</param>
+      </parameters>
+      <returns>List of analysis results (success or error dicts)</returns>
+      <description>Process emails concurrently using ThreadPoolExecutor. Submit all emails, wait for completion with 30s timeout per email. Individual failures logged but don't stop batch. Return aggregated results.</description>
+    </interface>
+    <interface name="OllamaManager.verify_model_checksum" kind="method">
+      <signature>def verify_model_checksum(self, model_name: str) -> Tuple[bool, str]</signature>
+      <parameters>
+        <param name="model_name" type="str">Model name to verify (e.g., "llama3.1:8b-instruct-q4_K_M")</param>
+      </parameters>
+      <returns>Tuple of (verified: bool, message: str)</returns>
+      <description>Calculate SHA256 checksum of model file and compare against model_checksums.json. Return (True, "verified") if match, (False, "mismatch warning") if differs, (None, "unknown model") if not in checksums.json.</description>
+    </interface>
+    <interface name="DatabaseManager.ALLOWED_TABLES" kind="constant">
+      <signature>ALLOWED_TABLES: Set[str] = {'email_analysis', 'performance_metrics', 'user_preferences', 'user_corrections'}</signature>
+      <description>Whitelist of valid table names for SQL operations. All table name parameters must be validated against this set before use in SQL queries. Prevents SQL injection via table name injection.</description>
+    </interface>
+    <interface name="model_checksums.json" kind="config-file">
+      <schema>
+{
+  "version": "1.0.0",
+  "models": {
+    "MODEL_NAME": {
+      "sha256": "HEXDIGEST",
+      "size_bytes": INTEGER,
+      "source": "ollama.com/library",
+      "verified_date": "YYYY-MM-DD"
+    }
+  }
+}
+      </schema>
+      <description>JSON configuration file storing verified SHA256 checksums for known-good models. Located at src/mailmind/config/model_checksums.json. Must include llama3.1:8b-instruct-q4_K_M and mistral:7b-instruct-q4_K_M.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <framework>pytest with pytest-cov for coverage and pytest-mock for mocking</framework>
+      <coverage>Minimum 85% coverage for new code (connection pooling, batch processing, security fixes)</coverage>
+      <security>Use bandit static analysis to verify no SQL injection vectors remain</security>
+      <performance>Benchmark tests must run on CI with performance regression detection</performance>
+      <patterns>Unit tests for individual components (OllamaConnectionPool, EmailBatchProcessor), integration tests for end-to-end workflows, security penetration tests for SQL injection attempts, performance benchmarks for throughput measurement</patterns>
+    </standards>
+    <locations>
+      <location>tests/unit/test_sql_injection.py - SQL injection prevention tests</location>
+      <location>tests/unit/test_connection_pool.py - OllamaConnectionPool unit tests</location>
+      <location>tests/unit/test_batch_processor.py - EmailBatchProcessor unit tests</location>
+      <location>tests/unit/test_model_verification.py - Checksum verification tests</location>
+      <location>tests/integration/test_batch_processing.py - End-to-end parallel processing tests</location>
+      <location>tests/integration/test_security.py - Security penetration tests</location>
+      <location>tests/performance/test_benchmark.py - Performance benchmarking suite</location>
+    </locations>
+    <ideas>
+      <test id="1" ac="AC1" priority="high">
+        <name>test_sql_injection_table_name</name>
+        <description>Attempt SQL injection via table name: clear_table("users; DROP TABLE email_analysis--") should raise ValueError with "Invalid table" message</description>
+      </test>
+      <test id="2" ac="AC1" priority="high">
+        <name>test_sql_injection_parameterized_queries</name>
+        <description>Verify all SQL queries in database_manager.py use parameterized queries (? placeholders). Use sqlparse to analyze query strings.</description>
+      </test>
+      <test id="3" ac="AC1" priority="high">
+        <name>test_allowed_tables_whitelist</name>
+        <description>Verify ALLOWED_TABLES = {'email_analysis', 'performance_metrics', 'user_preferences', 'user_corrections'} and all table operations validate against whitelist</description>
+      </test>
+      <test id="4" ac="AC1" priority="high">
+        <name>test_bandit_no_sql_injection</name>
+        <description>Run bandit static analysis on database_manager.py and verify no SQL injection vulnerabilities (B608) reported</description>
+      </test>
+      <test id="5" ac="AC2" priority="high">
+        <name>test_connection_pool_initialization</name>
+        <description>Create OllamaConnectionPool(size=3), verify pool.size=3, all connections created, stats show total=3, active=0, idle=3</description>
+      </test>
+      <test id="6" ac="AC2" priority="high">
+        <name>test_connection_pool_acquire_release</name>
+        <description>Use context manager: with pool.acquire() as conn: verify conn is ollama.Client, stats show active=1. After exit, verify stats show active=0.</description>
+      </test>
+      <test id="7" ac="AC2" priority="high">
+        <name>test_connection_pool_exhaustion</name>
+        <description>Pool size=2, acquire 2 connections, attempt 3rd with timeout=0.5s. Should raise queue.Empty after timeout. Verify queuing behavior works correctly.</description>
+      </test>
+      <test id="8" ac="AC2" priority="high">
+        <name>test_connection_pool_concurrent_access</name>
+        <description>Use threading to simulate 10 concurrent requests with pool size=3. Verify no deadlocks, all requests complete, connections properly released.</description>
+      </test>
+      <test id="9" ac="AC2" priority="medium">
+        <name>test_connection_pool_exception_cleanup</name>
+        <description>Acquire connection, raise exception during usage, verify connection still released (active count decrements). Pool not depleted.</description>
+      </test>
+      <test id="10" ac="AC3" priority="high">
+        <name>test_model_checksum_valid</name>
+        <description>Mock model file with known checksum. Call verify_model_checksum("llama3.1:8b-instruct-q4_K_M"). Should return (True, "verified").</description>
+      </test>
+      <test id="11" ac="AC3" priority="high">
+        <name>test_model_checksum_tampered</name>
+        <description>Mock model file with wrong checksum. Should return (False, "mismatch warning") and log WARNING level message.</description>
+      </test>
+      <test id="12" ac="AC3" priority="medium">
+        <name>test_model_checksum_unknown_model</name>
+        <description>Model not in model_checksums.json. Should return (None, "unknown model") and allow graceful degradation.</description>
+      </test>
+      <test id="13" ac="AC3" priority="medium">
+        <name>test_model_checksum_file_missing</name>
+        <description>model_checksums.json doesn't exist. Should handle gracefully, log info, allow usage without verification.</description>
+      </test>
+      <test id="14" ac="AC4" priority="high">
+        <name>test_batch_processor_parallel_execution</name>
+        <description>Process batch of 10 emails with pool size=3. Verify parallel execution (timing shows &lt;sequential time), all emails processed.</description>
+      </test>
+      <test id="15" ac="AC4" priority="high">
+        <name>test_batch_processor_individual_failure</name>
+        <description>Batch of 5 emails, mock 2nd email to raise exception. Verify: 2nd email result is error dict, other 4 emails succeed, batch completes.</description>
+      </test>
+      <test id="16" ac="AC4" priority="high">
+        <name>test_batch_processor_timeout</name>
+        <description>Mock one email to take &gt;30s. Verify timeout triggers, email marked as timeout error, batch continues for other emails.</description>
+      </test>
+      <test id="17" ac="AC4" priority="medium">
+        <name>test_batch_processor_progress_callback</name>
+        <description>Process 10 emails with progress_callback. Verify callback called 10 times with (current, total) values 1-10.</description>
+      </test>
+      <test id="18" ac="AC4" priority="medium">
+        <name>test_batch_processor_result_aggregation</name>
+        <description>Batch with 3 successes, 2 failures. Verify result list has 5 items, correct success/error dicts, counts match expectations.</description>
+      </test>
+      <test id="19" ac="AC5" priority="high">
+        <name>test_performance_benchmark_50_emails</name>
+        <description>Create 50 test emails, process with pool size=3. Measure emails/minute. On recommended hardware (mid-GPU), verify &gt;=10 emails/minute.</description>
+      </test>
+      <test id="20" ac="AC5" priority="high">
+        <name>test_performance_pool_size_comparison</name>
+        <description>Benchmark with pool sizes 1, 2, 3, 5. Verify throughput increases with pool size (diminishing returns after 3). Document results.</description>
+      </test>
+      <test id="21" ac="AC5" priority="medium">
+        <name>test_performance_regression_baseline</name>
+        <description>Establish baseline: 50 emails, pool size=3, record time. Use as regression test in CI to detect performance degradation.</description>
+      </test>
+      <test id="22" ac="AC6" priority="medium">
+        <name>test_performance_widget_displays_metrics</name>
+        <description>Create PerformanceMetricsWidget, verify displays: tokens/sec, queue depth, avg processing time, pool status (active/idle/total).</description>
+      </test>
+      <test id="23" ac="AC6" priority="medium">
+        <name>test_performance_widget_updates_non_blocking</name>
+        <description>Widget updates every 1s. Verify UI remains responsive, no blocking, updates reflect current metrics from EmailAnalysisEngine.</description>
+      </test>
+      <test id="24" ac="AC7" priority="medium">
+        <name>test_security_md_exists</name>
+        <description>Verify SECURITY.md exists at project root, contains required sections: SQL injection fix, connection pooling benefits, model verification, security roadmap, vulnerability reporting, best practices.</description>
+      </test>
+      <test id="25" ac="AC7" priority="medium">
+        <name>test_security_md_linked_from_readme</name>
+        <description>Parse README.md, verify link to SECURITY.md present in security or contributing section.</description>
+      </test>
+      <test id="26" ac="1-7" priority="high">
+        <name>test_end_to_end_batch_workflow</name>
+        <description>Integration test: Fetch 20 emails from mock Outlook, process with batch processor using connection pool, verify all stored in database, performance metrics logged, UI displays correctly.</description>
+      </test>
+      <test id="27" ac="1-7" priority="high">
+        <name>test_concurrency_multiple_users</name>
+        <description>Simulate 3 users processing emails simultaneously. Verify: no deadlocks, connection pool handles concurrency, database writes don't conflict, all users get results.</description>
+      </test>
+      <test id="28" ac="1-7" priority="high">
+        <name>test_memory_usage_under_load</name>
+        <description>Process 100 emails with pool size=3. Monitor memory with psutil. Verify memory stays &lt;8GB with model loaded, no memory leaks.</description>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

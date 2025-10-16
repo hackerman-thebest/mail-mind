@@ -7,6 +7,7 @@ Full UI and email integration will be added in subsequent stories.
 
 import logging
 import sys
+import os
 from pathlib import Path
 
 # Add src to path for development
@@ -47,8 +48,13 @@ def main():
         logger.info("Initializing Ollama Manager...")
         ollama_manager = OllamaManager(ollama_config)
 
+        # Check if we should skip test inference (for debugging Ollama issues)
+        skip_test = os.environ.get('MAILMIND_SKIP_TEST', '').lower() in ('1', 'true', 'yes')
+        if skip_test:
+            logger.warning("⚠️  MAILMIND_SKIP_TEST is set - skipping model test inference")
+
         # Attempt to connect and initialize
-        success, message = ollama_manager.initialize()
+        success, message = ollama_manager.initialize(skip_test_inference=skip_test)
 
         if success:
             logger.info("✓ Ollama initialization successful!")

@@ -81,6 +81,20 @@ except ImportError:
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Story 3.3 AC1: SQL Injection Prevention - Whitelists for table and column names
+ALLOWED_TABLES = {
+    'email_analysis',
+    'performance_metrics',
+    'user_preferences',
+    'user_corrections'
+}
+
+ALLOWED_COLUMNS = {
+    'message_id', 'subject', 'sender', 'received_date', 'analysis_json',
+    'priority', 'suggested_folder', 'confidence_score', 'sentiment',
+    'processing_time_ms', 'model_version', 'hardware_profile', 'processed_date'
+}
+
 
 class DatabaseError(Exception):
     """Base exception for database errors."""
@@ -661,6 +675,9 @@ class DatabaseManager:
 
         Returns:
             list: List of email analysis records
+
+        Raises:
+            ValueError: If column name or limit validation fails
         """
         query = "SELECT * FROM email_analysis"
         params = []
@@ -668,13 +685,21 @@ class DatabaseManager:
         if filters:
             where_clauses = []
             for key, value in filters.items():
-                where_clauses.append(f"{key} = ?")
+                # Story 3.3 AC1: Validate column name against whitelist (SQL injection prevention)
+                if key not in ALLOWED_COLUMNS:
+                    raise ValueError(f"Invalid column name: {key}. Must be one of {ALLOWED_COLUMNS}")
+                # Safe: column name validated against ALLOWED_COLUMNS whitelist above
+                where_clauses.append(f"{key} = ?")  # nosec B608
                 params.append(value)
 
             if where_clauses:
                 query += " WHERE " + " AND ".join(where_clauses)
 
-        query += f" ORDER BY processed_date DESC LIMIT {limit}"
+        # Story 3.3 AC1: Validate LIMIT parameter (SQL injection prevention)
+        if not isinstance(limit, int) or limit < 1 or limit > 100000:
+            raise ValueError(f"Invalid LIMIT value: {limit}. Must be integer between 1 and 100000")
+        # Safe: limit validated as positive integer above
+        query += f" ORDER BY processed_date DESC LIMIT {limit}"  # nosec B608
 
         results = self._execute_query(query, tuple(params), fetch_all=True)
 
@@ -1134,6 +1159,7 @@ class DatabaseManager:
 
         Raises:
             QueryError: If deletion fails
+            ValueError: If table name validation fails
 
         Warning:
             This operation is irreversible. Use with caution.
@@ -1145,7 +1171,11 @@ class DatabaseManager:
             # Delete from all tables
             tables = ["user_corrections", "email_analysis", "performance_metrics", "user_preferences"]
             for table in tables:
-                cursor.execute(f"DELETE FROM {table}")
+                # Story 3.3 AC1: Validate table name against whitelist (SQL injection prevention)
+                if table not in ALLOWED_TABLES:
+                    raise ValueError(f"Invalid table name: {table}. Must be one of {ALLOWED_TABLES}")
+                # Safe: table name validated against ALLOWED_TABLES whitelist above
+                cursor.execute(f"DELETE FROM {table}")  # nosec B608
 
             conn.commit()
             logger.warning("All data deleted from database")
