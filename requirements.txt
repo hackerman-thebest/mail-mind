@@ -22,6 +22,7 @@ pyyaml>=6.0
 # Utilities
 python-dateutil>=2.8.2
 psutil>=5.9.0  # System resource monitoring
+colorama>=0.4.6  # Cross-platform colored terminal output (Story 0.4)
 
 # Testing
 pytest>=7.4.0
