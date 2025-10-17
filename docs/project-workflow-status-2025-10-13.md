@@ -67,27 +67,28 @@
 
 | Epic | Story | ID  | Title | File | Points |
 | ---- | ----- | --- | ----- | ---- | ------ |
-| Epic 0 | Story 0.5 | 0.5 | Dynamic Model Loading & Runtime Switching | docs/Epic_0_Setup_Reliability.md (Story 0.5) | 3 |
+| (empty - all drafted stories either complete or in progress) |  |  |  |  |  |
 
-**Total in TODO:** 1 story (3 points)
+**Total in TODO:** 0 stories (0 points)
 
 #### IN PROGRESS (Approved for Development)
 
-**Story 0.4: Interactive Diagnostic Remediation Menu**
-- **Story ID:** 0.4
-- **Story Title:** Interactive Diagnostic Remediation Menu
-- **Story File:** `docs/stories/story-0.4.md`
-- **Story Status:** Ready
-- **Story Points:** 5
-- **Context File:** `docs/stories/story-context-0.4.xml` ✅
-- **Action:** DEV agent should run `dev-story` workflow to implement
+**Story 0.5: Dynamic Model Loading & Runtime Switching**
+- **Story ID:** 0.5
+- **Story Title:** Dynamic Model Loading & Runtime Switching
+- **Story File:** `docs/Epic_0_Setup_Reliability.md` (Story 0.5)
+- **Story Status:** Draft (needs story-ready workflow)
+- **Story Points:** 3
+- **Context File:** Not yet generated
+- **Action:** SM agent should run `story-ready` workflow to approve, then DEV agent runs `story-context` to generate context
 
-**Total in IN PROGRESS:** 1 story (5 points)
+**Total in IN PROGRESS:** 1 story (3 points)
 
 #### DONE (Completed Stories)
 
 | Story ID | File | Completed Date | Points |
 | -------- | ---- | -------------- | ------ |
+| 0.4 | docs/stories/story-0.4.md | 2025-10-17 | 5 |
 | 0.3 | docs/Epic_0_Setup_Reliability.md (Story 0.3) | 2025-10-17 | 2 |
 | 0.1 | docs/Epic_0_Setup_Reliability.md (Story 0.1) | 2025-10-17 | 3 |
 | 0.2 | docs/Epic_0_Setup_Reliability.md (Story 0.2) | 2025-10-17 | 5 |
@@ -108,23 +109,23 @@
 | 3.2 | docs/stories/story-3.2.md | 2025-10-16 | 3 |
 | 3.3 | docs/stories/story-3.3.md | 2025-10-16 | 5 |
 
-**Total completed:** 19 stories (All Epics complete ✅✅✅✅)
-**Total points completed:** 100 points (100% - Epic 0: 3/5 stories (10 pts) ✅, Epic 1: 100% ✅, Epic 2: 100% ✅, Epic 3: 100% ✅)
+**Total completed:** 20 stories (All Epics complete ✅✅✅✅)
+**Total points completed:** 105 points (Epic 0: 4/5 stories (15 pts) ✅, Epic 1: 100% ✅, Epic 2: 100% ✅, Epic 3: 100% ✅)
 
 #### Epic/Story Summary
 
 **Total Epics:** 4 (including Epic 0)
-**Total Stories:** 21 (3 Epic 0 stories completed + 16 original stories + 2 in active development)
-**Total Story Points:** 108 (10 Epic 0 points complete + 5 Epic 0 in progress + 3 Epic 0 in TODO + 90 original points)
+**Total Stories:** 21 (4 Epic 0 stories completed + 16 original stories + 1 in active development)
+**Total Story Points:** 108 (15 Epic 0 points complete + 3 Epic 0 in progress + 90 original points)
 **Stories in Backlog:** 0 (All stories drafted)
-**Stories in TODO:** 1 (Story 0.5 - ready for drafting when needed)
-**Stories in IN PROGRESS:** 1 (Story 0.4 - ready for context generation or development)
-**Stories DONE:** 19 (100 points total) ✅✅✅✅
+**Stories in TODO:** 0 (All drafted stories either complete or in progress)
+**Stories in IN PROGRESS:** 1 (Story 0.5 - ready for development)
+**Stories DONE:** 20 (105 points total) ✅✅✅✅
 
 **Epic Breakdown:**
-- Epic 0: Setup & Reliability (5 stories, 18 points) - 3/5 complete (60% done - Stories 0.3, 0.1, 0.2 ✅)
-  - **Completed:** Stories 0.3 (Unicode Fixes), 0.1 (Resource Detection), 0.2 (Model Selection) = 10 points
-  - **Remaining:** Story 0.4 (Remediation Menu - 5 pts), Story 0.5 (Dynamic Loading - 3 pts, nice-to-have)
+- Epic 0: Setup & Reliability (5 stories, 18 points) - 4/5 complete (80% done - Stories 0.3, 0.1, 0.2, 0.4 ✅)
+  - **Completed:** Stories 0.3 (Unicode Fixes), 0.1 (Resource Detection), 0.2 (Model Selection), 0.4 (Remediation Menu) = 15 points
+  - **Remaining:** Story 0.5 (Dynamic Loading - 3 pts, nice-to-have)
 - Epic 1: AI-Powered Email Intelligence (6 stories, 36 points) - 6/6 complete (100% done) ✅
 - Epic 2: Desktop Application & User Experience (6 stories, 39 points) - 6/6 complete (100% done) ✅
 - Epic 3: Security & MVP Readiness (4 stories, 15 points) - 4/4 complete (100% done) ✅
@@ -170,48 +171,36 @@
 
 ### Next Action Required
 
-**What to do next:** Implement Story 0.4 with DEV agent
+**What to do next:** Review and approve Story 0.5 with SM agent
 
-**Current Status:** ✅ **Story 0.4 Context Generated** - Ready for Implementation (5 points)
+**Current Status:** ✅ **Story 0.4 Complete** - Story 0.5 in Draft (needs review)
 
-**Story 0.4: Interactive Diagnostic Remediation Menu**
-- **Status:** Ready
-- **File:** docs/stories/story-0.4.md
-- **Story Points:** 5
-- **Context:** ✅ docs/stories/story-context-0.4.xml
-
-**Context Includes:**
-- 9 tasks mapped to 3 ACs (50+ subtasks)
-- 6 documentation artifacts (Epic 0, Stories 0.1/0.2/0.3, etc.)
-- 7 code artifacts (main.py, system_diagnostics.py, config files)
-- Dependencies: colorama>=0.4.6 (new), psutil, pyyaml, ollama
-- 6 constraints (encoding UTF-8, security, UX, platform compatibility)
-- 7 interfaces (offer_remediations, 6 remediation functions)
-- 85 test ideas covering all ACs
+**Story 0.5: Dynamic Model Loading & Runtime Switching**
+- **Status:** Draft (needs story-ready workflow)
+- **File:** docs/Epic_0_Setup_Reliability.md (Story 0.5)
+- **Story Points:** 3 (nice-to-have)
+- **Context:** Not yet generated
 
 **Epic Progress:**
-- **Epic 0:** 3/5 complete (60%) - Story 0.4 ready for implementation 🚀
+- **Epic 0:** 4/5 complete (80%) - Story 0.5 ready for review 🚀
   - ✅ Story 0.3: Unicode Error Fixes (2 pts)
   - ✅ Story 0.1: System Resource Detection (3 pts)
   - ✅ Story 0.2: Interactive Model Selection (5 pts)
-  - 🚀 Story 0.4: Interactive Remediation Menu (5 pts) - Context ready, ready for dev
-  - 📋 Story 0.5: Dynamic Model Loading (3 pts) - In TODO (nice-to-have)
+  - ✅ Story 0.4: Interactive Remediation Menu (5 pts) - Complete! 🎉
+  - 📋 Story 0.5: Dynamic Model Loading (3 pts) - In Draft (nice-to-have)
 - **Epic 1:** 6/6 complete (100%) ✅
 - **Epic 2:** 6/6 complete (100%) ✅
 - **Epic 3:** 4/4 complete (100%) ✅
 
 **Next Steps:**
 
-1. Switch to DEV agent: `/bmad:bmm:agents:dev`
-2. Run `dev-story` workflow to implement Story 0.4
-3. The context file provides comprehensive implementation guidance:
-   - All functions to create (offer_remediations, switch_to_smaller_model, etc.)
-   - Integration points (main.py run_ollama_diagnostics)
-   - Dependencies to add (colorama)
-   - Testing strategy (85 test ideas)
+1. Switch to SM agent: `/bmad:bmm:agents:sm`
+2. Run `story-ready` workflow to approve Story 0.5
+3. Then optionally run `story-context` to generate implementation context
+4. OR skip Story 0.5 (nice-to-have) and run retrospective workflow
 
-**Command to run:** `/bmad:bmm:agents:dev dev-story`
-**Current Agent:** SM (switch to DEV for implementation)
+**Command to run:** `/bmad:bmm:agents:sm story-ready` OR run retrospective
+**Current Agent:** DEV (switch to SM for story approval OR PM for retrospective)
 
 ---
 
@@ -588,6 +577,8 @@ This will:
 - **2025-10-17**: Story 0.4 (Interactive Diagnostic Remediation Menu) marked ready for development by SM agent. Moved from TODO → IN PROGRESS. Story 0.5 (Dynamic Model Loading & Runtime Switching) moved from BACKLOG → TODO (ready for drafting when needed). All Epic 0 stories now in active workflow (3 complete, 1 in progress, 1 in TODO). Updated status file: IN PROGRESS = 1 (Story 0.4 - 5 pts), TODO = 1 (Story 0.5 - 3 pts), Backlog = 0. Next: Run story-context to generate implementation context (recommended) OR switch to DEV agent for direct development.
 
 - **2025-10-17**: Completed story-context for Story 0.4 (Interactive Diagnostic Remediation Menu) by SM agent. Context file: docs/stories/story-context-0.4.xml. Comprehensive context includes: 9 tasks mapped to 3 ACs, 6 documentation artifacts (Epic 0, epic-stories, TROUBLESHOOTING_OLLAMA, Stories 0.1/0.2/0.3), 7 code artifacts (main.py run_ollama_diagnostics, system_diagnostics.py functions, config.py, user_config.yaml, requirements.txt), Python dependencies (colorama>=0.4.6 new, psutil/pyyaml/ollama existing), 6 constraints (encoding UTF-8, architecture, security sanitization, UX colorama, platform log locations, performance), 7 interfaces (offer_remediations, switch_to_smaller_model, repull_current_model, show_system_resources, show_ollama_logs, generate_support_report, check_system_resources), 85 test ideas mapped to ACs. Updated story file with context reference. Next: DEV agent should run dev-story workflow to implement Story 0.4.
+
+- **2025-10-17**: Story 0.4 (Interactive Diagnostic Remediation Menu) approved and marked done by DEV agent. Moved from IN PROGRESS → DONE. Story 0.5 (Dynamic Model Loading & Runtime Switching) moved from TODO → IN PROGRESS. Implementation complete: Added 6 remediation options (7 functions, ~700 lines in main.py), integrated offer_remediations() into run_ollama_diagnostics(), added colorama>=0.4.6 dependency. All verification tests pass. Git commit: a1b6c5a. Epic 0 progress: 4/5 stories complete (80%), 15/18 points. Next: Review/approve Story 0.5 with SM agent story-ready workflow.
 
 ---
 
