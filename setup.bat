@@ -38,17 +38,17 @@ echo NOTE: MailMind can use GPU acceleration if available, but works fine on CPU
 echo GPU detection can cause 90+ second delays on some systems.
 echo.
 choice /C YN /M "Do you have an NVIDIA GPU you want to use for acceleration"
-if errorlevel 2 (
+if %ERRORLEVEL%==2 (
     echo.
-    echo Configuring Ollama for CPU mode (recommended for most users)...
+    echo Configuring Ollama for CPU mode ^(recommended for most users^)...
     setx OLLAMA_NUM_GPU "0" >nul
     setx CUDA_VISIBLE_DEVICES "" >nul
     echo.
     echo CPU mode configured! This will avoid GPU detection delays.
-    echo Performance: ~10-30 tokens/second (sufficient for email processing)
-) else (
+    echo Performance: ~10-30 tokens/second ^(sufficient for email processing^)
+) else if %ERRORLEVEL%==1 (
     echo.
-    echo GPU mode enabled. If you experience delays, run this script again and select 'N'.
+    echo GPU mode enabled. If you experience delays, run this script again and select N.
 )
 echo.
 
@@ -66,7 +66,7 @@ if errorlevel 1 (
     echo   2. Continue without encryption (functional but less secure)
     echo.
     choice /C YN /M "Continue anyway"
-    if errorlevel 2 (
+    if %ERRORLEVEL%==2 (
         echo Setup cancelled.
         pause
         exit /b 1
@@ -83,11 +83,11 @@ if errorlevel 1 (
     echo This is ~5GB and may take 10-20 minutes depending on your internet speed.
     echo.
     choice /C YN /M "Download now"
-    if errorlevel 2 (
+    if %ERRORLEVEL%==2 (
         echo.
         echo Skipping model download. You can download it later with:
         echo   ollama pull llama3.1:8b-instruct-q4_K_M
-    ) else (
+    ) else if %ERRORLEVEL%==1 (
         ollama pull llama3.1:8b-instruct-q4_K_M
     )
 ) else (
