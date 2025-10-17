@@ -617,27 +617,27 @@ As a user running MailMind, I need the ability to switch AI models at runtime wi
 **Acceptance Criteria:**
 
 **AC1: Runtime Model Switching Command**
-- [ ] Add command-line flag: `python main.py --switch-model`
-- [ ] Show current model and detected system resources
-- [ ] Present model options with recommendations
-- [ ] Download new model if not present
-- [ ] Update user_config.yaml
-- [ ] Restart application with new model
+- [x] Add command-line flag: `python main.py --switch-model`
+- [x] Show current model and detected system resources
+- [x] Present model options with recommendations
+- [x] Download new model if not present
+- [x] Update user_config.yaml
+- [x] Restart application with new model
 
 **AC2: Automatic Model Fallback**
-- [ ] If inference timeout occurs 3 times consecutively:
+- [x] If inference timeout occurs 3 times consecutively:
   - Log warning: "Model inference timing out repeatedly"
   - Prompt user: "Switch to faster model? (y/n)"
   - If yes: Auto-switch to next smaller model
   - If no: Continue with current model
-- [ ] Store fallback history to prevent infinite loops
-- [ ] Display notification in UI when fallback occurs
+- [x] Store fallback history to prevent infinite loops
+- [x] Display notification in UI when fallback occurs
 
 **AC3: Model Performance Monitoring**
-- [ ] Track average inference time per model
-- [ ] Store in performance_metrics table
-- [ ] Display in settings UI: "Current model: llama3.2:3b (avg: 4.2s)"
-- [ ] Recommend upgrade if system resources improve: "Your RAM is now 12GB - consider upgrading to 8B model"
+- [x] Track average inference time per model
+- [x] Store in performance_metrics table
+- [x] Display in settings UI: "Current model: llama3.2:3b (avg: 4.2s)"
+- [x] Recommend upgrade if system resources improve: "Your RAM is now 12GB - consider upgrading to 8B model"
 
 **Technical Implementation:**
 
@@ -753,18 +753,18 @@ class OllamaManager:
 - Story 0.2 (Model Selection)
 
 **Testing:**
-- [ ] Test manual model switch command
-- [ ] Test automatic fallback on repeated timeouts
-- [ ] Test fallback chain (8B → 3B → 1B)
-- [ ] Test config persistence after switch
-- [ ] Test with model not downloaded (auto-downloads)
+- [x] Test manual model switch command
+- [x] Test automatic fallback on repeated timeouts
+- [x] Test fallback chain (8B → 3B → 1B)
+- [x] Test config persistence after switch
+- [x] Test with model not downloaded (auto-downloads)
 
 **Definition of Done:**
-- [ ] All ACs met
-- [ ] Manual switching works
-- [ ] Automatic fallback works
-- [ ] Config updated correctly
-- [ ] Documentation updated
+- [x] All ACs met
+- [x] Manual switching works
+- [x] Automatic fallback works
+- [x] Config updated correctly
+- [x] Documentation updated
 
 ---
 

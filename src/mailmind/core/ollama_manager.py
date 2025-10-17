@@ -38,6 +38,14 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Import PerformanceTracker for AC3 (Story 0.5)
+try:
+    from mailmind.core.performance_tracker import PerformanceTracker
+    PERFORMANCE_TRACKER_AVAILABLE = True
+except ImportError:
+    PERFORMANCE_TRACKER_AVAILABLE = False
+    logger.debug("PerformanceTracker not available")
+
 
 class OllamaConnectionPool:
     """
@@ -246,6 +254,22 @@ class OllamaManager:
         # Status
         self.is_connected = False
         self.model_status = "not_initialized"  # not_initialized, ready, loading, error
+
+        # AC2: Timeout tracking for automatic fallback (Story 0.5)
+        self.consecutive_timeouts = 0
+        self.fallback_history = []  # Track fallback attempts to prevent infinite loops
+        self.fallback_triggered = False
+
+        # AC3: Performance monitoring (Story 0.5)
+        self.performance_tracker = None
+        if PERFORMANCE_TRACKER_AVAILABLE:
+            try:
+                # Use database path from config or default
+                db_path = config.get('database_path', 'data/mailmind.db')
+                self.performance_tracker = PerformanceTracker(db_path)
+                logger.debug("PerformanceTracker initialized for model performance monitoring")
+            except Exception as e:
+                logger.warning(f"Could not initialize PerformanceTracker: {e}")
 
         logger.info(f"OllamaManager initialized with model: {self.primary_model}, pool_size: {pool_size}")
 
@@ -922,3 +946,492 @@ class OllamaManager:
         except Exception as e:
             logger.exception("Unexpected error during initialization")
             return False, f"Unexpected error: {str(e)}"
+
+    def generate(self, prompt: str, timeout: int = 30) -> Optional[Dict[str, Any]]:
+        """
+        Generate response from model with automatic timeout tracking.
+
+        Story 0.5 AC2: Tracks consecutive timeouts and triggers automatic fallback
+
+        Args:
+            prompt: Input prompt for the model
+            timeout: Maximum time in seconds to wait for response (default: 30)
+
+        Returns:
+            Response dict from Ollama, or None if timeout/error
+
+        Note:
+            After 3 consecutive timeouts, will prompt user for automatic model fallback
+        """
+        if not self.is_connected or not self.current_model:
+            logger.error("Cannot generate: not connected or no model loaded")
+            return None
+
+        try:
+            logger.debug(f"Generating response with {self.current_model}...")
+            start_time = time.time()
+
+            # Use threading to implement timeout
+            result = {'response': None, 'error': None, 'timeout': False}
+
+            def run_inference():
+                try:
+                    result['response'] = self.client.generate(
+                        model=self.current_model,
+                        prompt=prompt,
+                        options={
+                            "temperature": self.temperature,
+                            "num_ctx": self.context_window
+                        }
+                    )
+                except Exception as e:
+                    result['error'] = e
+
+            inference_thread = threading.Thread(target=run_inference, daemon=True)
+            inference_thread.start()
+            inference_thread.join(timeout=timeout)
+
+            if inference_thread.is_alive():
+                # Timeout occurred
+                result['timeout'] = True
+                elapsed = time.time() - start_time
+                logger.warning(f"⚠️  Inference timeout after {elapsed:.1f}s")
+
+                # AC2: Track consecutive timeouts
+                self.consecutive_timeouts += 1
+                logger.warning(
+                    f"Consecutive timeouts: {self.consecutive_timeouts}/3 "
+                    f"(fallback will trigger at 3)"
+                )
+
+                # Check if we should trigger automatic fallback
+                if self.consecutive_timeouts >= 3:
+                    self._handle_automatic_fallback()
+
+                return None
+
+            if result['error']:
+                # Reset timeout counter on non-timeout errors
+                self.consecutive_timeouts = 0
+                raise result['error']
+
+            # Success - reset timeout counter
+            self.consecutive_timeouts = 0
+            inference_time = time.time() - start_time
+            inference_time_ms = int(inference_time * 1000)
+            logger.debug(f"Generation successful in {inference_time:.3f}s")
+
+            # AC3: Log performance metrics
+            if self.performance_tracker:
+                try:
+                    # Calculate tokens per second if response available
+                    tokens_per_sec = None
+                    if response and 'response' in response:
+                        # Rough approximation: 1 token ≈ 4 characters
+                        approx_tokens = len(response['response']) / 4
+                        tokens_per_sec = approx_tokens / inference_time if inference_time > 0 else 0
+
+                    self.performance_tracker.log_operation(
+                        operation='model_inference',
+                        processing_time_ms=inference_time_ms,
+                        tokens_per_second=tokens_per_sec,
+                        model_version=self.current_model
+                    )
+                    logger.debug(f"Performance logged for {self.current_model}: {inference_time_ms}ms")
+                except Exception as e:
+                    logger.warning(f"Failed to log performance: {e}")
+
+            return result['response']
+
+        except Exception as e:
+            self.consecutive_timeouts = 0  # Reset on errors
+            logger.error(f"Generation failed: {e}", exc_info=True)
+            return None
+
+    def _handle_automatic_fallback(self) -> None:
+        """
+        Handle automatic model fallback after repeated timeouts.
+
+        Story 0.5 AC2: Automatic Model Fallback
+
+        Prompts user to switch to a faster model after 3 consecutive timeouts.
+        Stores fallback history to prevent infinite loops.
+        """
+        # Prevent triggering multiple times
+        if self.fallback_triggered:
+            logger.debug("Fallback already triggered, skipping")
+            return
+
+        self.fallback_triggered = True
+
+        # Log warning
+        logger.warning("=" * 60)
+        logger.warning("⚠️  Model inference timing out repeatedly")
+        logger.warning(f"Current model: {self.current_model}")
+        logger.warning(f"Consecutive timeouts: {self.consecutive_timeouts}")
+        logger.warning("=" * 60)
+
+        # Check if we've already tried this model fallback
+        if self.current_model in self.fallback_history:
+            logger.warning(
+                f"Model {self.current_model} already in fallback history. "
+                f"Cannot fallback further to prevent infinite loop."
+            )
+            logger.warning("Please manually switch to a different model using: python main.py --switch-model")
+            self.fallback_triggered = False  # Allow future attempts after manual intervention
+            return
+
+        # Determine next smaller model
+        fallback_chain = {
+            'llama3.1:8b-instruct-q4_K_M': 'llama3.2:3b',
+            'llama3.2:3b': 'llama3.2:1b',
+            'llama3.2:1b': None  # No smaller model available
+        }
+
+        next_model = fallback_chain.get(self.current_model)
+
+        if next_model is None:
+            logger.warning(
+                f"Already using the smallest model ({self.current_model}). "
+                f"Cannot fallback to a smaller model."
+            )
+            logger.warning("Please check system resources: python main.py --diagnose")
+            self.fallback_triggered = False
+            return
+
+        # Import colorama for colored output
+        try:
+            from colorama import Fore, Style, init
+            init()
+        except ImportError:
+            # Fallback if colorama not available
+            class Fore:
+                YELLOW = RED = GREEN = CYAN = ""
+            class Style:
+                RESET_ALL = ""
+
+        # Prompt user
+        print(f"\n{Fore.YELLOW}{'=' * 60}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}⚠️  Model Performance Issue Detected{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}{'=' * 60}{Style.RESET_ALL}\n")
+        print(f"Your current model ({Fore.CYAN}{self.current_model}{Style.RESET_ALL}) is timing out repeatedly.")
+        print(f"This usually means your system needs a faster, smaller model.\n")
+        print(f"Recommended action: Switch to {Fore.GREEN}{next_model}{Style.RESET_ALL}")
+        print(f"  • Faster inference")
+        print(f"  • Lower memory usage")
+        print(f"  • Better performance on your system\n")
+
+        try:
+            response = input(f"{Fore.CYAN}Switch to faster model now? (y/n): {Style.RESET_ALL}").strip().lower()
+
+            if response == 'y':
+                logger.info(f"User accepted automatic fallback to {next_model}")
+
+                # Add current model to fallback history
+                self.fallback_history.append(self.current_model)
+
+                # Attempt to switch model
+                success = self._switch_model_internal(next_model)
+
+                if success:
+                    print(f"\n{Fore.GREEN}✓ Successfully switched to {next_model}{Style.RESET_ALL}")
+                    print(f"The new model will be used for subsequent inference calls.\n")
+
+                    # Reset timeout counter
+                    self.consecutive_timeouts = 0
+                    self.fallback_triggered = False
+
+                    # Display notification
+                    logger.info("=" * 60)
+                    logger.info(f"📢 MODEL SWITCHED: {self.current_model}")
+                    logger.info(f"Reason: Automatic fallback due to repeated timeouts")
+                    logger.info("=" * 60)
+                else:
+                    print(f"\n{Fore.RED}✗ Failed to switch to {next_model}{Style.RESET_ALL}")
+                    print(f"Please switch manually: python main.py --switch-model\n")
+                    self.fallback_triggered = False
+            else:
+                logger.info("User declined automatic fallback")
+                print(f"\n{Fore.YELLOW}Continuing with current model: {self.current_model}{Style.RESET_ALL}")
+                print(f"You can manually switch models later: python main.py --switch-model\n")
+
+                # Reset counters to allow retries
+                self.consecutive_timeouts = 0
+                self.fallback_triggered = False
+
+        except KeyboardInterrupt:
+            print(f"\n{Fore.YELLOW}Fallback cancelled by user{Style.RESET_ALL}")
+            self.consecutive_timeouts = 0
+            self.fallback_triggered = False
+        except Exception as e:
+            logger.error(f"Error during automatic fallback: {e}")
+            self.fallback_triggered = False
+
+    def _switch_model_internal(self, new_model: str) -> bool:
+        """
+        Internal method to switch model programmatically.
+
+        Args:
+            new_model: Name of model to switch to
+
+        Returns:
+            bool: True if switch successful, False otherwise
+        """
+        try:
+            import subprocess
+            import yaml
+            from pathlib import Path
+
+            logger.info(f"Switching model from {self.current_model} to {new_model}...")
+
+            # Step 1: Check if model is downloaded
+            result = subprocess.run(
+                ['ollama', 'list'],
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='replace',
+                timeout=10
+            )
+
+            model_exists = False
+            if result.returncode == 0:
+                model_exists = new_model in result.stdout
+
+            # Step 2: Download model if needed
+            if not model_exists:
+                logger.info(f"Model {new_model} not found. Downloading...")
+                print(f"Downloading {new_model}... (this may take a few minutes)")
+
+                download_result = subprocess.run(
+                    ['ollama', 'pull', new_model],
+                    encoding='utf-8',
+                    errors='replace',
+                    timeout=900  # 15 minute timeout
+                )
+
+                if download_result.returncode != 0:
+                    logger.error(f"Failed to download {new_model}")
+                    return False
+
+                logger.info(f"✓ Model {new_model} downloaded successfully")
+
+            # Step 3: Update user_config.yaml
+            # Find config directory (go up from src/mailmind/core/ to root)
+            config_dir = Path(__file__).parent.parent.parent.parent / "config"
+            user_config_path = config_dir / "user_config.yaml"
+
+            user_config = {}
+            if user_config_path.exists():
+                with open(user_config_path, 'r', encoding='utf-8') as f:
+                    user_config = yaml.safe_load(f) or {}
+
+            if 'ollama' not in user_config:
+                user_config['ollama'] = {}
+
+            user_config['ollama']['selected_model'] = new_model
+            user_config['ollama']['primary_model'] = new_model
+
+            # Determine model size
+            if '8b' in new_model.lower():
+                user_config['ollama']['model_size'] = 'large'
+            elif '3b' in new_model.lower():
+                user_config['ollama']['model_size'] = 'medium'
+            else:
+                user_config['ollama']['model_size'] = 'small'
+
+            with open(user_config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(user_config, f, default_flow_style=False)
+
+            logger.info(f"✓ Configuration updated to use {new_model}")
+
+            # Step 4: Update internal state
+            self.current_model = new_model
+            self.primary_model = new_model
+
+            return True
+
+        except subprocess.TimeoutExpired:
+            logger.error("Model switch timed out")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to switch model: {e}", exc_info=True)
+            return False
+
+    def get_model_performance(self, model_name: Optional[str] = None, days: int = 30) -> Dict[str, Any]:
+        """
+        Get performance statistics for a specific model.
+
+        Story 0.5 AC3: Model Performance Monitoring
+
+        Args:
+            model_name: Model to get stats for (default: current_model)
+            days: Number of days to analyze (default: 30)
+
+        Returns:
+            Performance stats dict:
+            {
+                'model': 'llama3.2:3b',
+                'avg_inference_time_sec': 4.2,
+                'avg_tokens_per_sec': 15.3,
+                'inference_count': 250,
+                'min_time_ms': 850,
+                'max_time_ms': 12000
+            }
+        """
+        if not self.performance_tracker:
+            logger.warning("PerformanceTracker not available")
+            return {}
+
+        model = model_name or self.current_model
+
+        try:
+            # Get metrics summary from performance tracker
+            summary = self.performance_tracker.get_metrics_summary(days=days)
+
+            # Filter for model_inference operations
+            if 'model_inference' not in summary:
+                logger.debug(f"No performance data available for model_inference (last {days} days)")
+                return {
+                    'model': model,
+                    'message': 'No performance data available yet'
+                }
+
+            inference_stats = summary['model_inference']
+
+            # Get model-specific data from database (filtered by model_version)
+            import sqlite3
+            from datetime import datetime, timedelta
+
+            conn = sqlite3.connect(self.performance_tracker.db_path)
+            cursor = conn.cursor()
+
+            date_threshold = (datetime.now() - timedelta(days=days)).isoformat()
+
+            cursor.execute('''
+                SELECT
+                    COUNT(*) as count,
+                    AVG(processing_time_ms) as avg_time_ms,
+                    AVG(tokens_per_second) as avg_tokens_per_sec,
+                    MIN(processing_time_ms) as min_time_ms,
+                    MAX(processing_time_ms) as max_time_ms
+                FROM performance_metrics
+                WHERE operation = 'model_inference'
+                  AND model_version = ?
+                  AND timestamp > ?
+            ''', (model, date_threshold))
+
+            row = cursor.fetchone()
+            conn.close()
+
+            if row and row[0] > 0:  # Has data
+                return {
+                    'model': model,
+                    'inference_count': row[0],
+                    'avg_inference_time_ms': round(row[1], 2) if row[1] else 0,
+                    'avg_inference_time_sec': round(row[1] / 1000, 2) if row[1] else 0,
+                    'avg_tokens_per_sec': round(row[2], 2) if row[2] else None,
+                    'min_time_ms': row[3] or 0,
+                    'max_time_ms': row[4] or 0,
+                    'period_days': days
+                }
+            else:
+                return {
+                    'model': model,
+                    'message': f'No performance data for {model} in last {days} days'
+                }
+
+        except Exception as e:
+            logger.error(f"Failed to get model performance: {e}")
+            return {
+                'model': model,
+                'error': str(e)
+            }
+
+    def get_model_performance_display(self) -> str:
+        """
+        Get formatted model performance string for UI display.
+
+        Story 0.5 AC3: Display format for settings UI
+
+        Returns:
+            Formatted string: "Current model: llama3.2:3b (avg: 4.2s)"
+        """
+        if not self.current_model:
+            return "No model loaded"
+
+        perf = self.get_model_performance(days=7)  # Last 7 days
+
+        if 'error' in perf:
+            return f"Current model: {self.current_model}"
+
+        if 'message' in perf:
+            return f"Current model: {self.current_model} (no recent data)"
+
+        avg_time = perf.get('avg_inference_time_sec', 0)
+        return f"Current model: {self.current_model} (avg: {avg_time}s)"
+
+    def check_upgrade_recommendation(self) -> Optional[Dict[str, Any]]:
+        """
+        Check if system resources have improved to recommend model upgrade.
+
+        Story 0.5 AC3: Recommend upgrade if system resources improve
+
+        Returns:
+            Recommendation dict if upgrade suggested, None otherwise:
+            {
+                'current_model': 'llama3.2:3b',
+                'recommended_model': 'llama3.1:8b-instruct-q4_K_M',
+                'reason': 'Your system now has sufficient RAM for a higher quality model',
+                'available_ram_gb': 12.5
+            }
+        """
+        if not self.current_model:
+            return None
+
+        try:
+            # Import system diagnostics
+            from mailmind.utils.system_diagnostics import check_system_resources, recommend_model
+
+            # Check current system resources
+            resources = check_system_resources()
+            recommended, reasoning, perf = recommend_model(resources)
+
+            # Model hierarchy (smallest to largest)
+            model_hierarchy = [
+                'llama3.2:1b',
+                'llama3.2:3b',
+                'llama3.1:8b-instruct-q4_K_M'
+            ]
+
+            # Get current model index
+            try:
+                current_idx = model_hierarchy.index(self.current_model)
+            except ValueError:
+                # Current model not in hierarchy
+                return None
+
+            # Get recommended model index
+            try:
+                recommended_idx = model_hierarchy.index(recommended)
+            except ValueError:
+                # Recommended model not in hierarchy
+                return None
+
+            # If recommended model is better than current, suggest upgrade
+            if recommended_idx > current_idx:
+                return {
+                    'current_model': self.current_model,
+                    'recommended_model': recommended,
+                    'reason': reasoning,
+                    'available_ram_gb': round(resources['ram']['available_gb'], 1),
+                    'expected_quality': perf['quality'],
+                    'expected_speed': perf['tokens_per_second']
+                }
+
+            # No upgrade recommended
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to check upgrade recommendation: {e}")
+            return None

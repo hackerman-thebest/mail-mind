@@ -1,0 +1,318 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>0.5</storyId>
+    <title>Dynamic Model Loading & Runtime Switching</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/dawsonhulme/Downloads/Projects/mail-mind/docs/Epic_0_Setup_Reliability.md (Story 0.5, lines 609-769)</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user running MailMind</asA>
+    <iWant>the ability to switch AI models at runtime without reinstalling</iWant>
+    <soThat>I can upgrade/downgrade based on performance needs</soThat>
+    <tasks>
+      <task id="AC1" title="Runtime Model Switching Command">
+        - Add command-line flag: python main.py --switch-model
+        - Show current model and detected system resources
+        - Present model options with recommendations (1B, 3B, 8B)
+        - Download new model if not present using ollama pull
+        - Update user_config.yaml with selected model
+        - Restart application with new model loaded
+      </task>
+      <task id="AC2" title="Automatic Model Fallback">
+        - Detect 3 consecutive inference timeouts
+        - Log warning: "Model inference timing out repeatedly"
+        - Prompt user: "Switch to faster model? (y/n)"
+        - Auto-switch to next smaller model in chain (8B→3B→1B) if yes
+        - Store fallback history to prevent infinite loops
+        - Display notification in UI when fallback occurs
+      </task>
+      <task id="AC3" title="Model Performance Monitoring">
+        - Track average inference time per model during operations
+        - Store metrics in performance_metrics table (model, avg_time, last_updated)
+        - Display in settings UI: "Current model: llama3.2:3b (avg: 4.2s)"
+        - Monitor system resources and recommend upgrade when RAM increases
+        - Show upgrade path: "Your RAM is now 12GB - consider upgrading to 8B model"
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" title="Runtime Model Switching Command">
+      <requirement>Add command-line flag: python main.py --switch-model</requirement>
+      <requirement>Show current model and detected system resources</requirement>
+      <requirement>Present model options with recommendations based on available RAM</requirement>
+      <requirement>Download new model if not present (using ollama pull)</requirement>
+      <requirement>Update user_config.yaml with selected model</requirement>
+      <requirement>Restart application with new model loaded</requirement>
+      <validation>User can interactively switch between 1B, 3B, and 8B models</validation>
+      <validation>Selected model persists across application restarts</validation>
+    </criterion>
+
+    <criterion id="AC2" title="Automatic Model Fallback">
+      <requirement>If inference timeout occurs 3 times consecutively, trigger fallback logic</requirement>
+      <requirement>Log warning: "Model inference timing out repeatedly"</requirement>
+      <requirement>Prompt user: "Switch to faster model? (y/n)"</requirement>
+      <requirement>If yes: Auto-switch to next smaller model in fallback chain (8B→3B→1B)</requirement>
+      <requirement>If no: Continue with current model</requirement>
+      <requirement>Store fallback history to prevent infinite loops</requirement>
+      <requirement>Display notification in UI when fallback occurs</requirement>
+      <validation>Fallback chain: llama3.1:8b → llama3.2:3b → llama3.2:1b → no further fallback</validation>
+      <validation>System does not repeatedly fallback beyond smallest model</validation>
+    </criterion>
+
+    <criterion id="AC3" title="Model Performance Monitoring">
+      <requirement>Track average inference time per model across all operations</requirement>
+      <requirement>Store in performance_metrics table with fields: model, avg_inference_time_s, sample_count, last_updated</requirement>
+      <requirement>Display in settings UI: "Current model: llama3.2:3b (avg: 4.2s)"</requirement>
+      <requirement>Recommend upgrade when system resources improve: "Your RAM is now 12GB - consider upgrading to 8B model"</requirement>
+      <validation>Performance metrics persist across application restarts</validation>
+      <validation>Recommendations appear only when resources exceed current model requirements</validation>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/Epic_0_Setup_Reliability.md" section="Story 0.5" lines="609-769">
+        <title>Story 0.5: Dynamic Model Loading & Runtime Switching - Complete Specification</title>
+        <snippet>Story 0.5 embedded in Epic 0 file. Contains full user story, acceptance criteria (AC1-AC3), technical implementation examples for runtime model switching, automatic fallback chain (8B→3B→1B), and performance monitoring with performance_metrics table. Includes fallback_chain dictionary, handle_model_switch() function template, and OllamaManager enhancement examples.</snippet>
+        <relevance>Primary specification for this story - defines all requirements</relevance>
+      </doc>
+
+      <doc path="docs/stories/archive/Story_0.2_Enhanced_Diagnostics_Model_Selection.md" section="Technical Design" lines="98-336">
+        <title>Enhanced Model Selection & Remediation Architecture (Completed in Stories 0.1-0.4)</title>
+        <snippet>Contains technical design for model selection system already implemented in Epic 0. Includes system_diagnostics.py design, user_config.yaml structure (ollama.selected_model, ollama.model_size, system.ram_gb), model recommendation algorithm, and interactive remediation menu architecture. This is the foundation that Story 0.5 builds upon.</snippet>
+        <relevance>Foundation architecture - Story 0.5 extends this with runtime switching and monitoring</relevance>
+      </doc>
+
+      <doc path="docs/Epic_0_Setup_Reliability.md" section="Story 0.1" lines="47-194">
+        <title>Story 0.1: System Resource Detection & Model Recommendation</title>
+        <snippet>Defines check_system_resources() function used by Story 0.5 for resource checking. Returns dict with ram, cpu, gpu, disk, platform. Also defines recommend_model(resources) algorithm based on available RAM: 10+GB→8B, 6-10GB→3B, 4-6GB→1B. This function is reused by Story 0.5's --switch-model command.</snippet>
+        <relevance>Story 0.5 AC1 reuses check_system_resources() for model switching recommendations</relevance>
+      </doc>
+
+      <doc path="docs/Epic_0_Setup_Reliability.md" section="Story 0.4" lines="414-605">
+        <title>Story 0.4: Interactive Diagnostic Remediation Menu</title>
+        <snippet>Contains switch_to_smaller_model() function already implemented in main.py. Uses fallback_chain dict (8B→3B→1B→None), downloads new model with ollama pull, updates user_config.yaml, and reruns inference test. Story 0.5 AC2 (automatic fallback) reuses this logic but triggers automatically after 3 consecutive timeouts instead of manual menu selection.</snippet>
+        <relevance>Story 0.5 AC2 extends switch_to_smaller_model() with automatic timeout detection</relevance>
+      </doc>
+
+      <doc path="config/default.yaml" section="ollama configuration">
+        <title>Default Ollama Configuration Structure</title>
+        <snippet>Defines default ollama config with primary_model, fallback_model, temperature, context_window, auto_download, gpu_acceleration. User overrides in user_config.yaml merge with defaults via load_config() in config.py.</snippet>
+        <relevance>Story 0.5 reads/writes ollama.selected_model in user_config.yaml</relevance>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/mailmind/utils/config.py" symbol="load_config" lines="20-102" kind="function">
+        <reason>Handles user_config.yaml merging with default.yaml. Reads user_config.yaml and merges ollama.selected_model into config.ollama.primary_model. Story 0.5 AC1 uses this to read current model, AC1 writes to user_config.yaml when switching models.</reason>
+      </artifact>
+
+      <artifact path="src/mailmind/utils/config.py" symbol="get_ollama_config" lines="128-151" kind="function">
+        <reason>Extracts Ollama configuration from merged config dict. Returns dict with primary_model, fallback_model, temperature, context_window, auto_download, gpu_acceleration. Story 0.5 uses this to get current model settings.</reason>
+      </artifact>
+
+      <artifact path="main.py" symbol="switch_to_smaller_model" lines="607-124" kind="function">
+        <reason>Already implements model switching logic for Story 0.4 remediation menu. Uses fallback_chain dict (8B→3B→1B→None), downloads with 'ollama pull', updates user_config.yaml, reruns inference test. Story 0.5 AC2 (automatic fallback) reuses this core logic but adds timeout detection trigger.</reason>
+      </artifact>
+
+      <artifact path="src/mailmind/core/ollama_manager.py" symbol="OllamaManager" lines="209-251" kind="class">
+        <reason>Manages Ollama client connection and model management. Has primary_model, fallback_model, current_model attributes. Story 0.5 AC2 adds timeout_count and auto_fallback logic to test_inference() method. Story 0.5 AC3 uses this class to track model performance.</reason>
+      </artifact>
+
+      <artifact path="src/mailmind/utils/system_diagnostics.py" symbol="check_system_resources" kind="function">
+        <reason>Detects RAM, CPU, GPU, disk resources (implemented in Story 0.1). Returns dict with ram.total_gb, ram.available_gb, cpu.physical_cores, cpu.usage_percent, gpu.available, disk.free_gb. Story 0.5 AC1 reuses this for --switch-model resource display and AC3 for upgrade recommendations.</reason>
+      </artifact>
+
+      <artifact path="src/mailmind/utils/system_diagnostics.py" symbol="recommend_model" kind="function">
+        <reason>Recommends model based on available RAM (Story 0.1). Returns tuple (model_name, reasoning, performance_dict). Story 0.5 AC1 uses this to recommend appropriate model during --switch-model command.</reason>
+      </artifact>
+
+      <artifact path="src/mailmind/core/performance_tracker.py" symbol="PerformanceTracker" lines="37-495" kind="class">
+        <reason>Tracks performance metrics in performance_metrics table. Has log_operation() to record metrics, get_metrics_summary() to retrieve averages. Story 0.5 AC3 uses this to store model performance (model_version, tokens_per_second, processing_time_ms) and display average inference times per model.</reason>
+      </artifact>
+
+      <artifact path="src/mailmind/database/schema.py" symbol="PERFORMANCE_METRICS_TABLE" lines="75-85" kind="schema">
+        <reason>Defines performance_metrics table with: operation, hardware_config, model_version, tokens_per_second, memory_usage_mb, processing_time_ms, timestamp. Story 0.5 AC3 stores model performance here (already exists, no schema changes needed).</reason>
+      </artifact>
+
+      <artifact path="config/user_config.yaml" kind="config">
+        <reason>User configuration file (may not exist yet). Structure: ollama.selected_model, ollama.model_size ('small'/'medium'/'large'), system.ram_gb. Story 0.5 AC1 writes selected_model when user switches models via --switch-model command.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python version="3.10+">
+        <package name="ollama" version=">=0.1.6">For Ollama client interaction - model listing, pulling, inference calls</package>
+        <package name="pyyaml" version=">=6.0">For reading/writing config/user_config.yaml when switching models (AC1)</package>
+        <package name="psutil" version=">=5.9.0">For check_system_resources() - RAM detection for model recommendations (AC1, AC3)</package>
+        <package name="colorama" version=">=0.4.6">For colored terminal output in --switch-model command (Story 0.4 dependency)</package>
+      </python>
+
+      <existing_modules>
+        <module>mailmind.utils.config</module>
+        <module>mailmind.utils.system_diagnostics</module>
+        <module>mailmind.core.ollama_manager</module>
+        <module>mailmind.core.performance_tracker</module>
+        <module>mailmind.database (DatabaseManager)</module>
+      </existing_modules>
+
+      <external_commands>
+        <command name="ollama">
+          <usage>ollama pull &lt;model&gt; - Download model (AC1)</usage>
+          <usage>ollama list - List installed models</usage>
+          <usage>ollama run &lt;model&gt; - Test inference after model switch</usage>
+        </command>
+      </external_commands>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1" source="Story 0.3 - Unicode Fixes">
+      All subprocess calls to Ollama must use encoding='utf-8' and errors='replace' to prevent Unicode decode errors on Windows. This applies to all ollama pull and ollama run calls in AC1 and AC2.
+    </constraint>
+
+    <constraint id="2" source="Story 0.4 - Model Switching Pattern">
+      Model switching must follow established pattern: (1) download new model, (2) update user_config.yaml, (3) rerun inference test to verify. AC1 and AC2 must follow this pattern.
+    </constraint>
+
+    <constraint id="3" source="Epic 0 - Fallback Chain">
+      Fallback chain is fixed: llama3.1:8b-instruct-q4_K_M → llama3.2:3b → llama3.2:1b → None. AC2 must use this exact chain and prevent infinite loops.
+    </constraint>
+
+    <constraint id="4" source="Story 0.1 - Resource Detection">
+      Model recommendations must use check_system_resources() and recommend_model() from system_diagnostics.py. Do not duplicate this logic in new code. AC1 and AC3 must reuse existing functions.
+    </constraint>
+
+    <constraint id="5" source="Database Schema">
+      Performance metrics must be stored in existing performance_metrics table (schema.py). Do NOT create a new table. Use PerformanceTracker class to log metrics. AC3 must use existing infrastructure.
+    </constraint>
+
+    <constraint id="6" source="Story 0.4 - Remediation Integration">
+      AC2 automatic fallback must NOT conflict with Story 0.4's manual switch_to_smaller_model() remediation option. Both can coexist - manual remediation is user-triggered, automatic is timeout-triggered.
+    </constraint>
+
+    <constraint id="7" source="Configuration Management">
+      user_config.yaml is the source of truth for user-selected model. Main application reads this via load_config() which merges user settings into primary_model. AC1 writes must preserve this pattern.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="load_config" type="function" signature="load_config(config_path: str = None) -> Dict[str, Any]">
+      <location>src/mailmind/utils/config.py:20-102</location>
+      <description>Loads default.yaml and merges with user_config.yaml if it exists. Returns merged config dict.</description>
+      <usage>AC1 calls this to get current model before switching. Returns config dict with ollama.primary_model (from user_config.yaml.ollama.selected_model if present).</usage>
+    </interface>
+
+    <interface name="get_ollama_config" type="function" signature="get_ollama_config(config: Dict[str, Any]) -> Dict[str, Any]">
+      <location>src/mailmind/utils/config.py:128-151</location>
+      <description>Extracts Ollama settings from full config. Returns dict with primary_model, fallback_model, temperature, context_window, etc.</description>
+      <usage>AC1 and AC2 call this after load_config() to get current Ollama model configuration.</usage>
+    </interface>
+
+    <interface name="check_system_resources" type="function" signature="check_system_resources() -> Dict[str, Any]">
+      <location>src/mailmind/utils/system_diagnostics.py</location>
+      <description>Detects system hardware: RAM, CPU, GPU, disk. Returns dict with ram.available_gb, cpu.usage_percent, etc.</description>
+      <usage>AC1 --switch-model command displays resources. AC3 monitors RAM to recommend upgrades when resources improve.</usage>
+    </interface>
+
+    <interface name="recommend_model" type="function" signature="recommend_model(resources: Dict[str, Any]) -> Tuple[str, str, Dict[str, Any]]">
+      <location>src/mailmind/utils/system_diagnostics.py</location>
+      <description>Recommends model based on available RAM. Returns (model_name, reasoning, performance_expectations).</description>
+      <usage>AC1 shows recommendation in --switch-model menu. AC3 uses this to suggest upgrades when RAM increases.</usage>
+    </interface>
+
+    <interface name="PerformanceTracker.log_operation" type="method" signature="log_operation(operation: str, processing_time_ms: int, tokens_per_second: float = None, memory_usage_mb: int = None, model_version: str = None, batch_size: int = 1)">
+      <location>src/mailmind/core/performance_tracker.py:119-170</location>
+      <description>Logs performance metrics to performance_metrics table. Includes model_version, tokens_per_second, processing_time_ms.</description>
+      <usage>AC3 calls this after each inference operation to track model performance. Stores model_version so metrics can be grouped by model.</usage>
+    </interface>
+
+    <interface name="PerformanceTracker.get_metrics_summary" type="method" signature="get_metrics_summary(days: int = 7) -> Dict[str, Any]">
+      <location>src/mailmind/core/performance_tracker.py:171-234</location>
+      <description>Gets average metrics for last N days, grouped by operation. Returns dict with avg_time_ms, avg_tokens_per_sec, etc.</description>
+      <usage>AC3 queries this to get average inference time per model for display in settings UI. Filter by model_version in WHERE clause.</usage>
+    </interface>
+
+    <interface name="subprocess.run" type="function" signature="subprocess.run(args, *, encoding='utf-8', errors='replace', timeout=int, ...)">
+      <location>Python standard library</location>
+      <description>Executes external commands with proper Unicode handling (Story 0.3 requirement).</description>
+      <usage>AC1 uses this for 'ollama pull &lt;model&gt;' downloads. AC2 uses this for model switching subprocess calls. MUST include encoding='utf-8' and errors='replace' parameters.</usage>
+    </interface>
+
+    <interface name="yaml.safe_load / yaml.dump" type="function" signature="yaml.safe_load(stream) / yaml.dump(data, stream)">
+      <location>PyYAML library</location>
+      <description>Reads and writes YAML configuration files.</description>
+      <usage>AC1 writes user_config.yaml with ollama.selected_model after model switch. Must preserve existing config structure.</usage>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Project uses pytest framework with pytest-mock for mocking. Tests are organized in tests/unit/ and tests/integration/ directories. Unit tests mock external dependencies (Ollama, subprocess calls, file I/O). Integration tests use actual Ollama calls where safe. All tests use descriptive names like test_&lt;feature&gt;_&lt;scenario&gt;. Fixtures defined in conftest.py provide common test setup (mock clients, temp directories, config files). Code coverage target is 80%+ measured with pytest-cov.
+    </standards>
+
+    <locations>
+      <location>tests/unit/test_config_user_override.py</location>
+      <location>tests/unit/test_system_diagnostics.py</location>
+      <location>tests/unit/test_ollama_manager.py</location>
+      <location>tests/unit/test_performance_tracker.py</location>
+      <location>tests/integration/test_model_switching.py (new - create for Story 0.5)</location>
+    </locations>
+
+    <ideas>
+      <test_idea ac="AC1" priority="high">
+        Test --switch-model command: Mock subprocess.run for 'ollama pull', mock file writes to user_config.yaml, verify handle_model_switch() displays resources, shows model options, downloads selected model, updates config, and reruns inference test. Test with 1B, 3B, and 8B model selections.
+      </test_idea>
+
+      <test_idea ac="AC1" priority="high">
+        Test --switch-model with no internet: Mock subprocess.run to simulate download failure, verify handle_model_switch() shows error message and does NOT update user_config.yaml.
+      </test_idea>
+
+      <test_idea ac="AC1" priority="medium">
+        Test --switch-model cancellation: Mock user input to return 'c' for cancel, verify no model download and no config change occurs.
+      </test_idea>
+
+      <test_idea ac="AC2" priority="high">
+        Test automatic fallback after 3 timeouts: Mock OllamaManager.test_inference() to timeout 3 times consecutively, verify timeout_count increments, verify user prompt displayed, mock user input 'y', verify _auto_fallback_to_smaller_model() called, verify model switches from 8B→3B.
+      </test_idea>
+
+      <test_idea ac="AC2" priority="high">
+        Test fallback chain edge case (already using 1B): Set current_model to llama3.2:1b, trigger 3 timeouts, verify fallback_chain returns None for llama3.2:1b, verify error message "Already using smallest model - cannot fallback further", verify no infinite loop.
+      </test_idea>
+
+      <test_idea ac="AC2" priority="medium">
+        Test fallback history to prevent loops: Trigger automatic fallback 8B→3B, store fallback event in history, trigger another 3 timeouts on 3B model, verify system does not repeatedly fallback if already fell back recently (within 24 hours).
+      </test_idea>
+
+      <test_idea ac="AC2" priority="medium">
+        Test user declines automatic fallback: Trigger 3 timeouts, mock user input 'n' when prompted "Switch to faster model? (y/n)", verify model does NOT switch, verify timeout_count resets to 0, verify system continues with current model.
+      </test_idea>
+
+      <test_idea ac="AC3" priority="high">
+        Test performance metrics logging: Mock PerformanceTracker.log_operation(), run inference with llama3.2:3b, verify log_operation() called with model_version='llama3.2:3b', processing_time_ms, tokens_per_second. Verify metrics stored in performance_metrics table.
+      </test_idea>
+
+      <test_idea ac="AC3" priority="high">
+        Test average inference time display: Insert sample performance_metrics rows for llama3.2:3b (avg 4.2s) and llama3.2:1b (avg 2.1s), call get_model_performance_stats(), verify returns correct averages grouped by model. Test SQL query filters by model_version.
+      </test_idea>
+
+      <test_idea ac="AC3" priority="medium">
+        Test upgrade recommendation when RAM increases: Initial resources show 6GB available (recommends 3B model), later resources show 12GB available (recommends 8B model), verify system displays "Your RAM is now 12GB - consider upgrading to 8B model" notification. Test recommendation only appears when resources exceed current model requirements.
+      </test_idea>
+
+      <test_idea ac="AC3" priority="low">
+        Test performance metrics persistence across app restarts: Store metrics for llama3.2:3b, restart app (reload config), verify metrics still present in database and correctly displayed in settings UI.
+      </test_idea>
+
+      <test_idea ac="all" priority="high">
+        Integration test full model switching flow: Start with llama3.1:8b in user_config.yaml, run --switch-model command, select llama3.2:3b, verify download, verify config update, verify app restarts with llama3.2:3b as primary_model. Then trigger 3 timeouts, accept automatic fallback, verify switches to llama3.2:1b. Verify all metrics logged correctly.
+      </test_idea>
+
+      <test_idea ac="all" priority="medium">
+        Test Story 0.4 remediation menu compatibility: Verify switch_to_smaller_model() from remediation menu (manual) and automatic fallback (AC2) can coexist without conflicts. Mock both scenarios and verify they use shared logic but different triggers.
+      </test_idea>
+    </ideas>
+  </tests>
+</story-context>

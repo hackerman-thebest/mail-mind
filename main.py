@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from mailmind.utils.config import load_config, get_ollama_config
 from mailmind.core.ollama_manager import OllamaManager, OllamaConnectionError, OllamaModelError
-from mailmind.utils.system_diagnostics import check_system_resources
+from mailmind.utils.system_diagnostics import check_system_resources, recommend_model
 
 # Configure logging
 logging.basicConfig(
@@ -919,6 +919,227 @@ def offer_remediations(diagnostic_results: Optional[Dict[str, Any]] = None) -> b
             continue
 
 
+def handle_model_switch() -> bool:
+    """
+    AC1: Interactive model switching command.
+
+    Displays current model, system resources, and presents model options
+    with recommendations. Downloads new model if needed, updates config,
+    and offers to restart the application.
+
+    Returns:
+        bool: True if model switch was successful, False otherwise
+    """
+    print(f"\n{Fore.BLUE}{'=' * 60}{Style.RESET_ALL}")
+    print(f"{Fore.BLUE}🔄 Model Switching{Style.RESET_ALL}")
+    print(f"{Fore.BLUE}{'=' * 60}{Style.RESET_ALL}\n")
+
+    try:
+        # Step 1: Show current model
+        config = load_config()
+        ollama_config = get_ollama_config(config)
+        current_model = ollama_config.get('primary_model', 'llama3.1:8b-instruct-q4_K_M')
+
+        print(f"{Fore.CYAN}Current Model:{Style.RESET_ALL} {current_model}")
+
+        # Step 2: Check system resources
+        print(f"\n{Fore.CYAN}Checking system resources...{Style.RESET_ALL}")
+        resources = check_system_resources()
+
+        ram_available = resources['ram']['available_gb']
+        ram_total = resources['ram']['total_gb']
+        has_gpu = resources['gpu']['detected']
+        gpu_name = resources['gpu'].get('name', 'None')
+
+        print(f"  RAM: {ram_available:.1f}GB available / {ram_total:.1f}GB total")
+        print(f"  GPU: {Fore.GREEN if has_gpu else Fore.YELLOW}{gpu_name}{Style.RESET_ALL}")
+
+        # Step 3: Get recommendation
+        recommended_model, reasoning, performance = recommend_model(resources)
+
+        print(f"\n{Fore.CYAN}System Recommendation:{Style.RESET_ALL}")
+        print(f"  Model: {Fore.GREEN}{recommended_model}{Style.RESET_ALL}")
+        print(f"  Reason: {reasoning}")
+        print(f"  Expected Speed: {performance['tokens_per_second']}")
+        print(f"  Quality: {performance['quality']}")
+
+        # Step 4: Present model options
+        print(f"\n{Fore.CYAN}{'=' * 60}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Available Models:{Style.RESET_ALL}\n")
+
+        # Model definitions
+        models = {
+            '1': {
+                'name': 'llama3.2:1b',
+                'display': 'llama3.2:1b',
+                'description': 'Fastest, basic quality',
+                'ram_required': '2GB',
+                'size': '~1GB'
+            },
+            '2': {
+                'name': 'llama3.2:3b',
+                'display': 'llama3.2:3b',
+                'description': 'Balanced performance and quality',
+                'ram_required': '4GB',
+                'size': '~2GB'
+            },
+            '3': {
+                'name': 'llama3.1:8b-instruct-q4_K_M',
+                'display': 'llama3.1:8b-instruct-q4_K_M',
+                'description': 'Best quality, slowest',
+                'ram_required': '8GB',
+                'size': '~5GB'
+            }
+        }
+
+        # Display options with recommendation marker
+        for key, model_info in models.items():
+            is_current = model_info['name'] == current_model
+            is_recommended = model_info['name'] == recommended_model
+
+            marker = ""
+            if is_current:
+                marker = f" {Fore.BLUE}[CURRENT]{Style.RESET_ALL}"
+            elif is_recommended:
+                marker = f" {Fore.GREEN}⭐ [RECOMMENDED]{Style.RESET_ALL}"
+
+            print(f"  {Fore.GREEN}{key}{Style.RESET_ALL}. {model_info['display']}{marker}")
+            print(f"     {model_info['description']}")
+            print(f"     RAM required: {model_info['ram_required']}, Size: {model_info['size']}")
+            print()
+
+        # Step 5: Get user choice
+        choice = input(f"{Fore.CYAN}Select model (1/2/3) or 'c' to cancel: {Style.RESET_ALL}").strip().lower()
+
+        if choice == 'c':
+            print(f"\n{Fore.YELLOW}Model switching cancelled{Style.RESET_ALL}")
+            return False
+
+        if choice not in ['1', '2', '3']:
+            print(f"\n{Fore.RED}✗ Invalid choice. Please select 1, 2, 3, or 'c' to cancel.{Style.RESET_ALL}")
+            return False
+
+        selected_model = models[choice]['name']
+
+        # Check if already using this model
+        if selected_model == current_model:
+            print(f"\n{Fore.YELLOW}⚠️  You are already using {selected_model}{Style.RESET_ALL}")
+            return False
+
+        # Confirm switch
+        print(f"\n{Fore.CYAN}Selected:{Style.RESET_ALL} {selected_model}")
+        confirm = input(f"{Fore.CYAN}Proceed with model switch? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if confirm != 'y':
+            print(f"\n{Fore.YELLOW}Model switching cancelled{Style.RESET_ALL}")
+            return False
+
+        # Step 6: Check if model is already downloaded
+        print(f"\n{Fore.CYAN}Checking if model is already downloaded...{Style.RESET_ALL}")
+        result = subprocess.run(
+            ['ollama', 'list'],
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            timeout=10
+        )
+
+        model_exists = False
+        if result.returncode == 0:
+            # Check if model is in the list
+            model_exists = selected_model in result.stdout
+
+        # Step 7: Download model if needed
+        if not model_exists:
+            print(f"{Fore.CYAN}Model not found locally. Downloading {selected_model}...{Style.RESET_ALL}")
+            print(f"This may take several minutes depending on your internet connection.\n")
+
+            download_result = subprocess.run(
+                ['ollama', 'pull', selected_model],
+                encoding='utf-8',
+                errors='replace',
+                timeout=900  # 15 minute timeout for large models
+            )
+
+            if download_result.returncode != 0:
+                print(f"\n{Fore.RED}✗ Failed to download model{Style.RESET_ALL}")
+                print(f"Please check your internet connection and try again.")
+                return False
+
+            print(f"\n{Fore.GREEN}✓ Model downloaded successfully{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.GREEN}✓ Model already downloaded{Style.RESET_ALL}")
+
+        # Step 8: Update user_config.yaml
+        print(f"\n{Fore.CYAN}Updating configuration...{Style.RESET_ALL}")
+        config_dir = Path(__file__).parent / "config"
+        user_config_path = config_dir / "user_config.yaml"
+
+        user_config = {}
+        if user_config_path.exists():
+            with open(user_config_path, 'r', encoding='utf-8') as f:
+                user_config = yaml.safe_load(f) or {}
+
+        if 'ollama' not in user_config:
+            user_config['ollama'] = {}
+
+        # Update both selected_model and primary_model for compatibility
+        user_config['ollama']['selected_model'] = selected_model
+        user_config['ollama']['primary_model'] = selected_model
+
+        # Determine model size for tracking
+        if '8b' in selected_model.lower():
+            user_config['ollama']['model_size'] = 'large'
+        elif '3b' in selected_model.lower():
+            user_config['ollama']['model_size'] = 'medium'
+        else:
+            user_config['ollama']['model_size'] = 'small'
+
+        with open(user_config_path, 'w', encoding='utf-8') as f:
+            yaml.dump(user_config, f, default_flow_style=False)
+
+        print(f"{Fore.GREEN}✓ Configuration updated{Style.RESET_ALL}")
+
+        # Step 9: Test the new model
+        print(f"\n{Fore.CYAN}Testing new model...{Style.RESET_ALL}")
+        test_result = subprocess.run(
+            ['ollama', 'run', selected_model],
+            input='Test',
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            timeout=45
+        )
+
+        if test_result.returncode == 0 and test_result.stdout:
+            print(f"{Fore.GREEN}✓ Model test passed!{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.YELLOW}⚠️  Model test had issues, but configuration was updated{Style.RESET_ALL}")
+
+        # Step 10: Success message and restart option
+        print(f"\n{Fore.BLUE}{'=' * 60}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}✓ Model switch successful!{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}{'=' * 60}{Style.RESET_ALL}\n")
+        print(f"New model: {Fore.CYAN}{selected_model}{Style.RESET_ALL}")
+        print(f"\nThe new model will be used the next time you run MailMind.")
+        print(f"\nTo use the new model now, restart MailMind:")
+        print(f"  {Fore.CYAN}python main.py{Style.RESET_ALL}\n")
+
+        return True
+
+    except subprocess.TimeoutExpired:
+        print(f"\n{Fore.RED}✗ Operation timed out{Style.RESET_ALL}")
+        return False
+    except FileNotFoundError:
+        print(f"\n{Fore.RED}✗ Ollama command not found. Please install Ollama first.{Style.RESET_ALL}")
+        return False
+    except Exception as e:
+        print(f"\n{Fore.RED}✗ Error: {e}{Style.RESET_ALL}")
+        return False
+
+
 def main():
     """
     Main application entry point.
@@ -927,12 +1148,18 @@ def main():
 
     Command-line options:
         --diagnose    Run Ollama diagnostics and exit
+        --switch-model    Interactive model switching
     """
     # Check for diagnostic mode
     if '--diagnose' in sys.argv or '--diagnostics' in sys.argv:
         logger.info("Running in diagnostic mode...")
         logger.info("")
         success = run_ollama_diagnostics()
+        return 0 if success else 1
+
+    # Check for model switching mode (AC1: Story 0.5)
+    if '--switch-model' in sys.argv:
+        success = handle_model_switch()
         return 0 if success else 1
 
     logger.info("Starting MailMind...")
