@@ -9,18 +9,56 @@
 
 ## Epic Overview
 
-MailMind is a Sovereign AI Email Assistant - a privacy-first desktop application that provides AI-powered email intelligence without sending data to the cloud. The MVP consists of two main epics:
+MailMind is a Sovereign AI Email Assistant - a privacy-first desktop application that provides AI-powered email intelligence without sending data to the cloud. The MVP consists of four main epics:
 
+0. **Epic 0: Setup & Reliability** - Build bulletproof installation with automatic resource detection, model selection, and self-healing diagnostics (Week 0-1, foundational)
 1. **Epic 1: AI-Powered Email Intelligence** - Build the local LLM engine for real-time email analysis, response generation, and smart categorization
 2. **Epic 2: Desktop Application & User Experience** - Create the Windows desktop application with Outlook integration, modern UI, and seamless onboarding
+3. **Epic 3: Security & MVP Readiness** - Address security vulnerabilities and align marketing with implementation reality
 
-**Development Timeline:** 8 weeks MVP
+**Development Timeline:** 9 weeks MVP (1 week Epic 0 + 8 weeks main epics)
 **Target Users:** Privacy-conscious professionals (developers, executives, journalists, lawyers)
 **Key Differentiator:** Absolute privacy through local AI processing with one-time purchase model
 
 ---
 
 ## Epic Details
+
+### Epic 0: Setup & Reliability
+
+**Epic Goal:** Build a bulletproof installation and diagnostic system that automatically detects system resources, selects appropriate AI models, and provides automated troubleshooting for common issues - ensuring 90%+ of users can successfully set up MailMind without manual intervention.
+
+**Value Proposition:** Ensure users can actually install and run the product before they see the main features - addressing critical real-world blockers discovered during testing.
+
+**Success Criteria:**
+- Setup success rate >90% (currently ~30%)
+- Model selection accuracy >95% (users get models that work on their systems)
+- Diagnostic auto-fix rate >80% (issues resolved without manual steps)
+- Time to first success <5 minutes
+- Zero Unicode errors in diagnostics
+
+**Key Stories:**
+- Story 0.1: System Resource Detection & Model Recommendation (3 pts)
+- Story 0.2: Interactive Model Selection in Setup Wizard (5 pts)
+- Story 0.3: Unicode Error Fixes & Robust Subprocess Handling (2 pts)
+- Story 0.4: Interactive Diagnostic Remediation Menu (5 pts)
+- Story 0.5: Dynamic Model Loading & Runtime Switching (3 pts) - Nice to have
+
+**Total Epic Points:** 18 points (excluding 0.5)
+**Critical Path Points:** 10 points (Stories 0.1, 0.2, 0.3)
+
+**Why This Epic Exists:**
+Real-world testing revealed installation failures on 8GB RAM systems:
+- 45-second timeout errors (model too large for system)
+- Unicode decode crashes (Windows encoding issues)
+- No resource-aware setup (assumes all users have 16GB+ RAM)
+- Manual troubleshooting required (poor UX)
+
+Without this epic, 50-70% of users will fail during setup and abandon the product.
+
+**Full Epic Document:** [Epic_0_Setup_Reliability.md](Epic_0_Setup_Reliability.md)
+
+---
 
 ### Epic 1: AI-Powered Email Intelligence
 
@@ -651,8 +689,15 @@ As a product owner, I need marketing claims aligned with actual security impleme
 
 ## Story Summary
 
-**Total Stories:** 16
-**Total Story Points:** 87
+**Total Stories:** 21 (including Epic 0)
+**Total Story Points:** 105 (including Epic 0)
+
+### Epic 0: Setup & Reliability (5 stories, 18 points)
+- Story 0.1: System Resource Detection & Model Recommendation (3 pts) - P0
+- Story 0.2: Interactive Model Selection in Setup Wizard (5 pts) - P0
+- Story 0.3: Unicode Error Fixes & Robust Subprocess Handling (2 pts) - P0
+- Story 0.4: Interactive Diagnostic Remediation Menu (5 pts) - P1
+- Story 0.5: Dynamic Model Loading & Runtime Switching (3 pts) - P2
 
 ### Epic 1: AI-Powered Email Intelligence (6 stories, 36 points)
 - Story 1.1: Ollama Integration & Model Setup (5 pts) - P0
@@ -682,25 +727,32 @@ As a product owner, I need marketing claims aligned with actual security impleme
 
 **Recommended Development Order:**
 
-**Sprint 1 (Weeks 1-2): Foundation**
-1. Story 2.2: SQLite Database & Caching Layer
-2. Story 1.1: Ollama Integration & Model Setup
-3. Story 2.1: Outlook Integration (basic read-only)
+**Sprint 0 (Week 0-1): Setup & Reliability** ⚡ CRITICAL PATH
+1. Story 0.3: Unicode Error Fixes (2 pts) - Quick win, unblocks diagnostics
+2. Story 0.1: System Resource Detection (3 pts) - Enables smart model selection
+3. Story 0.2: Interactive Model Selection (5 pts) - Improves setup UX
+4. Story 0.4: Interactive Remediation (5 pts) - Automated troubleshooting
 
-**Sprint 2 (Weeks 3-4): Core AI**
-4. Story 1.2: Email Preprocessing Pipeline
-5. Story 1.3: Real-Time Analysis Engine
-6. Story 1.4: Priority Classification System
+**Sprint 1 (Weeks 1-2): Foundation**
+5. Story 2.2: SQLite Database & Caching Layer
+6. Story 1.1: Ollama Integration & Model Setup
+7. Story 2.1: Outlook Integration (basic read-only)
+
+**Sprint 2 (Weeks 2-4): Core AI**
+8. Story 1.2: Email Preprocessing Pipeline
+9. Story 1.3: Real-Time Analysis Engine
+10. Story 1.4: Priority Classification System
 
 **Sprint 3 (Weeks 5-6): User Interface**
-7. Story 2.3: CustomTkinter UI Framework
-8. Story 1.5: Response Generation Assistant
-9. Story 2.4: Settings & Configuration System
+11. Story 2.3: CustomTkinter UI Framework
+12. Story 1.5: Response Generation Assistant
+13. Story 2.4: Settings & Configuration System
 
-**Sprint 4 (Weeks 7-8): Polish & Release**
-10. Story 1.6: Performance Optimization & Caching
-11. Story 2.5: Hardware Profiling & Onboarding Wizard
-12. Story 2.6: Error Handling, Logging & Installer
+**Sprint 4 (Weeks 7-9): Polish & Release**
+14. Story 1.6: Performance Optimization & Caching
+15. Story 2.5: Hardware Profiling & Onboarding Wizard
+16. Story 2.6: Error Handling, Logging & Installer
+17. Story 3.1-3.4: Security & MVP Readiness (4 stories)
 
 ---
 
