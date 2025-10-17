@@ -1,0 +1,495 @@
+<story-context id="story-0.4-interactive-diagnostic-remediation-menu" v="1.0">
+  <metadata>
+    <epicId>0</epicId>
+    <storyId>0.4</storyId>
+    <title>Interactive Diagnostic Remediation Menu</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-17</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-0.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user experiencing setup issues</asA>
+    <iWant>an interactive menu that offers automated fixes</iWant>
+    <soThat>I can resolve problems without reading documentation or seeking support</soThat>
+    <tasks>
+      <task id="1" ac="1">Core Remediation Framework - Create offer_remediations() function, implement interactive menu with options 1-6, add menu loop logic, integrate with run_ollama_diagnostics()</task>
+      <task id="2" ac="2">Option 1 - Switch to Smaller Model - Detect current model, implement fallback chain (8B→3B→1B), execute ollama pull, update config, rerun test</task>
+      <task id="3" ac="2">Option 2 - Re-download Current Model - Add confirmation prompt, execute ollama rm and pull, verify download, rerun test</task>
+      <task id="4" ac="2">Option 3 - Show System Resources - Reuse check_system_resources() from Story 0.1, display formatted report with bottleneck highlighting</task>
+      <task id="5" ac="2">Option 4 - Show Ollama Logs - Auto-detect log location by platform, read last 50 lines, highlight errors/warnings</task>
+      <task id="6" ac="2">Option 5 - Generate Support Report - Collect system resources, Ollama version, model list, logs, diagnostics, sanitize and save</task>
+      <task id="7" ac="1,2">Option 6 - Exit - Return from menu, display manual troubleshooting guide</task>
+      <task id="8" ac="3">User Experience Enhancements - Add color-coded output using colorama, progress indicators, visual separators, emojis</task>
+      <task id="9" ac="1,2,3">Integration and Testing - Full flow testing, menu loop behavior, error handling, Windows 10/11 testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <description>Remediation Menu on Diagnostic Failure - When diagnostics fail, automatically show remediation menu with numbered options (1-6), accept user input, execute selected remediation, show progress/results, loop back if remediation fails, and provide option to exit</description>
+      <validation>
+        - Menu appears automatically after diagnostic failure
+        - 6 options displayed with clear numbers and descriptions
+        - User input validation works (1-6, invalid input handling)
+        - Menu loops back after each action unless resolved or user exits
+        - Exit option (6) returns to command prompt cleanly
+      </validation>
+    </criterion>
+    <criterion id="AC2">
+      <description>Automated Remediation Actions - Implement 6 remediation options: (1) Switch to Smaller Model for timeouts, (2) Re-download Current Model to fix corruption, (3) Show System Resources with bottleneck highlighting, (4) Show Ollama Logs with error highlighting, (5) Generate Support Report with all diagnostic data, (6) Exit with manual troubleshooting guide</description>
+      <validation>
+        - Option 1: Detects current model, recommends smaller size, downloads and switches, reruns test
+        - Option 2: Confirms with user, removes and re-downloads model, verifies success, reruns test
+        - Option 3: Shows detailed resource report with RAM/CPU/GPU/Disk, highlights bottlenecks (>90% usage)
+        - Option 4: Auto-detects platform-specific log location, shows last 50 lines with red highlights for errors
+        - Option 5: Collects all diagnostic data, sanitizes sensitive info, saves to timestamped file
+        - Option 6: Exits cleanly and displays path to TROUBLESHOOTING_OLLAMA.md
+      </validation>
+    </criterion>
+    <criterion id="AC3">
+      <description>User Experience - Clear visual formatting with separators, color-coded output (errors=red, success=green, info=blue), progress indicators for long operations, confirmation prompts for destructive actions, and success/failure feedback after each remediation</description>
+      <validation>
+        - Visual separators (=== lines) between sections
+        - Colors work on Windows cmd.exe and PowerShell (using colorama)
+        - Progress indicators shown for: model download, log reading, support report generation
+        - Confirmation prompt before destructive actions (model removal)
+        - Clear success (✓) or failure (✗) feedback after each remediation
+        - Emojis used appropriately (🔧 menu, ✓ success, ✗ failure, ⚠️ warnings)
+      </validation>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/Epic_0_Setup_Reliability.md</path>
+        <title>Epic 0: Setup & Reliability</title>
+        <section>Story 0.4: Interactive Diagnostic Remediation Menu</section>
+        <snippet>Full story requirements: AC1 (Remediation Menu), AC2 (6 Options), AC3 (UX). Model fallback chain: 8B→3B→1B. Ollama log locations by platform. Color-coded output using colorama. Support report sanitization requirements.</snippet>
+        <reason>Primary source for story requirements, acceptance criteria, implementation details, and testing standards</reason>
+      </doc>
+      <doc>
+        <path>docs/epic-stories.md</path>
+        <title>MailMind - Epic Breakdown</title>
+        <section>Epic 0: Setup & Reliability</section>
+        <snippet>Epic 0 goal: Build bulletproof installation with 90%+ setup success rate. Story 0.4: Interactive Diagnostic Remediation Menu (5 pts, P1). Success metric: 80% auto-fix rate. Dependencies: Story 0.1 (Resource Detection), Story 0.3 (Unicode Fixes).</snippet>
+        <reason>Epic context, success metrics, story prioritization, and dependencies</reason>
+      </doc>
+      <doc>
+        <path>TROUBLESHOOTING_OLLAMA.md</path>
+        <title>Ollama Troubleshooting Guide</title>
+        <section>Manual troubleshooting steps</section>
+        <snippet>Referenced in Exit option (Option 6) as manual fallback when automated remediation doesn't resolve issues</snippet>
+        <reason>Manual troubleshooting reference for Option 6 exit</reason>
+      </doc>
+      <doc>
+        <path>docs/stories/story-0.1.md</path>
+        <title>Story 0.1: System Resource Detection & Model Recommendation</title>
+        <section>check_system_resources() function</section>
+        <snippet>Detects RAM, CPU, GPU, Disk. Returns structured dict. Completed Story 0.1 implementation provides check_system_resources() function to reuse in Option 3.</snippet>
+        <reason>Dependency - Story 0.4 reuses check_system_resources() for Option 3</reason>
+      </doc>
+      <doc>
+        <path>docs/stories/story-0.3.md</path>
+        <title>Story 0.3: Unicode Error Fixes & Robust Subprocess Handling</title>
+        <section>Subprocess encoding requirements</section>
+        <snippet>All subprocess calls MUST use: encoding='utf-8', errors='replace' to prevent UnicodeDecodeError crashes on Windows. Story 0.3 established this pattern.</snippet>
+        <reason>Critical constraint - all subprocess calls in Story 0.4 must follow Story 0.3 pattern</reason>
+      </doc>
+      <doc>
+        <path>docs/stories/story-0.2.md</path>
+        <title>Story 0.2: Interactive Model Selection in Setup Wizard</title>
+        <section>user_config.yaml structure</section>
+        <snippet>User model selection stored in config/user_config.yaml with keys: ollama.selected_model, ollama.model_size, system.ram_gb. Story 0.4 reads/writes this file for model switching.</snippet>
+        <reason>Configuration file format and model selection persistence from Story 0.2</reason>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.py</path>
+        <kind>function</kind>
+        <symbol>run_ollama_diagnostics()</symbol>
+        <lines>30-191</lines>
+        <snippet>
+def run_ollama_diagnostics():
+    # ... 4 diagnostic tests ...
+    if all_passed:
+        logger.info("✅ All diagnostics passed!")
+    else:
+        logger.error("❌ Some diagnostics failed.")
+        # NO REMEDIATION OFFERED - THIS IS WHERE STORY 0.4 ADDS offer_remediations()
+    return all_passed
+        </snippet>
+        <reason>Integration point - Story 0.4 enhances this function to call offer_remediations() when diagnostics fail</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/utils/system_diagnostics.py</path>
+        <kind>function</kind>
+        <symbol>check_system_resources()</symbol>
+        <lines>17-67</lines>
+        <snippet>
+def check_system_resources() -> Dict[str, Any]:
+    """Comprehensive system resource check. Returns dict with ram, cpu, gpu, disk, platform."""
+    # ... RAM, CPU, GPU, Disk checks ...
+    return resources
+        </snippet>
+        <reason>Reuse in Option 3 - Shows detailed system resources with bottleneck highlighting</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/utils/system_diagnostics.py</path>
+        <kind>function</kind>
+        <symbol>recommend_model(resources)</symbol>
+        <lines>70-112</lines>
+        <snippet>
+def recommend_model(resources: Dict[str, Any]) -> Tuple[str, str, Dict[str, Any]]:
+    """Recommend appropriate model based on system resources. Returns (model_name, reasoning, expected_performance)."""
+    available_ram = resources['ram']['available_gb']
+    # Model selection logic: >=10GB → 8B, >=6GB → 3B, else 1B
+    return model, reasoning, performance
+        </snippet>
+        <reason>Reuse in Option 1 - Provides model recommendation logic for fallback chain</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/utils/system_diagnostics.py</path>
+        <kind>function</kind>
+        <symbol>format_resource_report(resources)</symbol>
+        <lines>292-342</lines>
+        <snippet>
+def format_resource_report(resources: Dict[str, Any]) -> str:
+    """Format system resources as a human-readable report."""
+    # ... Formats RAM, CPU, GPU, Disk with separators ...
+    return '\n'.join(lines)
+        </snippet>
+        <reason>Reuse in Option 3 - Base formatting for resource display (Story 0.4 adds bottleneck highlighting)</reason>
+      </artifact>
+      <artifact>
+        <path>src/mailmind/utils/config.py</path>
+        <kind>function</kind>
+        <symbol>load_config()</symbol>
+        <lines>20-102</lines>
+        <snippet>
+def load_config(config_path: str = None) -> Dict[str, Any]:
+    """Load configuration from YAML file. Loads default.yaml and merges with user_config.yaml if exists."""
+    # ... Loads and merges config files ...
+    return config
+        </snippet>
+        <reason>Read config in Option 1 - Detects current configured model from user_config.yaml</reason>
+      </artifact>
+      <artifact>
+        <path>config/user_config.yaml</path>
+        <kind>config</kind>
+        <symbol>ollama.selected_model</symbol>
+        <lines>N/A</lines>
+        <snippet>
+ollama:
+  selected_model: "llama3.2:3b"
+  model_size: "medium"
+system:
+  ram_gb: 8.0
+        </snippet>
+        <reason>Read/write in Option 1 - Stores user-selected model, updated when switching models</reason>
+      </artifact>
+      <artifact>
+        <path>requirements.txt</path>
+        <kind>dependency-manifest</kind>
+        <symbol>N/A</symbol>
+        <lines>1-35</lines>
+        <snippet>
+ollama>=0.1.6
+psutil>=5.9.0  # System resource monitoring
+pyyaml>=6.0
+# Story 0.4 needs to add: colorama>=0.4.6
+        </snippet>
+        <reason>Dependency list - Story 0.4 adds colorama>=0.4.6 for cross-platform colored output</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="colorama" version=">=0.4.6" purpose="Cross-platform colored terminal output (errors=red, success=green, info=blue, warnings=yellow)" new="true" />
+        <package name="psutil" version=">=5.9.0" purpose="System resource monitoring (already present from Story 0.1)" new="false" />
+        <package name="pyyaml" version=">=6.0" purpose="YAML config file parsing (already present)" new="false" />
+        <package name="ollama" version=">=0.1.6" purpose="Ollama Python client for model management (already present)" new="false" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="1" type="encoding" severity="critical">
+      <description>All subprocess calls MUST use encoding='utf-8' and errors='replace' per Story 0.3</description>
+      <rationale>Prevents UnicodeDecodeError crashes on Windows when Ollama outputs UTF-8 (emojis, special characters)</rationale>
+      <pattern>
+subprocess.run(
+    [...],
+    encoding='utf-8',
+    errors='replace',
+    ...
+)
+      </pattern>
+    </constraint>
+    <constraint id="2" type="architecture" severity="high">
+      <description>Add 6 new functions to main.py, keep functions focused and testable</description>
+      <rationale>Modular design enables independent testing of each remediation option</rationale>
+      <functions>
+        - offer_remediations(diagnostic_results: dict) -> bool (main menu controller)
+        - switch_to_smaller_model() -> bool (Option 1)
+        - repull_current_model() -> bool (Option 2)
+        - show_system_resources() (Option 3)
+        - show_ollama_logs() (Option 4)
+        - generate_support_report() -> str (Option 5)
+      </functions>
+    </constraint>
+    <constraint id="3" type="security" severity="high">
+      <description>Support report MUST sanitize sensitive data: passwords, API keys, email addresses, user paths</description>
+      <rationale>Prevents accidental exposure of sensitive information in support reports shared with third parties</rationale>
+      <sanitization>
+        - Replace Path.home() with <user_home>
+        - Remove email patterns: \b[\w.-]+@[\w.-]+\.\w+\b
+        - Remove API keys (long hex): \b[0-9a-f]{32,}\b
+        - Remove database passwords
+      </sanitization>
+    </constraint>
+    <constraint id="4" type="ux" severity="medium">
+      <description>Use colorama for cross-platform colored output, initialize with init() for Windows compatibility</description>
+      <rationale>Native ANSI escape codes don't work on Windows cmd.exe, colorama provides compatibility layer</rationale>
+      <pattern>
+from colorama import Fore, Style, init
+init()  # Initialize for Windows
+
+print(f"{Fore.RED}Error{Style.RESET_ALL}")
+print(f"{Fore.GREEN}Success{Style.RESET_ALL}")
+print(f"{Fore.YELLOW}Warning{Style.RESET_ALL}")
+print(f"{Fore.BLUE}Info{Style.RESET_ALL}")
+      </pattern>
+    </constraint>
+    <constraint id="5" type="compatibility" severity="medium">
+      <description>Ollama log location varies by platform: Windows=%LOCALAPPDATA%\Ollama\logs\, macOS=~/.ollama/logs/, Linux=~/.ollama/logs/</description>
+      <rationale>Option 4 must auto-detect correct log location based on platform.system()</rationale>
+      <pattern>
+log_paths = {
+    'Windows': Path(os.getenv('LOCALAPPDATA')) / 'Ollama' / 'logs' / 'server.log',
+    'Darwin': Path.home() / '.ollama' / 'logs' / 'server.log',
+    'Linux': Path.home() / '.ollama' / 'logs' / 'server.log'
+}
+      </pattern>
+    </constraint>
+    <constraint id="6" type="performance" severity="low">
+      <description>Menu display <1s, resource check <5s, log reading <2s, support report <5s</description>
+      <rationale>Interactive menu should feel responsive, long operations show progress indicators</rationale>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>offer_remediations</name>
+      <kind>function</kind>
+      <signature>def offer_remediations(diagnostic_results: dict) -> bool</signature>
+      <description>Main remediation menu controller. Displays menu, accepts user input, executes selected option, loops until resolved or user exits.</description>
+      <parameters>
+        <param name="diagnostic_results" type="dict">Results from run_ollama_diagnostics() containing test outcomes</param>
+      </parameters>
+      <returns>bool: True if issue was resolved, False otherwise</returns>
+      <integration>Called from main.py run_ollama_diagnostics() when all_passed == False</integration>
+    </interface>
+    <interface>
+      <name>switch_to_smaller_model</name>
+      <kind>function</kind>
+      <signature>def switch_to_smaller_model() -> bool</signature>
+      <description>Option 1: Detects current model, recommends next smaller size (8B→3B→1B), downloads, updates config, reruns test.</description>
+      <returns>bool: True if switch succeeded and test passed, False otherwise</returns>
+      <fallback_chain>
+        {
+          'llama3.1:8b-instruct-q4_K_M': 'llama3.2:3b',
+          'llama3.2:3b': 'llama3.2:1b',
+          'llama3.2:1b': None  # No smaller model available
+        }
+      </fallback_chain>
+    </interface>
+    <interface>
+      <name>repull_current_model</name>
+      <kind>function</kind>
+      <signature>def repull_current_model() -> bool</signature>
+      <description>Option 2: Removes and re-downloads current model to fix corruption. Confirms with user, executes ollama rm, then ollama pull, reruns test.</description>
+      <returns>bool: True if re-download succeeded and test passed, False otherwise</returns>
+      <confirmation>Must prompt user: "This will remove and re-download the model. Continue? (y/n)"</confirmation>
+    </interface>
+    <interface>
+      <name>show_system_resources</name>
+      <kind>function</kind>
+      <signature>def show_system_resources() -> None</signature>
+      <description>Option 3: Displays detailed system resource report with bottleneck highlighting. Reuses check_system_resources() from Story 0.1.</description>
+      <display>
+        - RAM: Total, Used, Available (highlight red if >90% used)
+        - CPU: Cores, Current Usage
+        - GPU: Detected, Name, VRAM
+        - Disk: Total, Free, Model Storage Location
+        - High-memory processes (Chrome, Outlook, etc.)
+        - Actionable recommendations ("Close Chrome to free 4GB RAM")
+      </display>
+    </interface>
+    <interface>
+      <name>show_ollama_logs</name>
+      <kind>function</kind>
+      <signature>def show_ollama_logs() -> None</signature>
+      <description>Option 4: Auto-detects platform-specific log location, reads last 50 lines, highlights errors/warnings in red.</description>
+      <log_locations>
+        - Windows: %LOCALAPPDATA%\Ollama\logs\server.log
+        - macOS: ~/.ollama/logs/server.log
+        - Linux: ~/.ollama/logs/server.log
+      </log_locations>
+      <features>
+        - Parse and highlight ERROR/WARNING lines in red
+        - Handle file not found gracefully
+        - Offer to save full logs to file
+      </features>
+    </interface>
+    <interface>
+      <name>generate_support_report</name>
+      <kind>function</kind>
+      <signature>def generate_support_report() -> str</signature>
+      <description>Option 5: Collects all diagnostic data, sanitizes sensitive info, saves to timestamped file, returns file path.</description>
+      <collects>
+        - System resources (from check_system_resources())
+        - Ollama version (ollama --version)
+        - Model list (ollama list)
+        - Last 100 lines of Ollama logs
+        - Diagnostic test results
+        - Sanitized config files (user_config.yaml, default.yaml)
+      </collects>
+      <sanitizes>
+        - User paths → <user_home>
+        - Email addresses → <email>
+        - API keys (long hex) → <redacted>
+        - Database passwords → <redacted>
+      </sanitizes>
+      <output>support_report_<timestamp>.txt in current directory</output>
+      <returns>str: Path to saved support report file</returns>
+    </interface>
+    <interface>
+      <name>check_system_resources</name>
+      <kind>function (existing)</kind>
+      <signature>def check_system_resources() -> Dict[str, Any]</signature>
+      <description>From Story 0.1. Returns structured dict with ram, cpu, gpu, disk, platform. Reused by Option 3.</description>
+      <source>src/mailmind/utils/system_diagnostics.py</source>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual testing required for Story 0.4 due to interactive nature and platform-specific behavior. Testing framework: pytest for unit tests where possible, manual testing for integration and UX. Test on Windows 10/11 (cmd.exe and PowerShell). Verify color output, menu navigation, subprocess calls, config file read/write. Success metric: 80%+ of diagnostic failures resolved via menu options (user testing).
+    </standards>
+    <locations>
+      tests/unit/ - Unit tests for individual functions (if testable in isolation)
+      tests/integration/ - Integration tests for full remediation flow
+      Manual testing required for: menu navigation, color output, subprocess execution, user prompts
+    </locations>
+    <ideas>
+      <!-- AC1: Remediation Menu on Diagnostic Failure -->
+      <test ac="AC1" id="1">Test offer_remediations() displays menu with 6 numbered options</test>
+      <test ac="AC1" id="2">Test menu accepts valid input (1-6) and executes corresponding option</test>
+      <test ac="AC1" id="3">Test menu rejects invalid input (0, 7, abc, empty) and re-prompts</test>
+      <test ac="AC1" id="4">Test menu loops back after option completes (unless resolved or exit)</test>
+      <test ac="AC1" id="5">Test Option 6 (Exit) returns cleanly and displays troubleshooting guide path</test>
+      <test ac="AC1" id="6">Test integration: run_ollama_diagnostics() calls offer_remediations() when all_passed=False</test>
+      <test ac="AC1" id="7">Test menu does NOT appear when diagnostics pass (all_passed=True)</test>
+
+      <!-- AC2: Automated Remediation Actions -->
+      <!-- Option 1: Switch to Smaller Model -->
+      <test ac="AC2" id="8">Test switch_to_smaller_model() detects current model from user_config.yaml</test>
+      <test ac="AC2" id="9">Test fallback chain: 8B → 3B (downloads 3B, updates config, reruns test)</test>
+      <test ac="AC2" id="10">Test fallback chain: 3B → 1B (downloads 1B, updates config, reruns test)</test>
+      <test ac="AC2" id="11">Test fallback chain: 1B → None (displays "Already using smallest model")</test>
+      <test ac="AC2" id="12">Test switch_to_smaller_model() executes ollama pull with progress display</test>
+      <test ac="AC2" id="13">Test switch_to_smaller_model() updates config/user_config.yaml correctly</test>
+      <test ac="AC2" id="14">Test switch_to_smaller_model() reruns inference test after switch</test>
+      <test ac="AC2" id="15">Test switch_to_smaller_model() returns True on success, False on failure</test>
+
+      <!-- Option 2: Re-download Current Model -->
+      <test ac="AC2" id="16">Test repull_current_model() displays confirmation prompt</test>
+      <test ac="AC2" id="17">Test repull_current_model() aborts if user declines (n)</test>
+      <test ac="AC2" id="18">Test repull_current_model() executes ollama rm <model> on confirmation</test>
+      <test ac="AC2" id="19">Test repull_current_model() executes ollama pull <model> after rm</test>
+      <test ac="AC2" id="20">Test repull_current_model() verifies download succeeded</test>
+      <test ac="AC2" id="21">Test repull_current_model() reruns inference test after re-download</test>
+      <test ac="AC2" id="22">Test repull_current_model() returns True on success, False on failure</test>
+      <test ac="AC2" id="23">Test repull_current_model() with corrupted model (mock scenario)</test>
+
+      <!-- Option 3: Show System Resources -->
+      <test ac="AC2" id="24">Test show_system_resources() calls check_system_resources() from Story 0.1</test>
+      <test ac="AC2" id="25">Test show_system_resources() displays RAM (Total, Used, Available, %)</test>
+      <test ac="AC2" id="26">Test show_system_resources() displays CPU (Cores, Usage %)</test>
+      <test ac="AC2" id="27">Test show_system_resources() displays GPU (Detected, Name, VRAM)</test>
+      <test ac="AC2" id="28">Test show_system_resources() displays Disk (Total, Free)</test>
+      <test ac="AC2" id="29">Test show_system_resources() highlights bottlenecks in red (RAM >90%)</test>
+      <test ac="AC2" id="30">Test show_system_resources() detects high-memory processes (Chrome, Outlook)</test>
+      <test ac="AC2" id="31">Test show_system_resources() provides actionable recommendations</test>
+      <test ac="AC2" id="32">Test show_system_resources() on low-RAM system (4GB available)</test>
+
+      <!-- Option 4: Show Ollama Logs -->
+      <test ac="AC2" id="33">Test show_ollama_logs() auto-detects Windows log location (%LOCALAPPDATA%)</test>
+      <test ac="AC2" id="34">Test show_ollama_logs() auto-detects macOS log location (~/.ollama/logs/)</test>
+      <test ac="AC2" id="35">Test show_ollama_logs() auto-detects Linux log location (~/.ollama/logs/)</test>
+      <test ac="AC2" id="36">Test show_ollama_logs() reads last 50 lines of server.log</test>
+      <test ac="AC2" id="37">Test show_ollama_logs() highlights ERROR lines in red</test>
+      <test ac="AC2" id="38">Test show_ollama_logs() highlights WARNING lines in red</test>
+      <test ac="AC2" id="39">Test show_ollama_logs() handles file not found gracefully</test>
+      <test ac="AC2" id="40">Test show_ollama_logs() offers to save full logs to file</test>
+
+      <!-- Option 5: Generate Support Report -->
+      <test ac="AC2" id="41">Test generate_support_report() collects system resources</test>
+      <test ac="AC2" id="42">Test generate_support_report() collects Ollama version (ollama --version)</test>
+      <test ac="AC2" id="43">Test generate_support_report() collects model list (ollama list)</test>
+      <test ac="AC2" id="44">Test generate_support_report() collects last 100 lines of Ollama logs</test>
+      <test ac="AC2" id="45">Test generate_support_report() collects diagnostic test results</test>
+      <test ac="AC2" id="46">Test generate_support_report() sanitizes user paths (Path.home() → <user_home>)</test>
+      <test ac="AC2" id="47">Test generate_support_report() sanitizes email addresses (email@example.com → <email>)</test>
+      <test ac="AC2" id="48">Test generate_support_report() sanitizes API keys (long hex → <redacted>)</test>
+      <test ac="AC2" id="49">Test generate_support_report() formats report with clear sections</test>
+      <test ac="AC2" id="50">Test generate_support_report() saves to support_report_<timestamp>.txt</test>
+      <test ac="AC2" id="51">Test generate_support_report() displays file location</test>
+      <test ac="AC2" id="52">Test generate_support_report() offers clipboard copy option</test>
+
+      <!-- AC3: User Experience -->
+      <test ac="AC3" id="53">Test menu displays visual separators (=== lines) between sections</test>
+      <test ac="AC3" id="54">Test colorama initialization works on Windows cmd.exe</test>
+      <test ac="AC3" id="55">Test colorama initialization works on Windows PowerShell</test>
+      <test ac="AC3" id="56">Test red color (Fore.RED) for errors</test>
+      <test ac="AC3" id="57">Test green color (Fore.GREEN) for success (✓)</test>
+      <test ac="AC3" id="58">Test yellow color (Fore.YELLOW) for warnings (⚠️)</test>
+      <test ac="AC3" id="59">Test blue color (Fore.BLUE) for info (ℹ️)</test>
+      <test ac="AC3" id="60">Test progress indicator shown during model download (ollama pull)</test>
+      <test ac="AC3" id="61">Test progress indicator shown during log reading</test>
+      <test ac="AC3" id="62">Test progress indicator shown during support report generation</test>
+      <test ac="AC3" id="63">Test confirmation prompt appears before model removal (Option 2)</test>
+      <test ac="AC3" id="64">Test success feedback (✓) after successful remediation</test>
+      <test ac="AC3" id="65">Test failure feedback (✗) after failed remediation</test>
+      <test ac="AC3" id="66">Test emojis display correctly: 🔧 (menu), ✓ (success), ✗ (failure), ⚠️ (warning)</test>
+
+      <!-- Integration & Performance -->
+      <test ac="AC1,AC2,AC3" id="67">Integration test: diagnostic failure → menu → Option 1 → retry → success</test>
+      <test ac="AC1,AC2,AC3" id="68">Integration test: diagnostic failure → menu → Option 2 → retry → success</test>
+      <test ac="AC1,AC2,AC3" id="69">Integration test: diagnostic failure → menu → Option 3 → return to menu</test>
+      <test ac="AC1,AC2,AC3" id="70">Integration test: diagnostic failure → menu → Option 4 → return to menu</test>
+      <test ac="AC1,AC2,AC3" id="71">Integration test: diagnostic failure → menu → Option 5 → return to menu</test>
+      <test ac="AC1,AC2,AC3" id="72">Integration test: diagnostic failure → menu → Option 6 → exit cleanly</test>
+      <test ac="AC1,AC2" id="73">Test menu loop: remediation fails → menu reappears → user tries another option</test>
+      <test ac="AC1,AC2" id="74">Test menu loop: remediation succeeds → menu exits → diagnostic reruns</test>
+      <test ac="AC1,AC2,AC3" id="75">Test error handling: network failure during ollama pull</test>
+      <test ac="AC1,AC2,AC3" id="76">Test error handling: config/user_config.yaml missing</test>
+      <test ac="AC1,AC2,AC3" id="77">Test error handling: Ollama logs directory doesn't exist</test>
+      <test ac="AC3" id="78">Performance test: menu display <1 second</test>
+      <test ac="AC3" id="79">Performance test: resource check <5 seconds (reuses Story 0.1)</test>
+      <test ac="AC3" id="80">Performance test: log reading <2 seconds</test>
+      <test ac="AC3" id="81">Performance test: support report generation <5 seconds</test>
+
+      <!-- Platform Testing -->
+      <test ac="AC1,AC2,AC3" id="82">Test full workflow on Windows 10 (cmd.exe)</test>
+      <test ac="AC1,AC2,AC3" id="83">Test full workflow on Windows 11 (PowerShell)</test>
+      <test ac="AC2,AC3" id="84">Test subprocess encoding (utf-8, errors='replace') prevents UnicodeDecodeError</test>
+
+      <!-- Success Metric -->
+      <test ac="AC1,AC2" id="85">User testing: Verify 80%+ of diagnostic failures resolved via menu options</test>
+    </ideas>
+  </tests>
+</story-context>
