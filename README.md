@@ -198,6 +198,7 @@ Settings → Privacy → Database Encryption
 
 1. **Python 3.10+**
    - Download from https://www.python.org/downloads/
+   - **Important:** Check "Add Python to PATH" during installation
 
 2. **Ollama**
    - Download from https://ollama.com/download
@@ -208,6 +209,53 @@ Settings → Privacy → Database Encryption
    - Mistral 7B (fallback): `ollama pull mistral:7b-instruct-q4_K_M`
 
 ## Installation
+
+### Quick Start (Recommended - Windows)
+
+**The fastest way to get started:**
+
+1. **Install Prerequisites:**
+   - Install Python 3.10+ (check "Add Python to PATH")
+   - Install Ollama from https://ollama.com/download
+
+2. **Clone Repository:**
+   ```bash
+   git clone https://github.com/yourusername/mail-mind.git
+   cd mail-mind
+   ```
+
+3. **Run Setup Script:**
+   ```bash
+   setup.bat
+   ```
+
+4. **Follow Prompts:**
+   - The script will detect your hardware
+   - Recommend CPU or GPU mode (most users should choose CPU mode)
+   - Install dependencies automatically
+   - Optionally download the AI model (~5GB)
+
+5. **Start MailMind:**
+   - **Important:** Open a NEW terminal (to load environment variables)
+   - ```bash
+     cd mail-mind
+     python main.py
+     ```
+
+**That's it!** The setup script handles:
+- ✅ Ollama configuration (CPU/GPU mode)
+- ✅ Python dependency installation
+- ✅ AI model download
+- ✅ Environment variable configuration
+
+**Common Issues:**
+- **"Ollama hangs for 90+ seconds"** → Run `setup.bat` again and select CPU mode (N)
+- **"pysqlcipher3 failed to install"** → Continue without encryption (still functional)
+- **"Environment variables not working"** → Restart your terminal after running setup.bat
+
+---
+
+### Advanced Installation (Manual)
 
 ### 1. Clone the Repository
 
