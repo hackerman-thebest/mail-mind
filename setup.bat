@@ -78,25 +78,94 @@ if errorlevel 1 (
 )
 echo.
 
-REM Download AI model
-echo [5/5] Checking AI model...
-ollama list | findstr "llama3.1:8b-instruct-q4_K_M" >nul
+REM AI Model Selection (Story 0.2)
+echo [5/6] AI Model Selection
+echo ========================================
+echo.
+echo Analyzing your system resources...
+echo.
+
+REM Run system resource detection
+python -c "import sys; sys.path.insert(0, 'src'); from mailmind.utils.system_diagnostics import check_system_resources, recommend_model, format_resource_report; r = check_system_resources(); print(format_resource_report(r)); model, reasoning, perf = recommend_model(r); print(''); print('RECOMMENDED MODEL:'); print('  %s' %% model); print('  %s' %% reasoning); print('  Expected speed: %s' %% perf['tokens_per_second']); print('  Download size: %dGB' %% perf['size_gb']); import json; open('temp_recommendation.json', 'w').write(json.dumps({'model': model, 'size': 'small' if '1b' in model else ('medium' if '3b' in model else 'large'), 'ram': r['ram']['available_gb']}))"
+
+echo.
+echo ========================================
+echo Choose your AI model:
+echo ========================================
+echo.
+echo   1. Small  - llama3.2:1b
+echo      Fast ^& Lightweight (1GB download, 4GB RAM minimum)
+echo      Best for: Low-spec systems, fast responses
+echo.
+echo   2. Medium - llama3.2:3b ⭐ RECOMMENDED
+echo      Balanced Performance (2GB download, 6GB RAM minimum)
+echo      Best for: Most users, good quality + speed
+echo.
+echo   3. Large  - llama3.1:8b-instruct-q4_K_M
+echo      Best Quality (5GB download, 10GB+ RAM minimum)
+echo      Best for: High-end systems, maximum accuracy
+echo.
+
+choice /C 123 /M "Select model size (1/2/3)"
+
+if %ERRORLEVEL%==1 (
+    set MODEL=llama3.2:1b
+    set SIZE=small
+    echo.
+    echo Selected: Small model (llama3.2:1b)
+)
+if %ERRORLEVEL%==2 (
+    set MODEL=llama3.2:3b
+    set SIZE=medium
+    echo.
+    echo Selected: Medium model (llama3.2:3b) ⭐
+)
+if %ERRORLEVEL%==3 (
+    set MODEL=llama3.1:8b-instruct-q4_K_M
+    set SIZE=large
+    echo.
+    echo Selected: Large model (llama3.1:8b-instruct-q4_K_M)
+)
+
+echo.
+echo [6/6] Downloading and configuring model...
+echo.
+
+REM Check if model already exists
+ollama list | findstr "%MODEL%" >nul
 if errorlevel 1 (
+    echo Downloading %MODEL%...
+    echo This may take 5-20 minutes depending on your internet speed.
     echo.
-    echo Downloading AI model ^(llama3.1:8b-instruct-q4_K_M^)...
-    echo This is ~5GB and may take 10-20 minutes depending on your internet speed.
-    echo.
-    choice /C YN /M "Download now"
-    if %ERRORLEVEL%==2 (
+    ollama pull %MODEL%
+    if errorlevel 1 (
         echo.
-        echo Skipping model download. You can download it later with:
-        echo   ollama pull llama3.1:8b-instruct-q4_K_M
-    ) else if %ERRORLEVEL%==1 (
-        ollama pull llama3.1:8b-instruct-q4_K_M
+        echo ERROR: Model download failed!
+        echo You can download it later with: ollama pull %MODEL%
+        echo.
+        pause
+        exit /b 1
     )
 ) else (
-    echo Model already installed!
+    echo Model %MODEL% already installed!
 )
+
+echo.
+echo Saving model configuration...
+
+REM Create config directory if it doesn't exist
+if not exist "config" mkdir config
+
+REM Save model selection to user_config.yaml
+python -c "import sys; sys.path.insert(0, 'src'); import yaml; from pathlib import Path; from datetime import datetime; import json; rec = json.load(open('temp_recommendation.json')); config = {'ollama': {'selected_model': '%MODEL%', 'model_size': '%SIZE%', 'selection_date': datetime.now().strftime('%%Y-%%m-%%d'), 'auto_selected': False}, 'system': {'ram_gb': rec['ram']}}; Path('config').mkdir(exist_ok=True); yaml.dump(config, open('config/user_config.yaml', 'w'), default_flow_style=False)"
+
+REM Clean up temp file
+if exist temp_recommendation.json del temp_recommendation.json
+
+echo ✓ Model configured successfully!
+echo.
+echo Your model selection has been saved to config/user_config.yaml
+echo MailMind will use this model for all AI operations.
 echo.
 
 REM Run Ollama diagnostics
