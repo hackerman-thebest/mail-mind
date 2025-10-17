@@ -682,6 +682,8 @@ class OllamaManager:
                 ['ollama', 'show', model_name, '--modelfile'],
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='replace',
                 timeout=10
             )
 

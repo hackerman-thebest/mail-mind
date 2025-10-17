@@ -54,6 +54,8 @@ def run_ollama_diagnostics():
             ['ollama', 'ps'],
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',
             timeout=10
         )
         if result.returncode == 0:
@@ -84,6 +86,8 @@ def run_ollama_diagnostics():
             ['ollama', 'list'],
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',
             timeout=10
         )
         if result.returncode == 0:
@@ -115,6 +119,8 @@ def run_ollama_diagnostics():
             input='Test',
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',
             timeout=45  # Slightly longer timeout for first run
         )
         elapsed = time.time() - start_time
@@ -153,6 +159,8 @@ def run_ollama_diagnostics():
             ['curl', '-s', 'http://localhost:11434/api/tags'],
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',
             timeout=5
         )
         if result.returncode == 0 and result.stdout:
