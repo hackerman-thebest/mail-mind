@@ -569,11 +569,45 @@ class OllamaManager:
                     logger.info(f"Still waiting... ({elapsed:.0f}s elapsed)")
 
             if inference_thread.is_alive():
-                logger.error(
-                    f"Test inference timed out after {timeout}s. "
-                    f"This may indicate the model is too large for your system or Ollama is having issues. "
-                    f"Try: 1) Restart Ollama, 2) Use a smaller model, 3) Check system resources"
-                )
+                logger.error("=" * 60)
+                logger.error(f"❌ Test inference TIMED OUT after {timeout}s")
+                logger.error("=" * 60)
+                logger.error("")
+                logger.error("This is a common issue with multiple possible causes:")
+                logger.error("")
+                logger.error("IMMEDIATE ACTIONS:")
+                logger.error("  1. Restart Ollama completely:")
+                logger.error("     - Close Ollama from system tray")
+                logger.error("     - Reopen Ollama application")
+                logger.error("     - Wait 10 seconds, then try again")
+                logger.error("")
+                logger.error("  2. Check Ollama service:")
+                logger.error("     - Open Command Prompt")
+                logger.error("     - Run: ollama ps")
+                logger.error("     - Should show running models")
+                logger.error("")
+                logger.error("  3. Verify model:")
+                logger.error("     - Run: ollama list")
+                logger.error("     - Check if llama3.1:8b-instruct-q4_K_M is listed")
+                logger.error("")
+                logger.error("COMMON CAUSES:")
+                logger.error("  • Ollama service not responding (restart needed)")
+                logger.error("  • Model corrupted (run: ollama rm llama3.1:8b-instruct-q4_K_M && ollama pull llama3.1:8b-instruct-q4_K_M)")
+                logger.error("  • Insufficient RAM (need 8GB+ available)")
+                logger.error("  • Windows Defender blocking (add Ollama to exclusions)")
+                logger.error("  • Antivirus interference (temporarily disable to test)")
+                logger.error("  • Port 11434 conflict (check with: netstat -ano | findstr \"11434\")")
+                logger.error("")
+                logger.error("DIAGNOSTIC TOOL:")
+                logger.error("  Run automatic diagnostics to identify the issue:")
+                logger.error("  python main.py --diagnose")
+                logger.error("")
+                logger.error("ALTERNATIVE WORKAROUND:")
+                logger.error("  Skip test inference (not recommended, only for debugging):")
+                logger.error("  set MAILMIND_SKIP_TEST=1")
+                logger.error("  python main.py")
+                logger.error("")
+                logger.error("=" * 60)
                 return False
 
             if result['error']:

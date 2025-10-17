@@ -99,6 +99,92 @@ if errorlevel 1 (
 )
 echo.
 
+REM Run Ollama diagnostics
+echo ========================================
+echo Running Ollama Diagnostics...
+echo ========================================
+echo.
+echo This will help verify your Ollama installation is working correctly.
+echo.
+
+REM Test 1: Check Ollama service
+echo [Test 1/4] Checking Ollama service status...
+ollama ps >nul 2>&1
+if errorlevel 1 (
+    echo   ❌ FAILED: Ollama service not responding
+    echo   This usually means Ollama is not running properly.
+    echo.
+    echo   Troubleshooting steps:
+    echo   1. Restart Ollama application (close it completely and reopen)
+    echo   2. Check Task Manager - ensure "ollama" process is running
+    echo   3. Try running: ollama serve
+    echo   4. Reinstall Ollama from https://ollama.com/download
+    echo.
+) else (
+    echo   ✓ Ollama service is running
+)
+echo.
+
+REM Test 2: Check model list
+echo [Test 2/4] Verifying model list access...
+ollama list >nul 2>&1
+if errorlevel 1 (
+    echo   ❌ FAILED: Cannot access model list
+    echo   This indicates Ollama API is not responding.
+    echo.
+    echo   Troubleshooting steps:
+    echo   1. Check if Windows Defender/antivirus is blocking Ollama
+    echo   2. Verify firewall isn't blocking localhost connections
+    echo   3. Try running Command Prompt as Administrator
+    echo   4. Check if port 11434 is available (default Ollama port)
+    echo.
+) else (
+    echo   ✓ Model list accessible
+)
+echo.
+
+REM Test 3: Simple inference test
+echo [Test 3/4] Testing basic model inference...
+echo This may take 10-30 seconds on first run...
+echo.
+echo Test | ollama run llama3.1:8b-instruct-q4_K_M >nul 2>&1
+if errorlevel 1 (
+    echo   ❌ FAILED: Model inference not working
+    echo.
+    echo   This is the most common issue. Possible causes:
+    echo   1. Model not fully downloaded - try: ollama pull llama3.1:8b-instruct-q4_K_M
+    echo   2. Corrupted model - try: ollama rm llama3.1:8b-instruct-q4_K_M then pull again
+    echo   3. Insufficient RAM - need at least 8GB available for this model
+    echo   4. Windows Defender real-time protection blocking model access
+    echo   5. Ollama process needs restart - close and reopen Ollama app
+    echo.
+    echo   Advanced troubleshooting:
+    echo   - Check Ollama logs: %%LOCALAPPDATA%%\Ollama\logs\
+    echo   - Try smaller model: ollama run llama3.2:1b
+    echo   - Verify model files: dir %%USERPROFILE%%\.ollama\models\
+    echo.
+) else (
+    echo   ✓ Model inference working!
+)
+echo.
+
+REM Test 4: Connection test
+echo [Test 4/4] Testing HTTP connection to Ollama...
+curl -s http://localhost:11434/api/tags >nul 2>&1
+if errorlevel 1 (
+    echo   ⚠️  WARNING: Direct HTTP connection failed
+    echo   This may indicate port conflicts or firewall issues.
+    echo.
+    echo   Troubleshooting steps:
+    echo   1. Check if another application is using port 11434
+    echo   2. Try: netstat -ano ^| findstr "11434"
+    echo   3. Configure firewall to allow Ollama connections
+    echo.
+) else (
+    echo   ✓ HTTP connection working
+)
+echo.
+
 echo ========================================
 echo Setup Complete!
 echo ========================================
@@ -109,5 +195,8 @@ echo   2. cd %CD%
 echo   3. python main.py
 echo.
 echo NOTE: If you configured CPU mode, you MUST restart your terminal for changes to take effect!
+echo.
+echo If any diagnostic tests failed above, please resolve those issues before running MailMind.
+echo You can run this setup script again to re-test after making changes.
 echo.
 pause
