@@ -37,7 +37,7 @@ echo.
 echo NOTE: MailMind can use GPU acceleration if available, but works fine on CPU.
 echo GPU detection can cause 90+ second delays on some systems.
 echo.
-choice /C YN /M "Do you have an NVIDIA GPU you want to use for acceleration? (Y/N)"
+choice /C YN /M "Do you have an NVIDIA GPU you want to use for acceleration"
 if errorlevel 2 (
     echo.
     echo Configuring Ollama for CPU mode (recommended for most users)...
@@ -61,11 +61,11 @@ if errorlevel 1 (
     echo.
     echo WARNING: Some dependencies failed to install.
     echo.
-    echo If pysqlcipher3 failed (encryption), you can:
+    echo If pysqlcipher3 failed ^(encryption^), you can:
     echo   1. Install Visual C++ Build Tools (https://visualstudio.microsoft.com/visual-cpp-build-tools/)
     echo   2. Continue without encryption (functional but less secure)
     echo.
-    choice /C YN /M "Continue anyway? (Y/N)"
+    choice /C YN /M "Continue anyway"
     if errorlevel 2 (
         echo Setup cancelled.
         pause
@@ -79,10 +79,10 @@ echo [5/5] Checking AI model...
 ollama list | findstr "llama3.1:8b-instruct-q4_K_M" >nul
 if errorlevel 1 (
     echo.
-    echo Downloading AI model (llama3.1:8b-instruct-q4_K_M)...
+    echo Downloading AI model ^(llama3.1:8b-instruct-q4_K_M^)...
     echo This is ~5GB and may take 10-20 minutes depending on your internet speed.
     echo.
-    choice /C YN /M "Download now? (Y/N)"
+    choice /C YN /M "Download now"
     if errorlevel 2 (
         echo.
         echo Skipping model download. You can download it later with:
