@@ -41,6 +41,10 @@ choice /C YN /M "Do you have an NVIDIA GPU you want to use for acceleration"
 if %ERRORLEVEL%==2 (
     echo.
     echo Configuring Ollama for CPU mode ^(recommended for most users^)...
+    REM Set for current session
+    set OLLAMA_NUM_GPU=0
+    set CUDA_VISIBLE_DEVICES=
+    REM Set permanently for future sessions
     setx OLLAMA_NUM_GPU "0" >nul
     setx CUDA_VISIBLE_DEVICES "" >nul
     echo.
