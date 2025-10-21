@@ -97,7 +97,7 @@ echo   1. Small  - llama3.2:1b
 echo      Fast ^& Lightweight (1GB download, 4GB RAM minimum)
 echo      Best for: Low-spec systems, fast responses
 echo.
-echo   2. Medium - llama3.2:3b [RECOMMENDED]
+echo   2. Medium - llama3.2:3b (RECOMMENDED)
 echo      Balanced Performance (2GB download, 6GB RAM minimum)
 echo      Best for: Most users, good quality + speed
 echo.
@@ -118,7 +118,7 @@ if %ERRORLEVEL%==2 (
     set MODEL=llama3.2:3b
     set SIZE=medium
     echo.
-    echo Selected: Medium model (llama3.2:3b) [RECOMMENDED]
+    echo Selected: Medium model (llama3.2:3b) ^(RECOMMENDED^)
 )
 if %ERRORLEVEL%==3 (
     set MODEL=llama3.1:8b-instruct-q4_K_M
@@ -162,7 +162,7 @@ python -c "import sys; sys.path.insert(0, 'src'); import yaml; from pathlib impo
 REM Clean up temp file
 if exist temp_recommendation.json del temp_recommendation.json
 
-echo [OK] Model configured successfully!
+echo Model configured successfully!
 echo.
 echo Your model selection has been saved to config/user_config.yaml
 echo MailMind will use this model for all AI operations.
@@ -180,7 +180,7 @@ REM Test 1: Check Ollama service
 echo [Test 1/4] Checking Ollama service status...
 ollama ps >nul 2>&1
 if errorlevel 1 (
-    echo   [FAILED] Ollama service not responding
+    echo   FAILED: Ollama service not responding
     echo   This usually means Ollama is not running properly.
     echo.
     echo   Troubleshooting steps:
@@ -190,7 +190,7 @@ if errorlevel 1 (
     echo   4. Reinstall Ollama from https://ollama.com/download
     echo.
 ) else (
-    echo   [OK] Ollama service is running
+    echo   OK: Ollama service is running
 )
 echo.
 
@@ -198,7 +198,7 @@ REM Test 2: Check model list
 echo [Test 2/4] Verifying model list access...
 ollama list >nul 2>&1
 if errorlevel 1 (
-    echo   [FAILED] Cannot access model list
+    echo   FAILED: Cannot access model list
     echo   This indicates Ollama API is not responding.
     echo.
     echo   Troubleshooting steps:
@@ -208,7 +208,7 @@ if errorlevel 1 (
     echo   4. Check if port 11434 is available (default Ollama port)
     echo.
 ) else (
-    echo   [OK] Model list accessible
+    echo   OK: Model list accessible
 )
 echo.
 
@@ -218,7 +218,7 @@ echo This may take 10-30 seconds on first run...
 echo.
 echo Test | ollama run llama3.1:8b-instruct-q4_K_M >nul 2>&1
 if errorlevel 1 (
-    echo   [FAILED] Model inference not working
+    echo   FAILED: Model inference not working
     echo.
     echo   This is the most common issue. Possible causes:
     echo   1. Model not fully downloaded - try: ollama pull llama3.1:8b-instruct-q4_K_M
@@ -233,7 +233,7 @@ if errorlevel 1 (
     echo   - Verify model files: dir %%USERPROFILE%%\.ollama\models\
     echo.
 ) else (
-    echo   [OK] Model inference working!
+    echo   OK: Model inference working!
 )
 echo.
 
@@ -241,7 +241,7 @@ REM Test 4: Connection test
 echo [Test 4/4] Testing HTTP connection to Ollama...
 curl -s http://localhost:11434/api/tags >nul 2>&1
 if errorlevel 1 (
-    echo   [WARNING] Direct HTTP connection failed
+    echo   WARNING: Direct HTTP connection failed
     echo   This may indicate port conflicts or firewall issues.
     echo.
     echo   Troubleshooting steps:
@@ -250,7 +250,7 @@ if errorlevel 1 (
     echo   3. Configure firewall to allow Ollama connections
     echo.
 ) else (
-    echo   [OK] HTTP connection working
+    echo   OK: HTTP connection working
 )
 echo.
 
