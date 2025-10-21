@@ -112,19 +112,19 @@ if %ERRORLEVEL%==1 (
     set MODEL=llama3.2:1b
     set SIZE=small
     echo.
-    echo Selected: Small model (llama3.2:1b)
+    echo Selected: Small model - llama3.2:1b
 )
 if %ERRORLEVEL%==2 (
     set MODEL=llama3.2:3b
     set SIZE=medium
     echo.
-    echo Selected: Medium model (llama3.2:3b) ^(RECOMMENDED^)
+    echo Selected: Medium model - llama3.2:3b
 )
 if %ERRORLEVEL%==3 (
     set MODEL=llama3.1:8b-instruct-q4_K_M
     set SIZE=large
     echo.
-    echo Selected: Large model (llama3.1:8b-instruct-q4_K_M)
+    echo Selected: Large model - llama3.1:8b-instruct-q4_K_M
 )
 
 echo.
