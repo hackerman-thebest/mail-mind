@@ -214,9 +214,24 @@ echo.
 
 REM Test 3: Simple inference test
 echo [Test 3/4] Testing basic model inference with %MODEL%...
-echo This may take 10-30 seconds on first run...
 echo.
-echo Test | ollama run %MODEL% >nul 2>&1
+echo NOTE: This test can take 30-60 seconds on first run (loading model into memory).
+echo       You can skip this test if you want to test MailMind directly instead.
+echo.
+choice /C YN /M "Run inference test (Y) or Skip (N)"
+if %ERRORLEVEL%==2 (
+    echo   SKIPPED: Model inference test skipped by user
+    echo   You can test the model later by running: python main.py
+    echo.
+    goto skip_inference_test
+)
+
+echo.
+echo Testing inference (this may take up to 60 seconds)...
+echo.
+REM Use timeout command with 60 second limit
+timeout /t 1 /nobreak >nul
+echo Test | ollama run %MODEL% --verbose >nul 2>&1
 if errorlevel 1 (
     echo   FAILED: Model inference not working
     echo.
@@ -229,12 +244,14 @@ if errorlevel 1 (
     echo.
     echo   Advanced troubleshooting:
     echo   - Check Ollama logs: %%LOCALAPPDATA%%\Ollama\logs\
-    echo   - Try: ollama run %MODEL% without ">nul" to see error messages
+    echo   - Try: ollama run %MODEL% (without redirection to see error messages)
     echo   - Verify model files: dir %%USERPROFILE%%\.ollama\models\
     echo.
 ) else (
     echo   OK: Model inference working!
 )
+
+:skip_inference_test
 echo.
 
 REM Test 4: Connection test
