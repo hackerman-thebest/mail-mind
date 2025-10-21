@@ -213,23 +213,23 @@ if errorlevel 1 (
 echo.
 
 REM Test 3: Simple inference test
-echo [Test 3/4] Testing basic model inference...
+echo [Test 3/4] Testing basic model inference with %MODEL%...
 echo This may take 10-30 seconds on first run...
 echo.
-echo Test | ollama run llama3.1:8b-instruct-q4_K_M >nul 2>&1
+echo Test | ollama run %MODEL% >nul 2>&1
 if errorlevel 1 (
     echo   FAILED: Model inference not working
     echo.
     echo   This is the most common issue. Possible causes:
-    echo   1. Model not fully downloaded - try: ollama pull llama3.1:8b-instruct-q4_K_M
-    echo   2. Corrupted model - try: ollama rm llama3.1:8b-instruct-q4_K_M then pull again
-    echo   3. Insufficient RAM - need at least 8GB available for this model
+    echo   1. Model not fully downloaded - try: ollama pull %MODEL%
+    echo   2. Corrupted model - try: ollama rm %MODEL% then pull again
+    echo   3. Insufficient RAM for selected model
     echo   4. Windows Defender real-time protection blocking model access
     echo   5. Ollama process needs restart - close and reopen Ollama app
     echo.
     echo   Advanced troubleshooting:
     echo   - Check Ollama logs: %%LOCALAPPDATA%%\Ollama\logs\
-    echo   - Try smaller model: ollama run llama3.2:1b
+    echo   - Try: ollama run %MODEL% without ">nul" to see error messages
     echo   - Verify model files: dir %%USERPROFILE%%\.ollama\models\
     echo.
 ) else (
